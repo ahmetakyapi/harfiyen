@@ -5,7 +5,7 @@
 
 ## Özet
 
-Harfiyen, günlük Türkçe kare bulmaca oyunudur. Her gün TSİ 00:00'da herkese aynı üç bulmaca açılır (Kolay 7×7, Orta 9×9, Zor 11×11). Oyuncular ipuçlarından kelimeleri bulup grid'e yazar; kelimeler klasik kare bulmacadaki gibi kesişir. Süre tutulur; her zorluğun kendi günlük liderlik tablosu vardır (LinkedIn Games / NYT Mini modeli). Seri (streak), sonuç paylaşımı, profil istatistikleri ve arşiv pratik modu v1 kapsamındadır.
+Harfiyen, günlük Türkçe kare bulmaca oyunudur. Her gün TSİ 09:00'da herkese aynı üç bulmaca açılır (Kolay 6×6, Orta 8×8, Zor 10×10). Oyuncular ipuçlarından kelimeleri bulup grid'e yazar; kelimeler klasik kare bulmacadaki gibi kesişir. Süre tutulur; her zorluğun kendi günlük liderlik tablosu vardır (LinkedIn Games / NYT Mini modeli). Seri (streak), sonuç paylaşımı, profil istatistikleri ve arşiv pratik modu v1 kapsamındadır.
 
 **Teknoloji:** Next.js 14 App Router, TypeScript strict, Tailwind CSS 3, Framer Motion, Drizzle ORM + Neon (serverless), next-auth v5 (Credentials), Vercel. Taban: `~/dev-starter/templates/nextjs-fullstack`.
 
@@ -15,19 +15,19 @@ Harfiyen, günlük Türkçe kare bulmaca oyunudur. Her gün TSİ 00:00'da herkes
 |------|-------|
 | Mekanik | Mini kare bulmaca: hücreye dokun, klavyeyle yaz; kesişen harfler iki kelimeyi doldurur |
 | Günlük yapı | Her gün 3 bulmaca (Kolay/Orta/Zor), her birinin ayrı liderlik tablosu |
-| Grid boyutları | Kolay 7×7 (~8-10 kelime), Orta 9×9 (~12-16), Zor 11×11 (~18-24) |
+| Grid boyutları | Kolay 6×6 (~7-9 kelime), Orta 8×8 (~11-14), Zor 10×10 (~16-20) |
 | Kimlik | Basit üyelik: kullanıcı adı + şifre (next-auth v5 Credentials, bcrypt) |
 | İçerik | Repo içi kelime bankası (JSON) + üreteç script'i; bulmacalar önceden üretilip DB'ye yazılır |
 | Hile önleme | Sunucu yetkili oturum: cevaplar istemciye gitmez, süre sunucu saatiyle ölçülür |
 | İsim | Harfiyen |
 | Görsel yön | "Modern gazete": NYT Games × LinkedIn karışımı — editoryal, göz yormayan, rafine |
-| Gün sınırı | Europe/Istanbul (TSİ 00:00) |
+| Gün sınırı | Europe/Istanbul (TSİ 09:00) |
 
 ## 1. Oyun deneyimi
 
 ### Akış
 
-1. Ana sayfa (`/`): günün üç bulmaca kartı (durum: oynanmadı / devam ediyor / bitti + süre), seri sayacı, bir sonraki güne geri sayım.
+1. Ana sayfa (`/`): günün üç bulmaca kartı (durum: oynanmadı / devam ediyor / bitti + süre), seri sayacı, bir sonraki bulmacaya (TSİ 09:00) geri sayım.
 2. "Başla" → sunucuda oturum açılır, süre başlar. Kısa bir "hazır mısın?" geçiş ekranı olur; grid bu ekrandan önce gösterilmez (süre adaleti).
 3. Oyun ekranı: grid üstte, aktif ipucu şeridi ortada, Türkçe ekran klavyesi altta (mobil). Masaüstünde ipucu listeleri yanda, fiziksel klavye kullanılır.
 4. Kelime doğru tamamlanınca yumuşak yeşil onay animasyonu. Yanlışsa işaret yok (NYT modeli: sessiz — hücre bazlı doğru/yanlış gösterimi yapılmaz).
@@ -56,19 +56,19 @@ Hedef: NYT Games'in editoryal zarafeti × LinkedIn'in yumuşak, yormayan ürün 
 - **Tipografi:** Fraunces (serif display — logo, başlıklar, sayılar) + Inter (arayüz metni), `next/font/google` ile. Grid hücre harfleri Inter (yüksek okunabilirlik).
 - **Animasyon:** Framer Motion, ease `[0.22, 1, 0.36, 1]`. Hücre dolarken ince pop, kelime tamamlanınca satır boyunca soldan sağa dalga, bitişte zarif ve abartısız kutlama. `prefers-reduced-motion` desteklenir.
 - Kesin renk token değerleri uygulama sırasında `frontend-design` skill'i ile belirlenir ve CSS variable olarak tanımlanır (hardcoded renk yok). Bu tema, global CLAUDE.md'deki varsayılan koyu temayı override eder; proje CLAUDE.md'sine not düşülür.
-- Mobil öncelikli: 360 px genişlikte 11×11 grid rahat oynanır (hücre ~30 px; giriş ekran klavyesinden olduğu için hücrelere hassas dokunma gerekmez, otomatik ilerleme vardır).
+- Mobil öncelikli: 360 px genişlikte 10×10 grid rahat oynanır (hücre ~34 px; giriş ekran klavyesinden olduğu için hücrelere hassas dokunma gerekmez, otomatik ilerleme vardır).
 
 ## 3. Sayfalar ve mimari
 
 | Rota | İçerik |
 |------|--------|
 | `/` | Günün 3 kartı, seri, geri sayım, nasıl oynanır bağlantısı |
-| `/oyna/[tarih]/[zorluk]` | Oyun ekranı (`tarih` = `YYYY-MM-DD`, `zorluk` = `kolay\|orta\|zor`) |
-| `/siralama` | Gün seçici + zorluk sekmeleri; top 100 + kullanıcının kendi sırası |
-| `/profil/[kullaniciadi]` | Herkese açık profil: çözülen sayısı, zorluk bazında ortalama/en iyi süre, seri, son oyunlar |
-| `/arsiv` | Geçmiş günler takvim/liste; pratik modu (sıralamasız, `isRanked=false`) |
-| `/giris`, `/kayit` | Auth formları |
-| `/nasil-oynanir` | Öğretici; ilk ziyarette oyun ekranında modal olarak da gösterilir |
+| `/play/[date]/[difficulty]` | Oyun ekranı (`date` = `YYYY-MM-DD`, `difficulty` = `easy\|medium\|hard`) |
+| `/leaderboard` | Gün seçici + zorluk sekmeleri; top 100 + kullanıcının kendi sırası |
+| `/profile/[username]` | Herkese açık profil: çözülen sayısı, zorluk bazında ortalama/en iyi süre, seri, son oyunlar |
+| `/archive` | Geçmiş günler takvim/liste; pratik modu (sıralamasız, `isRanked=false`) |
+| `/login`, `/register` | Auth formları |
+| `/how-to-play` | Öğretici; ilk ziyarette oyun ekranında modal olarak da gösterilir |
 
 - Sayfalar Server Component ağırlıklı; oyun ekranı `'use client'` bir `GameBoard` bileşeni. Bulmaca verisi (cevapsız) server component'ten prop olarak gelir.
 - Mutasyonlar API route'ları üzerinden (aşağıda). DB erişimi `@neondatabase/serverless` (pg değil).
@@ -78,11 +78,11 @@ Hedef: NYT Games'in editoryal zarafeti × LinkedIn'in yumuşak, yormayan ürün 
 
 | Uç | Görev |
 |----|-------|
-| `POST /api/oturum/basla` | `{puzzleId}` → aktif oturum döner (varsa mevcut oturumu döner, sıfırlamaz). Sunucu `startedAt` kaydeder. |
-| `POST /api/oturum/ipucu` | `{sessionId, row, col}` → o hücrenin harfini döner, `hintCount++`, +15 sn ceza loglanır. Sadece aktif oturumda çalışır. |
-| `POST /api/oturum/bitir` | `{sessionId, grid}` → sunucu çözümle karşılaştırır; doğruysa `durationMs = now − startedAt + penaltyMs`, oturum `completed`, sıralama pozisyonu döner. Yanlışsa hata (oturum açık kalır). |
-| `GET /api/siralama?tarih=&zorluk=` | Top 100 + istekte kimlik varsa kullanıcının sırası |
-| `POST /api/kayit` | Kullanıcı adı + şifre ile kayıt |
+| `POST /api/session/start` | `{puzzleId}` → aktif oturum döner (varsa mevcut oturumu döner, sıfırlamaz). Sunucu `startedAt` kaydeder. |
+| `POST /api/session/hint` | `{sessionId, row, col}` → o hücrenin harfini döner, `hintCount++`, +15 sn ceza loglanır. Sadece aktif oturumda çalışır. |
+| `POST /api/session/submit` | `{sessionId, grid}` → sunucu çözümle karşılaştırır; doğruysa `durationMs = now − startedAt + penaltyMs`, oturum `completed`, sıralama pozisyonu döner. Yanlışsa hata (oturum açık kalır). |
+| `GET /api/leaderboard?date=&difficulty=` | Top 100 + istekte kimlik varsa kullanıcının sırası |
+| `POST /api/register` | Kullanıcı adı + şifre ile kayıt |
 | `/api/auth/*` | next-auth v5 route'ları |
 
 ## 4. Hile önleme ve oturum kuralları
@@ -91,14 +91,14 @@ Hedef: NYT Games'in editoryal zarafeti × LinkedIn'in yumuşak, yormayan ürün 
 - **Anında geri bildirim:** her kelime için `SHA-256(puzzlePublicId + ":" + entryNo + ":" + yön + ":" + CEVAP)` hash'i istemciye verilir. Oyuncu kelimeyi doldurunca istemci hash'i hesaplar, eşleşirse yeşil onay. (Hash'ler çevrimdışı brute-force ile kırılabilir; bu bilinçli bir denge — asıl doğrulama ve süre ölçümü sunucudadır.)
 - **Süre:** tamamen sunucu saatiyle: `durationMs = submittedAt − startedAt + penaltyMs`. İstemcideki sayaç yalnızca gösterimdir (`startedAt` sunucudan gelir, istemci farkı gösterir).
 - Duraklatma yok; sekme/sayfa kapansa da süre işler. Sayfa yeniden açılınca aktif oturum sunucudan bulunur, harfler localStorage'dan (oturum id anahtarıyla) geri yüklenir.
-- Sıralamaya yalnızca kullanıcının o bulmacadaki **ilk tamamlanan oturumu** girer. `isRanked = üye girişi var ∧ oturum bulmacanın kendi günü (TSİ) içinde başlatıldı ∧ kullanıcının o bulmacada ilk tamamlanan oturumu`. Misafir oturumları ve arşiv oyunları `isRanked=false`.
-- Aynı bulmaca için ikinci `basla` çağrısı yeni oturum açmaz, mevcut aktif oturumu döner. `bitir` idempotent: tamamlanmış oturuma ikinci çağrı aynı sonucu döner.
-- Başlamadan `bitir`, başka kullanıcının oturumuna erişim, tamamlanmış oturuma `ipucu` → 4xx hata.
+- Sıralamaya yalnızca kullanıcının o bulmacadaki **ilk tamamlanan oturumu** girer. `isRanked = üye girişi var ∧ oturum bulmacanın kendi oyun günü (TSİ 09:00→09:00) içinde başlatıldı ∧ kullanıcının o bulmacada ilk tamamlanan oturumu`. Misafir oturumları ve arşiv oyunları `isRanked=false`.
+- Aynı bulmaca için ikinci `start` çağrısı yeni oturum açmaz, mevcut aktif oturumu döner. `submit` idempotent: tamamlanmış oturuma ikinci çağrı aynı sonucu döner.
+- Başlamadan `submit`, başka kullanıcının oturumuna erişim, tamamlanmış oturuma `hint` → 4xx hata.
 - Sunucu tarafında makul olmayan süreler (ör. < 5 sn) tabloya girmeden önce işaretlenir (`flagged`); v1'de sadece loglanır, otomatik ban yok.
 
 ## 5. İçerik üretimi
 
-### Kelime bankası (`content/kelime-bankasi.json`, repo içinde versiyonlu)
+### Kelime bankası (`content/word-bank.json`, repo içinde versiyonlu)
 
 ```json
 {
@@ -109,8 +109,8 @@ Hedef: NYT Games'in editoryal zarafeti × LinkedIn'in yumuşak, yormayan ürün 
 }
 ```
 
-- Hedef: ~1000 kelime; her kelimeye 2-3 elle yazılmış ipucu varyantı (tekrar hissini önler).
-- Kurallar: yalnızca 29 Türkçe harf, 3-11 harf uzunluk, `tr-TR` büyük harf normalize. Ağırlıklı olarak cins isimler; özel isimler `özel` etiketiyle sınırlı sayıda.
+- Hedef: ~1000 kelime (testler en az 900 girdiyi zorlar); her kelimeye 2-3 elle yazılmış ipucu varyantı (tekrar hissini önler).
+- Kurallar: yalnızca 29 Türkçe harf, 3-10 harf uzunluk, `tr-TR` büyük harf normalize. Ağırlıklı olarak cins isimler; özel isimler `özel` etiketiyle sınırlı sayıda.
 - `difficulty` 1-3: yaygın kelime + doğrudan ipucu = 1; nadir kelime veya dolaylı/esprili ipucu = 3. Kolay bulmaca 1-2'den, zor bulmaca 2-3'ten beslenir; ipucu varyantı da zorluğa göre seçilir.
 
 ### Üreteç (`scripts/generate-puzzles.ts`)
@@ -119,7 +119,7 @@ Hedef: NYT Games'in editoryal zarafeti × LinkedIn'in yumuşak, yormayan ürün 
 - Geçerlilik kuralları:
   - Her kelime en az bir başka kelimeyle kesişir; grid tek parça (bağlantılı) olur.
   - Min. kelime uzunluğu 3; yatay/dikey ardışık ≥2 beyaz hücre dizisi mutlaka yerleştirilmiş bir kelimeye karşılık gelir (kazara kelime oluşmaz).
-  - Aynı bulmacada kelime tekrarı yok; son 30 günün bulmacalarında çıkan kelimelerden kaçınılır.
+  - Aynı bulmacada ve aynı günün üç bulmacası arasında kelime tekrarı yok; son 21 günün bulmacalarında çıkan kelimelerden kaçınılır (banka yetmezse pencere kademeli daralır: 14→7→0 gün).
   - Doluluk hedefi: beyaz hücre oranı %60-75.
 - Çıktı DB'ye yazılır ve tarihe atanır: `npm run generate:puzzles -- --days 120` → 360 bulmaca. Havuz azalınca aynı script uzatır (ileride Vercel cron ile otomatikleştirilebilir; v1'de manuel).
 - Bulmaca numarası: lansman tarihinden gün farkı + 1 (`Harfiyen #42`).
@@ -140,7 +140,7 @@ puzzles
   id            serial PK
   publicId      varchar unique      -- hash tuzu, URL'de kullanılmaz
   date          date not null
-  difficulty    enum('kolay','orta','zor')
+  difficulty    enum('easy','medium','hard')
   size          int
   layout        jsonb   -- hücreler (siyah/beyaz), numaralar
   entries       jsonb   -- {no, dir, row, col, len, clue} — CEVAPSIZ, istemciye giden
@@ -173,14 +173,14 @@ play_sessions
 
 - **Paylaşım metni** (panoya kopyalanır, spoiler içermez):
   `Harfiyen #142 · Zor · ⏱ 2:47` + satır altında `harfiyen • günlük kelime bulmacası` + URL. Sıralamaya girildiyse `🏅 12.` eklenir.
-- **Seri:** herhangi bir zorluğu o gün (TSİ) bitirmek günü sayar. Ana sayfada alev/mühür ikonlu sayaç.
+- **Seri:** herhangi bir zorluğu o oyun günü içinde bitirmek günü sayar. Ana sayfada alev/mühür ikonlu sayaç.
 - **Profil:** toplam çözülen, zorluk bazında ortalama ve en iyi süre, mevcut/en iyi seri, son 7 gün mini grafiği. Kullanıcı adıyla herkese açık.
 
 ## 8. Hata durumları ve kenar senaryolar
 
-- `bitir` çözümü yanlışsa: oturum açık kalır, istemci "bir şeyler uyuşmuyor" tarzı nazik uyarı gösterir (hangi hücrenin yanlış olduğu söylenmez).
+- `submit` çözümü yanlışsa: oturum açık kalır, istemci "bir şeyler uyuşmuyor" tarzı nazik uyarı gösterir (hangi hücrenin yanlış olduğu söylenmez).
 - Ağ hatasında submit exponential backoff ile yeniden denenir; oturum sunucuda açık olduğundan veri kaybı olmaz.
-- Gün TSİ 00:00'da döner; oyun sırasında gün değişirse oturum geçerli kalır (oturum başladığı güne bağlıdır).
+- Gün TSİ 09:00'da döner; oyun sırasında gün değişirse oturum geçerli kalır (oturum başladığı güne bağlıdır).
 - Aynı kullanıcı iki cihazda aynı bulmacayı açarsa aynı oturum döner; grid durumu cihazlar arası senkronize edilmez (localStorage), bilinen v1 sınırı.
 - localStorage boşsa (gizli sekme vb.) oyuncu kaldığı yerden harfleri kaybeder ama oturum/süre sunucuda doğru işler.
 
