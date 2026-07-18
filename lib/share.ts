@@ -1,0 +1,23 @@
+import type { Difficulty } from './types';
+
+const LABELS: Record<Difficulty, string> = { easy: 'Kolay', medium: 'Orta', hard: 'Zor' };
+export const SITE_URL = 'harfiyen.vercel.app';
+
+export function formatDuration(ms: number): string {
+  const total = Math.round(ms / 1000);
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
+  const pad = (n: number): string => String(n).padStart(2, '0');
+  return h > 0 ? `${h}:${pad(m)}:${pad(s)}` : `${m}:${pad(s)}`;
+}
+
+export function buildShareText(opts: {
+  number: number; difficulty: Difficulty; durationMs: number; rank?: number | null;
+}): string {
+  const parts = [
+    `Harfiyen #${opts.number}`, LABELS[opts.difficulty], `⏱ ${formatDuration(opts.durationMs)}`,
+  ];
+  if (opts.rank != null) parts.push(`🏅 ${opts.rank}.`);
+  return `${parts.join(' · ')}\n${SITE_URL}`;
+}
