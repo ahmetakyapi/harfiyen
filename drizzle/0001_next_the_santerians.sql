@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "sessions_active_identity" ON "play_sessions" USING btree ("puzzle_id",COALESCE("user_id", -1),COALESCE("anon_id", '')) WHERE "play_sessions"."status" = 'active';

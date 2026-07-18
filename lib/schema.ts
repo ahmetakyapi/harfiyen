@@ -1,3 +1,4 @@
+import { sql } from 'drizzle-orm';
 import {
   boolean, date, index, integer, jsonb, pgEnum, pgTable, serial, text,
   timestamp, uniqueIndex, varchar,
@@ -46,4 +47,11 @@ export const playSessions = pgTable('play_sessions', {
 }, (t) => [
   index('sessions_leaderboard').on(t.puzzleId, t.isRanked, t.durationMs),
   index('sessions_identity').on(t.userId, t.puzzleId),
+  // Aynı kimlik+bulmaca için en fazla bir AKTİF oturuma izin ver (hint-exhaust +
+  // temiz ikinci oturum ile ceza atlatma saldırısını engeller). userId/anonId
+  // nullable olduğu için Postgres NULL'ları unique index'te farklı sayar —
+  // COALESCE ile normalize ediyoruz.
+  uniqueIndex('sessions_active_identity').on(
+    t.puzzleId, sql`COALESCE(${t.userId}, -1)`, sql`COALESCE(${t.anonId}, '')`,
+  ).where(sql`${t.status} = 'active'`),
 ]);

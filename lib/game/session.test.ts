@@ -4,7 +4,7 @@ import { addDays, gameDay } from '@/lib/date';
 import type { Db } from '@/lib/db';
 import { generateWithRetries } from '@/lib/generator/generator';
 import { buildPuzzleRow } from '@/lib/generator/assign';
-import { puzzles, users } from '@/lib/schema';
+import { playSessions, puzzles, users } from '@/lib/schema';
 import { createTestDb } from '@/tests/helpers/testDb';
 import { finishSession, startSession, useHint } from './session';
 
@@ -36,6 +36,22 @@ describe('startSession', () => {
     expect(b.existing).toBe(true);
     expect(b.sessionId).toBe(a.sessionId);
     expect(a.isRanked).toBe(true); // üye + günün bulmacası
+  });
+  it('eşzamanlı iki çağrı aynı kimlik+bulmaca için tek aktif oturum üretir (race)', async () => {
+    const db = await createTestDb();
+    const p = await makePuzzle(db, today);
+    const uid = await makeUser(db);
+    const identity = { userId: uid, anonId: null };
+    const [a, b] = await Promise.all([
+      startSession(db, { puzzleId: p.id, identity, now: T0 }),
+      startSession(db, { puzzleId: p.id, identity, now: T0 }),
+    ]);
+    expect(a.sessionId).toBe(b.sessionId);
+    const { and, eq } = await import('drizzle-orm');
+    const rows = await db.select().from(playSessions).where(
+      and(eq(playSessions.puzzleId, p.id), eq(playSessions.userId, uid), eq(playSessions.status, 'active')),
+    );
+    expect(rows).toHaveLength(1);
   });
   it('misafir ve arşiv oturumları ranked değildir', async () => {
     const db = await createTestDb();

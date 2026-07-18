@@ -58,11 +58,34 @@ export async function startSession(db: Db, opts: {
 
   const isRanked =
     opts.identity.userId !== null && puzzle.date === gameDay(now) && !completed;
-  const [row] = await db.insert(playSessions).values({
-    userId: opts.identity.userId, anonId: opts.identity.userId ? null : opts.identity.anonId,
-    puzzleId: opts.puzzleId, startedAt: now, isRanked,
-  }).returning();
-  return toResult(row, false);
+  try {
+    const [row] = await db.insert(playSessions).values({
+      userId: opts.identity.userId, anonId: opts.identity.userId ? null : opts.identity.anonId,
+      puzzleId: opts.puzzleId, startedAt: now, isRanked,
+    }).returning();
+    return toResult(row, false);
+  } catch (err) {
+    if (!isUniqueViolation(err)) throw err;
+    // Race: başka bir eşzamanlı çağrı bizden önce aktif oturumu ekledi
+    // (sessions_active_identity partial unique index'i tetiklendi).
+    // Var olan aktif oturumu okuyup onu dön — iki aktif oturum asla oluşmaz.
+    const raced = await db.select().from(playSessions)
+      .where(and(eq(playSessions.puzzleId, opts.puzzleId), identityFilter(opts.identity), eq(playSessions.status, 'active')));
+    const winner = raced[0];
+    if (!winner) throw err;
+    return toResult(winner, true);
+  }
+}
+
+/** Postgres unique_violation (SQLSTATE 23505). Drizzle sarmalar: attığı
+ *  `DrizzleQueryError`in `.cause` alanında asıl pg hatası (neon-http ve
+ *  pglite sürücülerinde `code: '23505'`) durur — hem kendisini hem cause'u kontrol et. */
+function isUniqueViolation(err: unknown): boolean {
+  const hasCode = (e: unknown): boolean =>
+    typeof e === 'object' && e !== null && 'code' in e && (e as { code?: unknown }).code === '23505';
+  if (hasCode(err)) return true;
+  const cause = err instanceof Error ? err.cause : undefined;
+  return hasCode(cause);
 }
 
 async function loadOwnedSession(db: Db, sessionId: number, identity: Identity) {
