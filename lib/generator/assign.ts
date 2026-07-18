@@ -49,7 +49,13 @@ export async function assignPuzzles(db: Db, opts: {
   let skipped = 0;
   for (let d = 0; d < opts.days; d++) {
     const date = addDays(opts.startDate, d);
-    const sameDay = new Set<string>(); // aynı gün içinde kelime tekrarı KESİNLİKLE yasak
+    // aynı gün içinde kelime tekrarı KESİNLİKLE yasak — önceki (yarım kalmış) bir
+    // çalıştırmadan bu tarih için zaten kaydedilmiş satırlar varsa, onların
+    // kelimeleriyle de tohumla (excludedWords `lt(date, date)` kullandığı için
+    // günün kendisini kapsamaz, bu yüzden burada seed etmek gerekiyor)
+    const persisted = await db.select({ words: puzzles.words }).from(puzzles)
+      .where(eq(puzzles.date, date));
+    const sameDay = new Set<string>(persisted.flatMap((r) => r.words as string[]));
     for (const difficulty of DIFFICULTIES) {
       const existing = await db.select({ id: puzzles.id }).from(puzzles)
         .where(and(eq(puzzles.date, date), eq(puzzles.difficulty, difficulty)));
