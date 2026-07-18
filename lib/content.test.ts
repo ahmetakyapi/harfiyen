@@ -20,16 +20,23 @@ describe('validateBank', () => {
 });
 
 describe('loadBank (gerçek dosya)', () => {
-  it('en az 120 geçerli girdi içerir', () => {
-    expect(loadBank().length).toBeGreaterThanOrEqual(120);
+  it('en az 900 geçerli girdi içerir', () => {
+    expect(loadBank().length).toBeGreaterThanOrEqual(900);
   });
-  it('her zorluk seviyesinden en az 30 kelime vardır', () => {
+  it('zorluk dağılımı: 1 için ≥270, 2 için ≥330, 3 için ≥180', () => {
     const bank = loadBank();
-    for (const d of [1, 2, 3] as const) {
-      expect(bank.filter((e) => e.difficulty === d).length).toBeGreaterThanOrEqual(30);
-    }
+    expect(bank.filter((e) => e.difficulty === 1).length).toBeGreaterThanOrEqual(270);
+    expect(bank.filter((e) => e.difficulty === 2).length).toBeGreaterThanOrEqual(330);
+    expect(bank.filter((e) => e.difficulty === 3).length).toBeGreaterThanOrEqual(180);
   });
-  it('3-10 harf yelpazesinde çeşitlilik vardır (en az 6 farklı uzunluk)', () => {
-    expect(new Set(loadBank().map((e) => e.word.length)).size).toBeGreaterThanOrEqual(6);
+  it('kısa kelime havuzu geniştir (3-4 harf ≥ 180 adet)', () => {
+    expect(loadBank().filter((e) => e.word.length <= 4).length).toBeGreaterThanOrEqual(180);
+  });
+  it('uzun kelimeler vardır (8+ harf ≥ 90 adet)', () => {
+    expect(loadBank().filter((e) => e.word.length >= 8).length).toBeGreaterThanOrEqual(90);
+  });
+  it('kelimelerin en az yarısında 2+ ipucu varyantı vardır', () => {
+    const bank = loadBank();
+    expect(bank.filter((e) => e.clues.length >= 2).length).toBeGreaterThanOrEqual(bank.length / 2);
   });
 });
