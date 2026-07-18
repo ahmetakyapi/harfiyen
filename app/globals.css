@@ -1,0 +1,138 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── Fonts ──────────────────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap&subset=latin-ext');
+
+/* ─── Variables ─────────────────────────────────────────────────────────── */
+:root {
+  --font-sans: 'Manrope';
+  --font-mono: 'IBM Plex Mono';
+  --bg-dark:  #04070d;
+  --bg-light: #f5f7fb;
+}
+
+/* ─── Base ──────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  letter-spacing: -0.01em;
+  transition: background-color 0.25s ease, color 0.25s ease;
+  background:
+    radial-gradient(circle at 18% 12%, rgba(79,70,229,0.14), transparent 30%),
+    radial-gradient(circle at 82% 10%, rgba(34,211,238,0.09), transparent 24%),
+    radial-gradient(circle at 50% 100%, rgba(16,185,129,0.05), transparent 28%),
+    var(--bg-dark);
+  color: #e2e8f0;
+}
+
+html:not(.dark) body {
+  background:
+    radial-gradient(circle at 14% 12%, rgba(59,130,246,0.12), transparent 30%),
+    radial-gradient(circle at 82% 8%,  rgba(14,165,233,0.10), transparent 24%),
+    radial-gradient(circle at 50% 100%, rgba(16,185,129,0.06), transparent 28%),
+    var(--bg-light);
+  color: #0f172a;
+}
+
+/* ─── Selection ─────────────────────────────────────────────────────────── */
+::selection {
+  background: rgba(56,189,248,0.24);
+  color: inherit;
+}
+
+/* ─── Scrollbar ─────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: rgba(56,189,248,0.28);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(56,189,248,0.5); }
+
+/* ─── Custom Cursor (desktop) ───────────────────────────────────────────── */
+@media (pointer: fine) and (hover: hover) {
+  *, *::before, *::after { cursor: none !important; }
+}
+
+/* ─── Background attachment mobile fix ─────────────────────────────────── */
+@media (max-width: 640px) {
+  body { background-attachment: scroll; }
+}
+
+/* ─── Components ────────────────────────────────────────────────────────── */
+@layer components {
+
+  /* Glassmorphism card */
+  .glass {
+    background: linear-gradient(180deg, rgba(8,12,22,0.72), rgba(6,10,18,0.46));
+    border: 1px solid rgba(148,163,184,0.1);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.04),
+      0 14px 34px rgba(2,6,23,0.14);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+  html:not(.dark) .glass {
+    background: linear-gradient(180deg, rgba(255,255,255,0.84), rgba(255,255,255,0.72));
+    border-color: rgba(148,163,184,0.2);
+    box-shadow: 0 16px 44px rgba(148,163,184,0.14);
+  }
+
+  /* Strong surface (modal, panel) */
+  .surface {
+    background: linear-gradient(180deg, rgba(8,12,22,0.88), rgba(4,7,13,0.96));
+    border: 1px solid rgba(148,163,184,0.1);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+  html:not(.dark) .surface {
+    background: linear-gradient(180deg, rgba(255,255,255,0.74), rgba(255,255,255,0.62));
+    border-color: rgba(148,163,184,0.18);
+  }
+
+  /* Pill chip / badge */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    border-radius: 999px;
+    border: 1px solid rgba(148,163,184,0.14);
+    background: rgba(7,11,20,0.56);
+    padding: 0.6rem 1rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #e2e8f0;
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+  }
+  html:not(.dark) .chip {
+    background: rgba(255,255,255,0.72);
+    border-color: rgba(148,163,184,0.2);
+    color: #334155;
+  }
+
+}
+
+/* ─── Animations ────────────────────────────────────────────────────────── */
+@layer utilities {
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50%       { transform: translateY(-16px); }
+  }
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0; }
+  }
+}
