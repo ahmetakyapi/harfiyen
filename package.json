@@ -14,7 +14,7 @@
     "db:studio": "drizzle-kit studio",
     "test": "vitest run",
     "test:watch": "vitest",
-    "generate:puzzles": "tsx scripts/generate-puzzles.ts"
+    "generate:puzzles": "tsx --env-file=.env.local scripts/generate-puzzles.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.2",
