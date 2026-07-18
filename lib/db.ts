@@ -1,8 +1,17 @@
-import { neon } from '@neondatabase/serverless'
-import { drizzle } from 'drizzle-orm/neon-http'
-import * as schema from './schema'
+import { neon } from '@neondatabase/serverless';
+import { drizzle } from 'drizzle-orm/neon-http';
+import type { PgDatabase, PgQueryResultHKT } from 'drizzle-orm/pg-core';
+import * as schema from './schema';
 
-// @neondatabase/serverless — Vercel serverless için (mistakes.md #5)
-const sql = neon(process.env.DATABASE_URL!)
+export type Db = PgDatabase<PgQueryResultHKT, typeof schema>;
 
-export const db = drizzle(sql, { schema })
+let cached: Db | null = null;
+
+export function getDb(): Db {
+  if (!cached) {
+    const url = process.env.DATABASE_URL;
+    if (!url) throw new Error('DATABASE_URL tanımlı değil');
+    cached = drizzle(neon(url), { schema });
+  }
+  return cached;
+}
