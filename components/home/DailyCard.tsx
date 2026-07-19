@@ -1,32 +1,26 @@
 import Link from 'next/link';
-import { Coffee, Flame, Sparkles } from 'lucide-react';
-import { DIFFICULTY_BADGE_CLASS, DIFFICULTY_CHIP_CLASS } from '@/lib/difficulty';
+import { LetterTile } from '@/components/ui/LetterTile';
+import { DIFFICULTY_BADGE_CLASS } from '@/lib/difficulty';
 import { formatDuration } from '@/lib/share';
 import type { Difficulty } from '@/lib/types';
 
-const META: Record<Difficulty, { label: string; blurb: string; Icon: typeof Sparkles }> = {
-  easy: { label: 'Kolay', blurb: 'Isınma Turu', Icon: Sparkles },
-  medium: { label: 'Orta', blurb: 'Kahve Molası', Icon: Coffee },
-  hard: { label: 'Zor', blurb: 'Günün Sınavı', Icon: Flame },
+const META: Record<Difficulty, { label: string; blurb: string }> = {
+  easy: { label: 'Kolay', blurb: 'Isınma Turu' },
+  medium: { label: 'Orta', blurb: 'Kahve Molası' },
+  hard: { label: 'Zor', blurb: 'Günün Sınavı' },
 };
 
-// Kartın kendi zorluk rengiyle hafif bir degrade zemini + sol şeridi var —
-// dinlenme halinde bile üç kart birbirinden anında ayrışsın diye (sadece
-// hover'da değil).
+// Kartın sol yarısında zorluk renginde çok hafif bir yıkama — dinlenme
+// halinde bile üç kart ayrışır; via/to ile kartın sağı temiz kâğıt kalır.
 const WASH_CLASS: Record<Difficulty, string> = {
   easy: 'from-[var(--diff-easy-soft)]',
   medium: 'from-[var(--diff-medium-soft)]',
-  hard: 'from-[var(--accent-soft)]',
-};
-const BAR_CLASS: Record<Difficulty, string> = {
-  easy: 'bg-[var(--diff-easy)]',
-  medium: 'bg-[var(--diff-medium)]',
-  hard: 'bg-[var(--accent)]',
+  hard: 'from-[var(--diff-hard-soft)]',
 };
 const GLOW_CLASS: Record<Difficulty, string> = {
-  easy: 'shadow-[0_10px_28px_-20px_var(--diff-easy)] hover:shadow-[0_18px_40px_-16px_var(--diff-easy)]',
-  medium: 'shadow-[0_10px_28px_-20px_var(--diff-medium)] hover:shadow-[0_18px_40px_-16px_var(--diff-medium)]',
-  hard: 'shadow-[0_10px_28px_-20px_var(--accent)] hover:shadow-[0_18px_40px_-16px_var(--accent)]',
+  easy: 'shadow-[0_12px_30px_-22px_var(--diff-easy)] hover:shadow-[0_20px_44px_-18px_var(--diff-easy)]',
+  medium: 'shadow-[0_12px_30px_-22px_var(--diff-medium)] hover:shadow-[0_20px_44px_-18px_var(--diff-medium)]',
+  hard: 'shadow-[0_12px_30px_-22px_var(--diff-hard)] hover:shadow-[0_20px_44px_-18px_var(--diff-hard)]',
 };
 
 export function DailyCard({ difficulty, size, wordCount, date, status, durationMs }: {
@@ -36,15 +30,12 @@ export function DailyCard({ difficulty, size, wordCount, date, status, durationM
   const meta = META[difficulty];
   return (
     <Link href={`/play/${date}/${difficulty}`}
-      className={`group relative flex items-center gap-4 overflow-hidden rounded-3xl border border-[var(--line)] bg-gradient-to-br ${WASH_CLASS[difficulty]} to-[var(--paper-raised)] p-4 pl-5 transition-[transform,box-shadow] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-1 ${GLOW_CLASS[difficulty]}`}>
-      <span className={`absolute inset-y-0 left-0 w-1.5 ${BAR_CLASS[difficulty]}`} />
-      <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl ring-4 ring-[var(--paper-raised)] ${DIFFICULTY_CHIP_CLASS[difficulty]}`}>
-        <meta.Icon className="h-6 w-6" strokeWidth={2.25} />
-      </div>
+      className={`group flex items-center gap-4 rounded-[1.6rem] border border-[var(--line)] bg-gradient-to-r ${WASH_CLASS[difficulty]} via-[var(--paper-raised)] to-[var(--paper-raised)] p-4 transition-[transform,box-shadow] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-1 ${GLOW_CLASS[difficulty]}`}>
+      <LetterTile difficulty={difficulty} />
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <p className="font-display text-2xl">{meta.label}</p>
-          <span className={`rounded-full px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wide ${DIFFICULTY_BADGE_CLASS[difficulty]}`}>
+          <span className={`rounded-full px-2 py-0.5 text-[0.65rem] font-semibold tracking-wide ${DIFFICULTY_BADGE_CLASS[difficulty]}`}>
             {size}×{size}
           </span>
         </div>
@@ -57,7 +48,11 @@ export function DailyCard({ difficulty, size, wordCount, date, status, durationM
           <span className="font-mono tabular-nums text-[var(--correct)]">✓ {formatDuration(durationMs)}</span>
         )}
         {status === 'devam' && <span className="font-medium text-[var(--accent)]">Devam Et →</span>}
-        {status === 'yeni' && <span className="text-[var(--ink-soft)] group-hover:text-[var(--accent)]">Oyna →</span>}
+        {status === 'yeni' && (
+          <span className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--line)] bg-[var(--paper-raised)] text-[var(--ink-soft)] transition-colors duration-200 group-hover:border-transparent group-hover:bg-[var(--ink)] group-hover:text-[var(--paper)]">
+            →
+          </span>
+        )}
       </div>
     </Link>
   );

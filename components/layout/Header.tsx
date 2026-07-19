@@ -6,7 +6,7 @@ import { ThemeToggle } from '@/components/layout/ThemeToggle';
 export async function Header() {
   const session = await auth();
   return (
-    <header className="border-b border-[var(--line)]">
+    <header className="site-header border-b border-[var(--line)]">
       <div className="mx-auto flex h-14 max-w-3xl items-center justify-between px-4">
         <Link href="/" className="flex items-center gap-2.5">
           <Logo className="h-8 w-8" />

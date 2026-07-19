@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { auth } from '@/lib/auth';
 import { addDays, formatTrtDate, gameDay } from '@/lib/date';
-import { DIFFICULTY_CHIP_CLASS, DIFFICULTY_LABELS } from '@/lib/difficulty';
+import { DIFFICULTY_TAB_CLASS, DIFFICULTY_LABELS } from '@/lib/difficulty';
 import { getDb } from '@/lib/db';
 import { getLeaderboard } from '@/lib/game/leaderboard';
 import { DIFFICULTIES, type Difficulty } from '@/lib/types';
@@ -24,7 +24,7 @@ export default async function LeaderboardPage({ searchParams }: {
 
   return (
     <main className="mx-auto max-w-lg px-4 py-8">
-      <h1 className="mb-2 bg-gradient-to-r from-[var(--diff-medium)] to-[var(--accent)] bg-clip-text text-center font-display text-3xl text-transparent">
+      <h1 className="mb-2 bg-gradient-to-r from-[var(--title-from)] to-[var(--title-to)] bg-clip-text text-center font-display text-3xl text-transparent">
         Sıralama
       </h1>
       <div className="mb-5 flex items-center justify-center gap-3 text-sm">
@@ -39,7 +39,7 @@ export default async function LeaderboardPage({ searchParams }: {
       <nav className="mb-6 flex justify-center gap-2">
         {DIFFICULTIES.map((d) => (
           <Link key={d} href={`/leaderboard?date=${date}&difficulty=${d}`}
-            className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${d === difficulty ? DIFFICULTY_CHIP_CLASS[d] : 'border border-[var(--line)] text-[var(--ink-soft)] hover:bg-[var(--paper-raised)]'}`}>
+            className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${d === difficulty ? DIFFICULTY_TAB_CLASS[d] : 'border border-[var(--line)] text-[var(--ink-soft)] hover:bg-[var(--paper-raised)]'}`}>
             {DIFFICULTY_LABELS[d]}
           </Link>
         ))}

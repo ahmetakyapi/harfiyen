@@ -1,17 +1,16 @@
 import Link from 'next/link';
 import { and, eq, lt } from 'drizzle-orm';
-import { Coffee, Flame, Sparkles } from 'lucide-react';
+import { Check } from 'lucide-react';
 import { auth } from '@/lib/auth';
+import { LetterTile } from '@/components/ui/LetterTile';
 import { formatTrtDate, gameDay, puzzleNumber } from '@/lib/date';
-import { DIFFICULTY_CHIP_CLASS, DIFFICULTY_LABELS } from '@/lib/difficulty';
+import { DIFFICULTY_LABELS } from '@/lib/difficulty';
 import { getDb } from '@/lib/db';
 import { playSessions, puzzles } from '@/lib/schema';
-import { DIFFICULTIES, type Difficulty } from '@/lib/types';
+import { DIFFICULTIES } from '@/lib/types';
 
 export const metadata = { title: 'Arşiv' };
 export const dynamic = 'force-dynamic';
-
-const ICONS: Record<Difficulty, typeof Sparkles> = { easy: Sparkles, medium: Coffee, hard: Flame };
 
 export default async function ArchivePage() {
   const db = getDb();
@@ -34,7 +33,7 @@ export default async function ArchivePage() {
 
   return (
     <main className="mx-auto max-w-lg px-4 py-10">
-      <h1 className="bg-gradient-to-r from-[var(--diff-medium)] to-[var(--accent)] bg-clip-text text-center font-display text-3xl text-transparent">
+      <h1 className="bg-gradient-to-r from-[var(--title-from)] to-[var(--title-to)] bg-clip-text text-center font-display text-3xl text-transparent">
         Arşiv
       </h1>
       <p className="mt-2 text-center text-sm text-[var(--ink-soft)]">
@@ -52,15 +51,16 @@ export default async function ArchivePage() {
             </span>
             <span className="flex gap-2">
               {DIFFICULTIES.map((d) => {
-                const Icon = ICONS[d];
                 const isDone = done.has(`${date}:${d}`);
                 return (
                   <Link key={d} href={`/play/${date}/${d}`}
-                    className={`flex h-9 w-9 items-center justify-center rounded-full transition-transform hover:scale-105 ${
-                      isDone ? 'bg-[var(--correct-soft)] text-[var(--correct)]' : DIFFICULTY_CHIP_CLASS[d]
-                    }`}
+                    className="transition-transform hover:scale-105"
                     aria-label={`${formatTrtDate(date)} ${DIFFICULTY_LABELS[d]}`}>
-                    <Icon className="h-4 w-4" strokeWidth={2.25} />
+                    {isDone
+                      ? <span className="flex h-9 w-9 items-center justify-center rounded-[0.7rem] bg-[var(--correct-soft)] text-[var(--correct)]">
+                          <Check className="h-4 w-4" strokeWidth={2.5} />
+                        </span>
+                      : <LetterTile difficulty={d} size="sm" />}
                   </Link>
                 );
               })}

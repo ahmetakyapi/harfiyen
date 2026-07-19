@@ -2,48 +2,60 @@
 @tailwind components;
 @tailwind utilities;
 
+/* İkili malzeme kimliği: iki tema aynı iki malzemenin tersyüz edilmiş hali.
+   Açık = kum rengi kâğıt üstüne lacivert mürekkep; koyu = lacivert gece
+   üstüne krem mürekkep + altın vurgu. Böylece "mavi + bej" her iki temada
+   da ürünün DNA'sı olur, tek tema tesadüfen güzel görünmez. */
 :root {
-  --paper: #eef6fb;
-  --paper-raised: #ffffff;
-  --ink: #10182a;
-  --ink-soft: #56677e;
-  --line: #c3d9e8;
-  --accent: #023e8a;
-  --accent-soft: #d3e8f7;
+  --paper: #f5f0e4;
+  --paper-raised: #fffdf7;
+  --ink: #182742;
+  --ink-soft: #5d6579;
+  --line: #e2d9c4;
+  --accent: #1a5fb4; /* kâğıt üstünde 5.5:1 — AA ✓ */
+  --accent-soft: #dbe7f8;
   --correct: #0f7a5c;
-  --correct-soft: #cdeee0;
-  --cell: #ffffff;
+  --correct-soft: #d9eedd;
+  --cell: #fffdf7;
   --cell-active: #f7c59f;
-  --cell-word: #dcedf7;
-  /* Zorluk seviyesi renk merdiveni — açık (kolay) → koyu (zor), tek bakışta
-     zorluğu renkten okunabilir kılar. easy/medium bilinçli olarak temayla
-     dönüşmez (her iki temada da parlak kalır); hard=--accent zaten dönüşüyor. */
-  --diff-easy: #00b4d8;
-  --diff-easy-soft: #d7f3fa;
-  --diff-medium: #0077b6;
-  --diff-medium-soft: #d3e8f5;
+  --cell-word: #dbe8f7;
+  /* Zorluk merdiveni: turkuaz (kolay) → azur (orta) → lacivert (zor).
+     --accent'ten bilinçli olarak ayrıldı; koyu temada accent altına döner
+     ama merdiven mavi ailesinde kalır. */
+  --diff-easy: #0096c7;
+  --diff-easy-soft: #d8edf6;
+  --diff-medium: #0e63a8;
+  --diff-medium-soft: #d7e5f4;
+  --diff-hard: #023e8a;
+  --diff-hard-soft: #d4def2;
+  --title-from: #0086bf;
+  --title-to: #023e8a;
 }
 
 .dark {
-  --paper: #0a0f1a;
-  --paper-raised: #121a2c;
-  /* Lacivert zemin üzerinde bilinçli olarak SICAK bej/krem metin — soğuk
-     mavi-beyaz yerine, "mavi üstüne bej" daha premium ve daha az klinik
-     duruyor (kontrast: ink 15.9:1, ink-soft 8.5:1 — ikisi de AA'nın üstünde). */
-  --ink: #f2e9d8;
-  --ink-soft: #b8ab90;
-  --line: #22324a;
-  --accent: #3bbaff;
-  --accent-soft: #142a42;
+  --paper: #0b1322;
+  --paper-raised: #16213a;
+  /* Lacivert üstüne sıcak krem metin (ink ~15:1, ink-soft ~8:1 — AA'nın
+     çok üstünde); vurgu ise altın/kum (--accent #e3b968, zeminde ~10:1) —
+     gece göğü + altın, "mavi üstüne bej" isteğinin damıtılmış hali. */
+  --ink: #f2e9d6;
+  --ink-soft: #b5aa90;
+  --line: #2b3a58;
+  --accent: #e3b968;
+  --accent-soft: #372b16;
   --correct: #34d399;
-  --correct-soft: #103b34;
-  --cell: #141d30;
-  --cell-active: #47301c;
-  --cell-word: #1b2947;
-  --diff-easy: #00b4d8;
-  --diff-easy-soft: #123244;
-  --diff-medium: #0077b6;
-  --diff-medium-soft: #142a42;
+  --correct-soft: #113c30;
+  --cell: #16223c;
+  --cell-active: #4a3620;
+  --cell-word: #1e3050;
+  --diff-easy: #3fc1e6;
+  --diff-easy-soft: #113349;
+  --diff-medium: #4a90d9;
+  --diff-medium-soft: #152e4e;
+  --diff-hard: #7aa2e8;
+  --diff-hard-soft: #16294a;
+  --title-from: #6db8ee;
+  --title-to: #e9cf9e;
 }
 
 html {
@@ -53,20 +65,36 @@ html {
 body {
   touch-action: manipulation; /* mobil çift dokunuş zoom'unu engelle */
   position: relative;
-  /* Köşelerde çok hafif mavi/turkuaz "glow" — düz tek renk zemin yerine
-     derinlik hissi verir (kullanıcının kendi kişisel köşe-gradyanı DNA'sına
-     mavi paletle uyarlanmış hali). background-color'ı (Tailwind bg-[var(--paper)]
-     utility'si) değiştirmez, sadece üstüne background-image ekler. */
+  /* Köşe glow'ları temanın iki malzemesini taşır: bir köşede mavi, karşı
+     köşede sıcak kum — zemin tek düz renk yerine hafif bir atmosfer kazanır.
+     background-color'ı (bg-[var(--paper)] utility'si) değiştirmez. */
   background-image:
-    radial-gradient(900px circle at 12% -8%, rgba(0, 180, 216, 0.12), transparent 60%),
-    radial-gradient(800px circle at 105% 15%, rgba(2, 62, 138, 0.08), transparent 55%);
+    radial-gradient(1000px circle at 15% -10%, rgba(0, 150, 199, 0.13), transparent 58%),
+    radial-gradient(900px circle at 108% 20%, rgba(214, 166, 86, 0.12), transparent 55%);
   background-attachment: fixed;
+}
+
+/* iOS/Android'de background-attachment:fixed repaint sorunları yaratıyor
+   (öğrenilen hatalar #7) — mobilde scroll'a dön. */
+@media (max-width: 640px) {
+  body { background-attachment: scroll; }
 }
 
 .dark body {
   background-image:
-    radial-gradient(900px circle at 12% -8%, rgba(0, 180, 216, 0.14), transparent 60%),
-    radial-gradient(800px circle at 105% 15%, rgba(59, 186, 255, 0.1), transparent 55%);
+    radial-gradient(1000px circle at 15% -10%, rgba(63, 193, 230, 0.12), transparent 58%),
+    radial-gradient(900px circle at 108% 20%, rgba(227, 185, 104, 0.09), transparent 55%);
+}
+
+/* Yapışkan, buzlu cam başlık — kaydırınca içerik altından akar. Tailwind'in
+   opaklık kısayolu CSS değişkenli renklerle çalışmadığından color-mix ile. */
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: color-mix(in srgb, var(--paper) 78%, transparent);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
 }
 
 /* Çok hafif kağıt dokusu (spec §2'de tanımlı, hiç uygulanmamıştı) — SVG

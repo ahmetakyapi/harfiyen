@@ -43,7 +43,7 @@ export default async function HomePage() {
       <p className="mx-auto w-fit rounded-full bg-[var(--accent-soft)] px-4 py-1 text-center text-xs font-semibold uppercase tracking-widest text-[var(--accent)]">
         {formatTrtDate(today)} · #{puzzleNumber(today)}
       </p>
-      <h1 className="font-display-flourish mt-4 bg-gradient-to-r from-[var(--diff-medium)] to-[var(--accent)] bg-clip-text text-center font-display text-4xl text-transparent sm:text-5xl">
+      <h1 className="font-display-flourish mt-4 bg-gradient-to-r from-[var(--title-from)] to-[var(--title-to)] bg-clip-text text-center font-display text-4xl text-transparent sm:text-5xl">
         Günün Bulmacaları
       </h1>
       <div className="mt-5 flex justify-center">
