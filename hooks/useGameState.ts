@@ -101,6 +101,7 @@ export function createReducer(ctx: GridCtx) {
       case 'SELECT': {
         const { row, col } = action;
         if (row < 0 || col < 0 || row >= ctx.size || col >= ctx.size || ctx.black[row][col]) return state;
+        if (!entryAt(ctx, row, col, state.sel.dir) && !entryAt(ctx, row, col, other(state.sel.dir))) return state;
         if (row === state.sel.row && col === state.sel.col && entryAt(ctx, row, col, other(state.sel.dir))) {
           return { ...state, sel: { row, col, dir: other(state.sel.dir) } };
         }

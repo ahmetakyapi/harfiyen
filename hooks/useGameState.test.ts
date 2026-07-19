@@ -57,6 +57,17 @@ describe('SELECT', () => {
     const s1 = reduce(initialState(ctx), { type: 'SELECT', row: 4, col: 4 });
     expect(s1).toEqual(initialState(ctx));
   });
+  it('hiç girdiye kapalı yetim hücre seçilmez', () => {
+    // Yetim hücre: (4,4) beyaz ama hiçbir girdi tarafından kaplanmaz
+    const orphanBlack = Array.from({ length: 5 }, () => Array.from({ length: 5 }, () => true));
+    for (const e of entries) for (const c of cellsOf(e)) orphanBlack[c.row][c.col] = false;
+    orphanBlack[4][4] = false; // (4,4)'ü beyaz yap ama girdileri değiştirme
+    const orphanCtx: GridCtx = { size: 5, black: orphanBlack, entries };
+    const orphanReduce = createReducer(orphanCtx);
+    const s0 = initialState(orphanCtx);
+    const s1 = orphanReduce(s0, { type: 'SELECT', row: 4, col: 4 });
+    expect(s1).toEqual(s0);
+  });
 });
 
 describe('DELETE', () => {
