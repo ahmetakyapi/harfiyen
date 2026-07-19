@@ -2,7 +2,7 @@ const TRT = 'Europe/Istanbul';
 const DAY_MS = 86_400_000;
 const HOUR_MS = 3_600_000;
 
-export const LAUNCH_DATE = '2026-07-21';
+export const LAUNCH_DATE = '2026-07-19';
 export const RESET_HOUR = 9; // TSİ
 
 export function trtDate(now: Date = new Date()): string {
