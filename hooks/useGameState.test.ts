@@ -1,0 +1,98 @@
+import { describe, expect, it } from 'vitest';
+import type { Entry } from '@/lib/types';
+import {
+  activeEntry, allCellsFilled, cellsOf, createReducer, entryString, initialState,
+  type GridCtx,
+} from './useGameState';
+
+// Fikstür: 5x5, KALEM (1 soldan sağa) + 1 yukarıdan aşağıya (0,0) len 4 + 2 yukarıdan aşağıya (0,2) len 3
+const entries: Entry[] = [
+  { no: 1, dir: 'across', row: 0, col: 0, len: 5, clue: 'c1' },
+  { no: 1, dir: 'down', row: 0, col: 0, len: 4, clue: 'c2' },
+  { no: 2, dir: 'down', row: 0, col: 2, len: 3, clue: 'c3' },
+];
+
+function buildCtx(size: number, list: Entry[]): GridCtx {
+  const black = Array.from({ length: size }, () => Array.from({ length: size }, () => true));
+  for (const e of list) for (const c of cellsOf(e)) black[c.row][c.col] = false;
+  return { size, black, entries: list };
+}
+const ctx = buildCtx(5, entries);
+const reduce = createReducer(ctx);
+
+describe('initialState', () => {
+  it('ilk kelimenin başında, soldan sağa başlar', () => {
+    expect(initialState(ctx).sel).toEqual({ row: 0, col: 0, dir: 'across' });
+  });
+});
+
+describe('TYPE', () => {
+  it('harf yazar ve sonraki boş hücreye ilerler', () => {
+    const s1 = reduce(initialState(ctx), { type: 'TYPE', letter: 'K' });
+    expect(s1.letters[0][0]).toBe('K');
+    expect(s1.sel).toEqual({ row: 0, col: 1, dir: 'across' });
+  });
+  it('geçersiz karakteri yok sayar', () => {
+    const s1 = reduce(initialState(ctx), { type: 'TYPE', letter: 'w' });
+    expect(s1).toEqual(initialState(ctx));
+  });
+  it('kelime bitince boş hücresi olan sonraki kelimeye geçer', () => {
+    let s = initialState(ctx);
+    for (const l of ['K', 'A', 'L', 'E', 'M']) s = reduce(s, { type: 'TYPE', letter: l });
+    // across bitti → 1-down'un ilk boş hücresi (1,0)
+    expect(s.sel).toEqual({ row: 1, col: 0, dir: 'down' });
+  });
+});
+
+describe('SELECT', () => {
+  it('aynı hücreye ikinci dokunuş yön değiştirir', () => {
+    const s1 = reduce(initialState(ctx), { type: 'SELECT', row: 0, col: 0 });
+    expect(s1.sel.dir).toBe('down');
+  });
+  it('yalnızca dikey kelimesi olan hücrede yön down olur', () => {
+    const s1 = reduce(initialState(ctx), { type: 'SELECT', row: 1, col: 2 });
+    expect(s1.sel).toEqual({ row: 1, col: 2, dir: 'down' });
+  });
+  it('siyah hücre yok sayılır', () => {
+    const s1 = reduce(initialState(ctx), { type: 'SELECT', row: 4, col: 4 });
+    expect(s1).toEqual(initialState(ctx));
+  });
+});
+
+describe('DELETE', () => {
+  it('dolu hücreyi temizler, yerinde kalır; boşta bir geri gidip temizler', () => {
+    let s = reduce(initialState(ctx), { type: 'TYPE', letter: 'K' }); // sel (0,1)
+    s = reduce(s, { type: 'DELETE' }); // (0,1) boş → geri git (0,0)'ı temizle
+    expect(s.letters[0][0]).toBeNull();
+    expect(s.sel).toEqual({ row: 0, col: 0, dir: 'across' });
+    s = reduce(s, { type: 'TYPE', letter: 'K' });
+    s = reduce(s, { type: 'SELECT', row: 0, col: 0 }); // seçimi (0,0)'a al (yön down olur)
+    s = reduce(s, { type: 'DELETE' }); // dolu → temizle, yerinde kal
+    expect(s.letters[0][0]).toBeNull();
+    expect(s.sel.row).toBe(0);
+  });
+});
+
+describe('MOVE', () => {
+  it('siyah hücrelerin üzerinden atlar', () => {
+    // (0,1)'den aşağı: (1,1) siyah… 1-down yalnızca sütun 0; sütun 1'de yalnız (0,1) beyaz → hareket etmez
+    const s0 = { ...initialState(ctx), sel: { row: 0, col: 1, dir: 'across' as const } };
+    expect(reduce(s0, { type: 'MOVE', dRow: 1, dCol: 0 }).sel).toEqual(s0.sel);
+    // (0,0)'dan sağa zaten beyaz (0,1)
+    expect(reduce(initialState(ctx), { type: 'MOVE', dRow: 0, dCol: 1 }).sel.col).toBe(1);
+  });
+});
+
+describe('yardımcılar', () => {
+  it('entryString eksikte null, tamamda kelime döner', () => {
+    let s = initialState(ctx);
+    expect(entryString(s.letters, entries[0])).toBeNull();
+    for (const l of ['K', 'A', 'L', 'E', 'M']) s = reduce(s, { type: 'TYPE', letter: l });
+    expect(entryString(s.letters, entries[0])).toBe('KALEM');
+  });
+  it('allCellsFilled ve activeEntry çalışır', () => {
+    const s = initialState(ctx);
+    expect(allCellsFilled(ctx, s.letters)).toBe(false);
+    expect(activeEntry(ctx, s.sel).dir).toBe('across');
+  });
+});
