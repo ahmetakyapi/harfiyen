@@ -16,9 +16,11 @@ export function HowToModal() {
     setOpen(false);
   };
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-sm rounded-2xl bg-[var(--paper-raised)] p-6">
-        <p className="font-display text-2xl">Harfiyen&apos;e Hoş Geldin</p>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
+      <div className="w-full max-w-sm rounded-[1.6rem] border border-[var(--line)] bg-[var(--paper-raised)] p-6 shadow-2xl">
+        <p className="bg-gradient-to-r from-[var(--title-from)] to-[var(--title-to)] bg-clip-text font-display text-2xl text-transparent">
+          Harfiyen&apos;e Hoş Geldin
+        </p>
         <p className="mt-3 text-sm text-[var(--ink-soft)]">
           İpuçlarından kelimeleri bul, kesişimleri kullan. Süre &quot;Başla&quot; deyince başlar;
           doğru biten kelime yeşil yanar. Takılırsan ipucu alabilirsin (+15 sn).
@@ -27,7 +29,7 @@ export function HowToModal() {
           <Link href="/how-to-play" className="underline" onClick={close}>Ayrıntılı Anlatım</Link>
         </p>
         <button type="button" onClick={close}
-          className="mt-5 w-full rounded-lg bg-[var(--ink)] py-2.5 font-medium text-[var(--paper)]">
+          className="mt-5 w-full rounded-xl bg-[var(--ink)] py-2.5 font-medium text-[var(--paper)] transition-transform duration-150 active:scale-[0.98]">
           Anladım, Başlayalım
         </button>
       </div>

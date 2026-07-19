@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import { auth, signOut } from '@/lib/auth';
+import { LetterTile } from '@/components/ui/LetterTile';
 import { DIFFICULTY_LABELS } from '@/lib/difficulty';
 import { getDb } from '@/lib/db';
 import { getProfileStats } from '@/lib/game/stats';
@@ -17,7 +18,9 @@ export default async function ProfilePage({ params }: { params: { username: stri
 
   return (
     <main className="mx-auto max-w-lg px-4 py-10">
-      <h1 className="text-center font-display text-3xl">{stats.username}</h1>
+      <h1 className="bg-gradient-to-r from-[var(--title-from)] to-[var(--title-to)] bg-clip-text text-center font-display text-3xl text-transparent">
+        {stats.username}
+      </h1>
       <p className="mt-1 text-center text-sm text-[var(--ink-soft)]">
         Üyelik: {formatTrtDate(stats.memberSince)}
       </p>
@@ -27,32 +30,39 @@ export default async function ProfilePage({ params }: { params: { username: stri
           { label: 'Seri', value: String(stats.currentStreak) },
           { label: 'En İyi Seri', value: String(stats.bestStreak) },
         ].map((s) => (
-          <div key={s.label} className="rounded-xl border border-[var(--line)] bg-[var(--paper-raised)] p-4">
+          <div key={s.label} className="rounded-2xl border border-[var(--line)] bg-[var(--paper-raised)] p-4 shadow-sm">
             <p className="font-display text-3xl">{s.value}</p>
             <p className="mt-1 text-xs text-[var(--ink-soft)]">{s.label}</p>
           </div>
         ))}
       </div>
-      <table className="mt-6 w-full text-sm">
-        <thead>
-          <tr className="text-left text-xs uppercase tracking-wide text-[var(--ink-soft)]">
-            <th className="py-2">Zorluk</th><th>Çözülen</th><th>En İyi</th><th>Ortalama</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-[var(--line)]">
-          {DIFFICULTIES.map((d) => {
-            const p = stats.perDifficulty[d];
-            return (
-              <tr key={d}>
-                <td className="py-2 font-medium">{DIFFICULTY_LABELS[d]}</td>
-                <td>{p.solved}</td>
-                <td className="font-mono tabular-nums">{p.bestMs !== null ? formatDuration(p.bestMs) : '—'}</td>
-                <td className="font-mono tabular-nums">{p.avgMs !== null ? formatDuration(p.avgMs) : '—'}</td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+      <div className="mt-6 overflow-hidden rounded-2xl border border-[var(--line)]">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="bg-[var(--paper-raised)] text-left text-xs uppercase tracking-wide text-[var(--ink-soft)]">
+              <th className="px-3 py-2.5">Zorluk</th><th>Çözülen</th><th>En İyi</th><th className="pr-3">Ortalama</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-[var(--line)]">
+            {DIFFICULTIES.map((d) => {
+              const p = stats.perDifficulty[d];
+              return (
+                <tr key={d}>
+                  <td className="px-3 py-2.5">
+                    <span className="flex items-center gap-2.5 font-medium">
+                      <LetterTile difficulty={d} size="sm" />
+                      {DIFFICULTY_LABELS[d]}
+                    </span>
+                  </td>
+                  <td>{p.solved}</td>
+                  <td className="font-mono tabular-nums">{p.bestMs !== null ? formatDuration(p.bestMs) : '—'}</td>
+                  <td className="pr-3 font-mono tabular-nums">{p.avgMs !== null ? formatDuration(p.avgMs) : '—'}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
       {stats.recent.length > 0 && (
         <>
           <h2 className="mt-8 text-sm font-medium uppercase tracking-wide text-[var(--ink-soft)]">Son Oyunlar</h2>

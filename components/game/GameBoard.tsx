@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Eraser, Lightbulb } from 'lucide-react';
 import { activeEntry, allCellsFilled, cellsOf, entryString, useGameState } from '@/hooks/useGameState';
+import { LetterTile } from '@/components/ui/LetterTile';
 import { DIFFICULTY_BADGE_CLASS, DIFFICULTY_LABELS } from '@/lib/difficulty';
 import { wordHash } from '@/lib/hash';
 import { trUpper } from '@/lib/tr';
@@ -222,19 +223,32 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive }: {
 
   if (phase === 'idle' || phase === 'starting') {
     return (
-      <div className="mx-auto max-w-sm px-4 py-16 text-center">
-        <p className="font-display text-4xl">Harfiyen #{puzzleNumber}</p>
-        <p className="mt-2 text-[var(--ink-soft)]">
-          {DIFFICULTY_LABELS[puzzle.difficulty]} · {puzzle.size}×{puzzle.size} · {puzzle.entries.length} kelime
-          <br />{formatTrtDate(puzzle.date)}
-        </p>
-        {isArchive && <p className="mt-3 text-sm text-[var(--ink-soft)]">Arşiv oyunu — sıralamaya girmez.</p>}
-        <p className="mt-3 text-sm text-[var(--ink-soft)]">Süre "Başla" dediğin an işlemeye başlar.</p>
-        {error && <p className="mt-3 text-sm text-[var(--accent)]">{error}</p>}
-        <button type="button" onClick={start} disabled={phase === 'starting'}
-          className="mt-6 w-full rounded-xl bg-[var(--ink)] py-3 text-lg font-medium text-[var(--paper)] disabled:opacity-50">
-          {phase === 'starting' ? 'Hazırlanıyor…' : 'Başla'}
-        </button>
+      <div className="mx-auto max-w-sm px-4 py-12">
+        <div className="rounded-[1.8rem] border border-[var(--line)] bg-[var(--paper-raised)] p-8 text-center shadow-[0_28px_70px_-45px_var(--diff-hard)]">
+          <div className="flex justify-center"><LetterTile difficulty={puzzle.difficulty} /></div>
+          <p className="mt-4 bg-gradient-to-r from-[var(--title-from)] to-[var(--title-to)] bg-clip-text font-display text-4xl text-transparent">
+            Harfiyen #{puzzleNumber}
+          </p>
+          <p className="mt-1 text-sm text-[var(--ink-soft)]">{formatTrtDate(puzzle.date)}</p>
+          <div className="mt-4 flex flex-wrap justify-center gap-2 text-xs font-semibold">
+            <span className={`rounded-full px-3 py-1 ${DIFFICULTY_BADGE_CLASS[puzzle.difficulty]}`}>
+              {DIFFICULTY_LABELS[puzzle.difficulty]}
+            </span>
+            <span className="rounded-full bg-[var(--paper)] px-3 py-1 text-[var(--ink-soft)]">
+              {puzzle.size}×{puzzle.size}
+            </span>
+            <span className="rounded-full bg-[var(--paper)] px-3 py-1 text-[var(--ink-soft)]">
+              {puzzle.entries.length} kelime
+            </span>
+          </div>
+          {isArchive && <p className="mt-4 text-sm text-[var(--ink-soft)]">Arşiv oyunu — sıralamaya girmez.</p>}
+          <p className="mt-4 text-sm text-[var(--ink-soft)]">Süre "Başla" dediğin an işlemeye başlar.</p>
+          {error && <p className="mt-3 text-sm text-[var(--accent)]">{error}</p>}
+          <button type="button" onClick={start} disabled={phase === 'starting'}
+            className="mt-6 w-full rounded-2xl bg-[var(--ink)] py-3.5 text-lg font-semibold text-[var(--paper)] shadow-lg transition-transform duration-150 ease-[cubic-bezier(0.22,1,0.36,1)] active:scale-[0.98] disabled:opacity-50">
+            {phase === 'starting' ? 'Hazırlanıyor…' : 'Başla'}
+          </button>
+        </div>
         <HowToModal />
       </div>
     );
@@ -259,18 +273,19 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive }: {
     // masaüstü pencerelerinde klavyeyi ekranın en altına itip görünmez kılıyordu.
     <div className="mx-auto flex w-full max-w-lg flex-col gap-4 px-3 py-4">
       <div className="flex items-center justify-between">
-        <span className="flex items-center gap-2">
+        <span className="flex items-center gap-2.5">
+          {/* Mini taş zorluğu tek başına anlatır — ayrıca rozetle yer kaplamayız */}
+          <LetterTile difficulty={puzzle.difficulty} size="sm" />
           <span className="font-display text-lg font-semibold text-[var(--ink)]">
             #{puzzleNumber}
-          </span>
-          <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${DIFFICULTY_BADGE_CLASS[puzzle.difficulty]}`}>
-            {DIFFICULTY_LABELS[puzzle.difficulty]}
           </span>
         </span>
         <div className="flex items-center gap-2">
           {session && (
-            <Timer startedAt={session.startedAt} serverNow={session.serverNow}
-              penaltyMs={penaltyMs} finalMs={result?.durationMs ?? null} />
+            <span className="rounded-full border border-[var(--line)] bg-[var(--paper-raised)] px-3 py-1.5">
+              <Timer startedAt={session.startedAt} serverNow={session.serverNow}
+                penaltyMs={penaltyMs} finalMs={result?.durationMs ?? null} />
+            </span>
           )}
           <button type="button" onClick={clearAll} aria-label="Tümünü temizle (doğrular korunur)"
             title="Tümünü temizle"

@@ -9,7 +9,7 @@ const ROWS: string[][] = [
 ];
 
 const KEY_CLASS =
-  'h-12 rounded-lg border border-[var(--line)] bg-[var(--paper-raised)] font-semibold text-[var(--ink)] ' +
+  'h-12 rounded-xl border border-[var(--line)] bg-[var(--paper-raised)] font-semibold text-[var(--ink)] ' +
   'shadow-[0_2px_0_var(--line)] transition-all duration-75 ' +
   'active:translate-y-[2px] active:bg-[var(--cell-active)] active:shadow-none';
 
@@ -17,7 +17,7 @@ export function Keyboard({ onLetter, onDelete }: {
   onLetter: (letter: string) => void; onDelete: () => void;
 }) {
   return (
-    <div className="select-none rounded-xl border-t border-[var(--line)] bg-[var(--paper)] px-1 pb-[max(env(safe-area-inset-bottom),0.5rem)] pt-2">
+    <div className="select-none rounded-2xl px-1 pb-[max(env(safe-area-inset-bottom),0.5rem)] pt-2">
       <div className="space-y-1.5">
         {ROWS.map((row, i) => (
           <div key={i} className="flex justify-center gap-1">

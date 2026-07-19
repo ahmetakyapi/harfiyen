@@ -7,7 +7,9 @@ export default function LoginPage({ searchParams }: { searchParams: { next?: str
   const { next } = searchParams;
   return (
     <main className="px-4 py-12">
-      <h1 className="mb-8 text-center font-display text-3xl">Giriş Yap</h1>
+      <h1 className="mb-8 bg-gradient-to-r from-[var(--title-from)] to-[var(--title-to)] bg-clip-text text-center font-display text-3xl text-transparent">
+        Giriş Yap
+      </h1>
       <AuthForm mode="login" next={next} />
       <p className="mt-6 text-center text-sm text-[var(--ink-soft)]">
         Hesabın yok mu?{' '}

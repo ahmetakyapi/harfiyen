@@ -26,15 +26,16 @@ export const DIFFICULTY_TAB_CLASS: Record<Difficulty, string> = {
   hard: 'bg-[var(--diff-hard-soft)] text-[var(--ink)] ring-1 ring-[var(--diff-hard)]',
 };
 
-// İmza öğe: zorluk işaretleri ikon değil, oyunun kendisinden gelen "harf
-// taşları" — köşesinde numarası olan birer çengel bulmaca hücresi (K/O/Z).
-// Taşın zemini her iki temada da SABİT krem (fiziksel bir taş gibi), bu
-// yüzden harf renkleri de sabit: krem (#fdf8ec) üzerinde üçü de ≥4.8:1.
-// Gradyan çerçeve zorluk merdivenini taşır (turkuaz → azur → lacivert).
+// İmza öğe: zorluk işaretleri, köşesinde numarası olan birer çengel bulmaca
+// hücresi görünümünde "taşlar". Taşın zemini her iki temada da SABİT krem
+// (fiziksel bir taş gibi), içindeki glif de sabit derin renklerde: krem
+// (#fdf8ec) üzerinde üçü de ≥4.8:1. Gradyan çerçeve zorluk merdivenini
+// taşır (turkuaz → azur → lacivert). Glifin kendisi LetterTile'da çizilir:
+// zorlukla yoğunlaşan mini bulmaca ızgarası (2×2 → artı → dolu 3×3).
 export const DIFFICULTY_TILE: Record<Difficulty, {
-  letter: string; no: number; ringClass: string; letterClass: string;
+  no: number; ringClass: string; glyphClass: string;
 }> = {
-  easy: { letter: 'K', no: 1, ringClass: 'bg-gradient-to-br from-[#38c3e8] to-[#0086bf]', letterClass: 'text-[#006b96]' },
-  medium: { letter: 'O', no: 2, ringClass: 'bg-gradient-to-br from-[#3f8fd9] to-[#0d5799]', letterClass: 'text-[#0d5799]' },
-  hard: { letter: 'Z', no: 3, ringClass: 'bg-gradient-to-br from-[#4a6fd4] to-[#0c2f6b]', letterClass: 'text-[#0c2f6b]' },
+  easy: { no: 1, ringClass: 'bg-gradient-to-br from-[#38c3e8] to-[#0086bf]', glyphClass: 'text-[#0083b8]' },
+  medium: { no: 2, ringClass: 'bg-gradient-to-br from-[#3f8fd9] to-[#0d5799]', glyphClass: 'text-[#0d5799]' },
+  hard: { no: 3, ringClass: 'bg-gradient-to-br from-[#4a6fd4] to-[#0c2f6b]', glyphClass: 'text-[#0c2f6b]' },
 };

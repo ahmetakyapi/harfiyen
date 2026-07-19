@@ -31,7 +31,7 @@ export function Grid({ puzzle, letters, sel, activeCells, correctCells, flashCel
   }
   return (
     <div role="grid" aria-label="Bulmaca"
-      className="mx-auto grid w-full max-w-[28rem] gap-[2px] rounded-lg border border-[var(--line)] bg-[var(--line)] p-[2px]"
+      className="mx-auto grid w-full max-w-[28rem] gap-[2px] rounded-2xl border border-[var(--line)] bg-[var(--line)] p-[3px] shadow-[0_24px_60px_-42px_var(--ink)]"
       style={{ gridTemplateColumns: `repeat(${puzzle.size}, minmax(0, 1fr))` }}>
       {puzzle.black.map((rowArr, r) =>
         rowArr.map((isBlack, c) => {

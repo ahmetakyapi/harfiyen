@@ -9,7 +9,7 @@ export function ClueBar({ entry, onPrev, onNext, onToggleDir, onClearWord }: {
   entry: Entry; onPrev: () => void; onNext: () => void; onToggleDir: () => void; onClearWord: () => void;
 }) {
   return (
-    <div className="flex min-h-14 items-stretch gap-1 rounded-xl bg-[var(--ink)] pl-1 pr-1 text-[var(--paper)] shadow-sm">
+    <div className="flex min-h-14 items-stretch gap-1 rounded-2xl bg-[var(--ink)] pl-1 pr-1 text-[var(--paper)] shadow-[0_14px_34px_-22px_var(--ink)]">
       <button type="button" onClick={onPrev} aria-label="Önceki ipucu"
         className="flex min-w-11 items-center justify-center rounded-lg px-2 opacity-70 hover:opacity-100">
         <ChevronLeft className="h-5 w-5" />
