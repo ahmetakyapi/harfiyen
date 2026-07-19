@@ -40,7 +40,7 @@ export default async function HomePage() {
     : null;
 
   return (
-    <main className="mx-auto max-w-lg px-4 py-10">
+    <main className="mx-auto max-w-lg px-4 py-8 sm:py-12">
       <AutoRefresh />
       <p className="mx-auto w-fit rounded-full bg-[var(--accent-soft)] px-4 py-1 text-center text-xs font-semibold uppercase tracking-widest text-[var(--accent)]">
         {formatTrtDate(today)} · #{puzzleNumber(today)}

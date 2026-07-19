@@ -23,6 +23,9 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
+  // Çentikli telefonlarda sayfa kenardan kenara uzanır; alt güvenli alan
+  // zaten env(safe-area-inset-bottom) ile ele alınıyor.
+  viewportFit: 'cover',
   themeColor: [
     { media: '(prefers-color-scheme: light)', color: '#f5f0e4' },
     { media: '(prefers-color-scheme: dark)', color: '#0b1322' },

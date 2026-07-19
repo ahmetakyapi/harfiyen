@@ -308,7 +308,7 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive, alreadyCompleted }:
     }
     return (
       <div className="mx-auto max-w-sm px-4 py-12">
-        <div className="rounded-[1.8rem] border border-[var(--line)] bg-[var(--paper-raised)] p-8 text-center shadow-[0_28px_70px_-45px_var(--diff-hard)]">
+        <div className="rounded-[1.8rem] border border-[var(--line)] bg-[var(--paper-raised)] p-6 text-center shadow-[0_28px_70px_-45px_var(--diff-hard)] sm:p-8">
           <div className="flex justify-center"><LetterTile difficulty={puzzle.difficulty} /></div>
           <p className="mt-4 bg-gradient-to-r from-[var(--title-from)] to-[var(--title-to)] bg-clip-text font-display text-4xl text-transparent">
             Harfiyen #{puzzleNumber}

@@ -32,8 +32,8 @@ export default async function ProfilePage({ params }: { params: { username: stri
           { label: 'Seri', value: String(stats.currentStreak) },
           { label: 'En İyi Seri', value: String(stats.bestStreak) },
         ].map((s) => (
-          <div key={s.label} className="rounded-2xl border border-[var(--line)] bg-[var(--paper-raised)] p-4 shadow-sm">
-            <p className="font-display text-3xl">{s.value}</p>
+          <div key={s.label} className="rounded-2xl border border-[var(--line)] bg-[var(--paper-raised)] p-3 shadow-sm sm:p-4">
+            <p className="font-display text-2xl sm:text-3xl">{s.value}</p>
             <p className="mt-1 text-xs text-[var(--ink-soft)]">{s.label}</p>
           </div>
         ))}
