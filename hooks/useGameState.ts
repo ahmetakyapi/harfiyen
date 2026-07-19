@@ -7,10 +7,12 @@ import type { Direction, Entry, Letters } from '@/lib/types';
 export type GridCtx = { size: number; black: boolean[][]; entries: Entry[] };
 export type Selection = { row: number; col: number; dir: Direction };
 export type GameState = { letters: Letters; sel: Selection };
+// protectedCells (`${row}:${col}`): doğrulanmış (yeşil) + ipucuyla açılmış
+// hücreler — TYPE üzerine yazamaz, DELETE/CLEAR_* silemez.
 export type GameAction =
   | { type: 'SELECT'; row: number; col: number }
-  | { type: 'TYPE'; letter: string }
-  | { type: 'DELETE' }
+  | { type: 'TYPE'; letter: string; protectedCells?: Set<string> }
+  | { type: 'DELETE'; protectedCells?: Set<string> }
   | { type: 'NEXT_ENTRY'; delta: 1 | -1 }
   | { type: 'MOVE'; dRow: number; dCol: number }
   | { type: 'SET_LETTERS'; letters: Letters }
@@ -112,6 +114,11 @@ export function createReducer(ctx: GridCtx) {
       }
       case 'TYPE': {
         if (!isTrLetter(action.letter)) return state;
+        // Kilitli hücrenin üzerine yazılmaz — yazma akışı bozulmasın diye
+        // harf değişmeden bir sonraki boş hücreye ilerlenir.
+        if (action.protectedCells?.has(`${state.sel.row}:${state.sel.col}`)) {
+          return { ...state, sel: advance(ctx, state.letters, state.sel) };
+        }
         const letters = cloneLetters(state.letters);
         letters[state.sel.row][state.sel.col] = action.letter;
         return { letters, sel: advance(ctx, letters, state.sel) };
@@ -124,9 +131,11 @@ export function createReducer(ctx: GridCtx) {
         return { letters, sel };
       }
       case 'DELETE': {
+        const prot = action.protectedCells;
         const letters = cloneLetters(state.letters);
         const { row, col } = state.sel;
-        if (letters[row][col] !== null) {
+        // Kilitli dolu hücre "silinebilir" sayılmaz: boşmuş gibi bir geri gidilir.
+        if (letters[row][col] !== null && !prot?.has(`${row}:${col}`)) {
           letters[row][col] = null;
           return { letters, sel: state.sel };
         }
@@ -134,7 +143,9 @@ export function createReducer(ctx: GridCtx) {
         const idx = cells.findIndex((c) => c.row === row && c.col === col);
         if (idx <= 0) return state;
         const prev = cells[idx - 1];
-        letters[prev.row][prev.col] = null;
+        // Geri gidilen hücre kilitliyse harfi kalır, yalnızca seçim üzerine gelir —
+        // arka arkaya backspace kilitli hücrelerin üzerinden akıp geçer.
+        if (!prot?.has(`${prev.row}:${prev.col}`)) letters[prev.row][prev.col] = null;
         return { letters, sel: { ...state.sel, row: prev.row, col: prev.col } };
       }
       case 'NEXT_ENTRY': {

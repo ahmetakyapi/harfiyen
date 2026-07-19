@@ -11,7 +11,7 @@
   --paper-raised: #fffdf7;
   --ink: #182742;
   --ink-soft: #5d6579;
-  --line: #e2d9c4;
+  --line: #d9cdb2;
   --accent: #1a5fb4; /* kâğıt üstünde 5.5:1 — AA ✓ */
   --accent-soft: #dbe7f8;
   --correct: #0f7a5c;
@@ -47,7 +47,7 @@
   --correct-soft: #113c30;
   --cell: #16223c;
   --cell-active: #4a3620;
-  --cell-word: #1e3050;
+  --cell-word: #24406e;
   --diff-easy: #3fc1e6;
   --diff-easy-soft: #113349;
   --diff-medium: #4a90d9;

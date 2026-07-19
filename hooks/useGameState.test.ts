@@ -131,6 +131,30 @@ describe('CLEAR_ALL', () => {
   });
 });
 
+describe('kilitli hücreler (doğru/ipucu)', () => {
+  it('TYPE kilitli hücrenin üzerine yazmaz, harf akışı bozulmadan ilerler', () => {
+    let s = reduce(initialState(ctx), { type: 'TYPE', letter: 'K' }); // (0,0)='K', sel (0,1)
+    s = reduce(s, { type: 'SELECT', row: 0, col: 0 });
+    // 'B' geçerli bir Türkçe harf (X/W/Q alfabede yok, isTrLetter eler)
+    const s2 = reduce(s, { type: 'TYPE', letter: 'B', protectedCells: new Set(['0:0']) });
+    expect(s2.letters[0][0]).toBe('K');
+    expect(s2.sel).toEqual({ row: 0, col: 1, dir: 'across' });
+  });
+  it('DELETE kilitli hücreyi silmez; backspace üzerinden akıp geçer', () => {
+    let s = initialState(ctx);
+    for (const l of ['K', 'A']) s = reduce(s, { type: 'TYPE', letter: l }); // sel (0,2)
+    // (0,2) boş; bir geri: (0,1)='A' kilitli → harf kalır, seçim üzerine gelir
+    const s2 = reduce(s, { type: 'DELETE', protectedCells: new Set(['0:1']) });
+    expect(s2.letters[0][1]).toBe('A');
+    expect(s2.sel).toEqual({ row: 0, col: 1, dir: 'across' });
+    // kilitli dolu hücrede tekrar DELETE: yine silinmez, bir geri gidip (0,0)'ı siler
+    const s3 = reduce(s2, { type: 'DELETE', protectedCells: new Set(['0:1']) });
+    expect(s3.letters[0][1]).toBe('A');
+    expect(s3.letters[0][0]).toBeNull();
+    expect(s3.sel).toEqual({ row: 0, col: 0, dir: 'across' });
+  });
+});
+
 describe('yardımcılar', () => {
   it('entryString eksikte null, tamamda kelime döner', () => {
     let s = initialState(ctx);

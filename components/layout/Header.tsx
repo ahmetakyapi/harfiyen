@@ -12,11 +12,11 @@ export async function Header() {
           <Logo className="h-8 w-8" />
           <span className="font-display text-xl font-semibold tracking-tight">Harfiyen</span>
         </Link>
-        <nav className="flex items-center gap-4 text-sm">
+        <nav className="flex items-center gap-3 text-sm sm:gap-5">
           <Link href="/leaderboard">Sıralama</Link>
           <Link href="/archive">Arşiv</Link>
           {session
-            ? <Link href={`/profile/${session.user.name}`} className="font-medium">{session.user.name}</Link>
+            ? <Link href={`/profile/${session.user.name}`} className="max-w-[7rem] truncate font-medium">{session.user.name}</Link>
             : <Link href="/login" className="flex min-h-11 items-center rounded-full border border-[var(--line)] px-4">Giriş</Link>}
           <ThemeToggle />
         </nav>

@@ -46,11 +46,13 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive }: {
   const [result, setResult] = useState<{ durationMs: number; rank: number | null; isRanked: boolean } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [correctKeys, setCorrectKeys] = useState<Set<string>>(new Set());
+  const [hintCells, setHintCells] = useState<Set<string>>(new Set()); // ipucuyla açılan hücreler
   const [flashCell, setFlashCell] = useState<string | null>(null);
   const [hintBusy, setHintBusy] = useState(false);
   const submitting = useRef(false);
 
   const storageKey = session ? `harfiyen:letters:${session.sessionId}` : null;
+  const hintsKey = session ? `harfiyen:hints:${session.sessionId}` : null;
 
   const start = useCallback(async () => {
     setPhase('starting');
@@ -81,6 +83,8 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive }: {
       }
       const saved = localStorage.getItem(`harfiyen:letters:${s.sessionId}`);
       if (saved) dispatch({ type: 'SET_LETTERS', letters: JSON.parse(saved) as Letters });
+      const savedHints = localStorage.getItem(`harfiyen:hints:${s.sessionId}`);
+      if (savedHints) setHintCells(new Set(JSON.parse(savedHints) as string[]));
       setPhase('playing');
     } catch {
       setError('Bağlantı kurulamadı. Tekrar dene.');
@@ -124,6 +128,7 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive }: {
             setResult({ durationMs: r.durationMs, rank: r.rank, isRanked: r.isRanked });
             setPhase('done');
             if (storageKey) localStorage.removeItem(storageKey);
+            if (hintsKey) localStorage.removeItem(hintsKey);
           } else {
             setError('Bir şeyler uyuşmuyor — kontrol edip tekrar dene.');
             setPhase('playing');
@@ -138,7 +143,7 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive }: {
       setPhase('playing');
       submitting.current = false;
     })();
-  }, [correctKeys, phase, session, state.letters, ctx, puzzle.entries.length, storageKey]);
+  }, [correctKeys, phase, session, state.letters, ctx, puzzle.entries.length, storageKey, hintsKey]);
 
   const entry = phase === 'playing' ? activeEntry(ctx, state.sel) : null;
   const activeCells = new Set(entry ? cellsOf(entry).map((c) => `${c.row}:${c.col}`) : []);
@@ -148,6 +153,12 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive }: {
       for (const c of cellsOf(e)) correctCells.add(`${c.row}:${c.col}`);
     }
   }
+  // Kilitli hücreler = doğrulanmış (yeşil) ∪ ipucuyla açılmış; TYPE/DELETE/
+  // CLEAR_* hiçbirine dokunamaz. Fiziksel klavye dinleyicisi her render'da
+  // yeniden bağlanmasın diye ref üzerinden okur.
+  const lockedCells = new Set([...correctCells, ...hintCells]);
+  const lockedRef = useRef(lockedCells);
+  lockedRef.current = lockedCells;
 
   const hint = useCallback(async () => {
     if (!session || phase !== 'playing' || hintBusy) return;
@@ -157,7 +168,7 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive }: {
     // anlamlı bir hücreyi açar ya da neden yapamadığını söyler.
     let target = state.sel;
     const filled = state.letters[target.row][target.col] !== null;
-    if (filled && correctCells.has(`${target.row}:${target.col}`)) {
+    if (filled && lockedCells.has(`${target.row}:${target.col}`)) {
       const active = activeEntry(ctx, state.sel);
       const nextEmpty = cellsOf(active).find((c) => state.letters[c.row][c.col] === null);
       if (!nextEmpty) { setError('Bu kelime zaten tamamlandı.'); return; }
@@ -173,6 +184,12 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive }: {
       setPenaltyMs(r.penaltyMs);
       setHintCount(r.hintCount);
       const key = `${target.row}:${target.col}`;
+      // İpuçlu hücre kalıcı olarak kilitlenir + görsel işaretlenir; sayfa
+      // yenilense de kaybolmasın diye oturum bazında localStorage'a yazılır.
+      const nextHints = new Set(hintCells);
+      nextHints.add(key);
+      setHintCells(nextHints);
+      if (hintsKey) localStorage.setItem(hintsKey, JSON.stringify([...nextHints]));
       dispatch({ type: 'REVEAL', row: target.row, col: target.col, letter: r.letter });
       if (target.row !== state.sel.row || target.col !== state.sel.col) {
         dispatch({ type: 'SELECT', row: target.row, col: target.col });
@@ -184,22 +201,26 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive }: {
     } finally {
       setHintBusy(false);
     }
-  }, [session, phase, hintBusy, state.sel, state.letters, correctCells, ctx, dispatch]);
+  }, [session, phase, hintBusy, state.sel, state.letters, lockedCells, hintCells, hintsKey, ctx, dispatch]);
 
   const clearWord = useCallback(() => {
-    dispatch({ type: 'CLEAR_WORD', protectedCells: correctCells });
-  }, [dispatch, correctCells]);
+    dispatch({ type: 'CLEAR_WORD', protectedCells: lockedCells });
+  }, [dispatch, lockedCells]);
 
   const clearAll = useCallback(() => {
-    dispatch({ type: 'CLEAR_ALL', protectedCells: correctCells });
-  }, [dispatch, correctCells]);
+    dispatch({ type: 'CLEAR_ALL', protectedCells: lockedCells });
+  }, [dispatch, lockedCells]);
 
   // fiziksel klavye
   useEffect(() => {
     if (phase !== 'playing') return;
     const onKey = (e: KeyboardEvent): void => {
       if (e.metaKey || e.ctrlKey || e.altKey) return;
-      if (e.key === 'Backspace') { e.preventDefault(); dispatch({ type: 'DELETE' }); return; }
+      if (e.key === 'Backspace') {
+        e.preventDefault();
+        dispatch({ type: 'DELETE', protectedCells: lockedRef.current });
+        return;
+      }
       if (e.key === 'Tab' || e.key === 'Enter') {
         e.preventDefault();
         dispatch({ type: 'NEXT_ENTRY', delta: e.shiftKey ? -1 : 1 });
@@ -215,7 +236,7 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive }: {
         dispatch({ type: 'MOVE', dRow, dCol });
         return;
       }
-      if (e.key.length === 1) dispatch({ type: 'TYPE', letter: trUpper(e.key) });
+      if (e.key.length === 1) dispatch({ type: 'TYPE', letter: trUpper(e.key), protectedCells: lockedRef.current });
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -271,7 +292,7 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive }: {
     // Sabit dvh + mt-auto YOK: klavye içeriğin doğal akışında, ipucu çubuğunun
     // hemen altında durur. Önceki sürümde min-h-[100dvh] + mt-auto, geniş/uzun
     // masaüstü pencerelerinde klavyeyi ekranın en altına itip görünmez kılıyordu.
-    <div className="mx-auto flex w-full max-w-lg flex-col gap-4 px-3 py-4">
+    <div className="mx-auto flex w-full max-w-lg flex-col gap-3 px-2.5 py-3 sm:gap-4 sm:px-4 sm:py-5">
       <div className="flex items-center justify-between">
         <span className="flex items-center gap-2.5">
           {/* Mini taş zorluğu tek başına anlatır — ayrıca rozetle yer kaplamayız */}
@@ -301,7 +322,8 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive }: {
       </div>
       {error && <p className="rounded-lg bg-[var(--accent-soft)] px-3 py-2 text-sm text-[var(--accent)]">{error}</p>}
       <Grid puzzle={puzzle} letters={state.letters} sel={state.sel}
-        activeCells={activeCells} correctCells={correctCells} flashCell={flashCell}
+        activeCells={activeCells} correctCells={correctCells} hintCells={hintCells}
+        flashCell={flashCell}
         onCellTap={(row, col) => dispatch({ type: 'SELECT', row, col })} />
       {entry && (
         <ClueBar entry={entry} onClearWord={clearWord}
@@ -309,8 +331,8 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive }: {
           onNext={() => dispatch({ type: 'NEXT_ENTRY', delta: 1 })}
           onToggleDir={() => dispatch({ type: 'SELECT', row: state.sel.row, col: state.sel.col })} />
       )}
-      <Keyboard onLetter={(l) => dispatch({ type: 'TYPE', letter: l })}
-        onDelete={() => dispatch({ type: 'DELETE' })} />
+      <Keyboard onLetter={(l) => dispatch({ type: 'TYPE', letter: l, protectedCells: lockedCells })}
+        onDelete={() => dispatch({ type: 'DELETE', protectedCells: lockedCells })} />
       <FinishDialog open={phase === 'done'} durationMs={result?.durationMs ?? 0}
         rank={result?.rank ?? null} isRanked={result?.isRanked ?? false}
         hintCount={hintCount} puzzleNumber={puzzleNumber} difficulty={puzzle.difficulty}

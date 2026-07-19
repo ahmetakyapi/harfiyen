@@ -4,7 +4,7 @@ const STEPS = [
   ['İpucunu Oku', 'Her kelimenin gazete bulmacası tarzında kısa bir ipucu var. Numara ve yön (soldan sağa / yukarıdan aşağıya) ipucu şeridinde yazar.'],
   ['Hücreye Dokun, Yaz', 'Hücreye dokununca kelime seçilir; ikinci dokunuş yönü değiştirir. Harfler otomatik olarak sonraki boş hücreye ilerler.'],
   ['Kesişimleri Kullan', 'Bir kelimeyi çözmek, kesiştiği kelimelere harf kazandırır. Doğru tamamlanan kelime yeşil yanar.'],
-  ['Takılırsan İpucu Al', 'Seçili hücrenin harfini açar; karşılığında sürene +15 saniye eklenir.'],
+  ['Takılırsan İpucu Al', 'Seçili hücrenin harfini açar; karşılığında sürene +15 saniye eklenir. Açılan harf köşesinde turuncu işaret taşır — silinemez ve değiştirilemez.'],
   ['Süreni Yarıştır', 'Süre "Başla" dediğin an başlar, bulmaca bitince durur. Üyeler günün sıralamasına girer; her gün 09:00\'da üç yeni bulmaca gelir.'],
 ] as const;
 

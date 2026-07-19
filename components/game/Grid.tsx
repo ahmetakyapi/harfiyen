@@ -5,11 +5,12 @@ import { cellsOf } from '@/hooks/useGameState';
 import type { ClientPuzzle, Letters } from '@/lib/types';
 import type { Selection } from '@/hooks/useGameState';
 
-export function Grid({ puzzle, letters, sel, activeCells, correctCells, flashCell, onCellTap }: {
+export function Grid({ puzzle, letters, sel, activeCells, correctCells, hintCells, flashCell, onCellTap }: {
   puzzle: ClientPuzzle; letters: Letters; sel: Selection;
   activeCells: Set<string>;   // `${row}:${col}` — aktif kelimenin hücreleri
   correctCells: Set<string>;  // doğrulanmış kelimelerin hücreleri
-  flashCell?: string | null;  // ipucuyla az önce açılan hücre — kısa vermilyon parıltı
+  hintCells: Set<string>;     // ipucuyla açılan hücreler — köşe işareti + kilitli
+  flashCell?: string | null;  // ipucuyla az önce açılan hücre — kısa parıltı
   onCellTap: (row: number, col: number) => void;
 }) {
   const numberAt = new Map<string, number>();
@@ -71,6 +72,14 @@ export function Grid({ puzzle, letters, sel, activeCells, correctCells, flashCel
                   animate={{ opacity: 0 }}
                   transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
                 />
+              )}
+              {hintCells.has(key) && (
+                // İpucuyla açılmış harfin kalıcı işareti: sağ üst köşede amber
+                // üçgen (gazete bulmacası uygulamalarının "açıldı" dili). Hücre
+                // sonradan yeşile dönse bile işaret kalır — kim bakarsa baksın
+                // bu harfin ipucuyla geldiği belli olur.
+                <span aria-hidden
+                  className="pointer-events-none absolute right-0 top-0 z-10 h-0 w-0 rounded-tr-[3px] border-l-[10px] border-t-[10px] border-l-transparent border-t-[#d97706]" />
               )}
               {numberAt.has(key) && (
                 <span className="pointer-events-none absolute left-1 top-0.5 z-10 text-[0.7rem] font-bold leading-tight text-[var(--ink)]">

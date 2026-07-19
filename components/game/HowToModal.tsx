@@ -23,7 +23,8 @@ export function HowToModal() {
         </p>
         <p className="mt-3 text-sm text-[var(--ink-soft)]">
           İpuçlarından kelimeleri bul, kesişimleri kullan. Süre &quot;Başla&quot; deyince başlar;
-          doğru biten kelime yeşil yanar. Takılırsan ipucu alabilirsin (+15 sn).
+          doğru biten kelime yeşil yanar. Takılırsan ipucu alabilirsin (+15 sn) —
+          açılan harf köşesinde turuncu işaretle kilitlenir.
         </p>
         <p className="mt-2 text-sm">
           <Link href="/how-to-play" className="underline" onClick={close}>Ayrıntılı Anlatım</Link>
