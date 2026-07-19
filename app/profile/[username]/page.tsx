@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import { auth, signOut } from '@/lib/auth';
+import { AutoRefresh } from '@/components/layout/AutoRefresh';
 import { LetterTile } from '@/components/ui/LetterTile';
 import { DIFFICULTY_LABELS } from '@/lib/difficulty';
 import { getDb } from '@/lib/db';
@@ -18,6 +19,7 @@ export default async function ProfilePage({ params }: { params: { username: stri
 
   return (
     <main className="mx-auto max-w-lg px-4 py-10">
+      <AutoRefresh />
       <h1 className="bg-gradient-to-r from-[var(--title-from)] to-[var(--title-to)] bg-clip-text text-center font-display text-3xl text-transparent">
         {stats.username}
       </h1>

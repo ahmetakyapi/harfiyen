@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { auth } from '@/lib/auth';
+import { AutoRefresh } from '@/components/layout/AutoRefresh';
 import { addDays, formatTrtDate, gameDay } from '@/lib/date';
 import { DIFFICULTY_TAB_CLASS, DIFFICULTY_LABELS } from '@/lib/difficulty';
 import { getDb } from '@/lib/db';
@@ -24,6 +25,7 @@ export default async function LeaderboardPage({ searchParams }: {
 
   return (
     <main className="mx-auto max-w-lg px-4 py-8">
+      <AutoRefresh />
       <h1 className="mb-2 bg-gradient-to-r from-[var(--title-from)] to-[var(--title-to)] bg-clip-text text-center font-display text-3xl text-transparent">
         Sıralama
       </h1>

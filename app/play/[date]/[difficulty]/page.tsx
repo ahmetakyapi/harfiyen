@@ -1,5 +1,6 @@
 import { notFound, redirect } from 'next/navigation';
 import { and, eq } from 'drizzle-orm';
+import { AutoRefresh } from '@/components/layout/AutoRefresh';
 import { GameBoard } from '@/components/game/GameBoard';
 import { auth } from '@/lib/auth';
 import { gameDay, puzzleNumber } from '@/lib/date';
@@ -50,7 +51,12 @@ export default async function PlayPage({ params }: {
   )).limit(1);
 
   return (
-    <GameBoard puzzle={puzzle} puzzleNumber={puzzleNumber(date)} isArchive={date < today}
-      alreadyCompleted={done !== undefined} />
+    <>
+      {/* Geri tuşuyla dönüşte bayat "Başla" görünmesin — refresh istemci
+          state'ini korur, süren oyunu etkilemez. */}
+      <AutoRefresh />
+      <GameBoard puzzle={puzzle} puzzleNumber={puzzleNumber(date)} isArchive={date < today}
+        alreadyCompleted={done !== undefined} />
+    </>
   );
 }
