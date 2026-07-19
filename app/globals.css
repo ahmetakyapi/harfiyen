@@ -27,8 +27,11 @@
 .dark {
   --paper: #0a0f1a;
   --paper-raised: #121a2c;
-  --ink: #eef3f8;
-  --ink-soft: #93a3ba;
+  /* Lacivert zemin üzerinde bilinçli olarak SICAK bej/krem metin — soğuk
+     mavi-beyaz yerine, "mavi üstüne bej" daha premium ve daha az klinik
+     duruyor (kontrast: ink 15.9:1, ink-soft 8.5:1 — ikisi de AA'nın üstünde). */
+  --ink: #f2e9d8;
+  --ink-soft: #b8ab90;
   --line: #22324a;
   --accent: #3bbaff;
   --accent-soft: #142a42;
@@ -50,6 +53,20 @@ html {
 body {
   touch-action: manipulation; /* mobil çift dokunuş zoom'unu engelle */
   position: relative;
+  /* Köşelerde çok hafif mavi/turkuaz "glow" — düz tek renk zemin yerine
+     derinlik hissi verir (kullanıcının kendi kişisel köşe-gradyanı DNA'sına
+     mavi paletle uyarlanmış hali). background-color'ı (Tailwind bg-[var(--paper)]
+     utility'si) değiştirmez, sadece üstüne background-image ekler. */
+  background-image:
+    radial-gradient(900px circle at 12% -8%, rgba(0, 180, 216, 0.12), transparent 60%),
+    radial-gradient(800px circle at 105% 15%, rgba(2, 62, 138, 0.08), transparent 55%);
+  background-attachment: fixed;
+}
+
+.dark body {
+  background-image:
+    radial-gradient(900px circle at 12% -8%, rgba(0, 180, 216, 0.14), transparent 60%),
+    radial-gradient(800px circle at 105% 15%, rgba(59, 186, 255, 0.1), transparent 55%);
 }
 
 /* Çok hafif kağıt dokusu (spec §2'de tanımlı, hiç uygulanmamıştı) — SVG

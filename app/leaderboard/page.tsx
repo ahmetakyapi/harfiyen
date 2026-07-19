@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { auth } from '@/lib/auth';
 import { addDays, formatTrtDate, gameDay } from '@/lib/date';
-import { DIFFICULTY_LABELS } from '@/lib/difficulty';
+import { DIFFICULTY_CHIP_CLASS, DIFFICULTY_LABELS } from '@/lib/difficulty';
 import { getDb } from '@/lib/db';
 import { getLeaderboard } from '@/lib/game/leaderboard';
 import { DIFFICULTIES, type Difficulty } from '@/lib/types';
@@ -24,18 +24,22 @@ export default async function LeaderboardPage({ searchParams }: {
 
   return (
     <main className="mx-auto max-w-lg px-4 py-8">
-      <h1 className="mb-2 text-center font-display text-3xl">Sıralama</h1>
-      <div className="mb-4 flex items-center justify-center gap-4 text-sm">
-        <Link href={`/leaderboard?date=${addDays(date, -1)}&difficulty=${difficulty}`} aria-label="Önceki gün">←</Link>
-        <span>{formatTrtDate(date)}</span>
+      <h1 className="mb-2 bg-gradient-to-r from-[var(--diff-medium)] to-[var(--accent)] bg-clip-text text-center font-display text-3xl text-transparent">
+        Sıralama
+      </h1>
+      <div className="mb-5 flex items-center justify-center gap-3 text-sm">
+        <Link href={`/leaderboard?date=${addDays(date, -1)}&difficulty=${difficulty}`} aria-label="Önceki gün"
+          className="flex h-8 w-8 items-center justify-center rounded-full border border-[var(--line)] transition-colors hover:bg-[var(--paper-raised)]">←</Link>
+        <span className="font-medium">{formatTrtDate(date)}</span>
         {date < today
-          ? <Link href={`/leaderboard?date=${addDays(date, 1)}&difficulty=${difficulty}`} aria-label="Sonraki gün">→</Link>
-          : <span className="opacity-30">→</span>}
+          ? <Link href={`/leaderboard?date=${addDays(date, 1)}&difficulty=${difficulty}`} aria-label="Sonraki gün"
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-[var(--line)] transition-colors hover:bg-[var(--paper-raised)]">→</Link>
+          : <span className="flex h-8 w-8 items-center justify-center opacity-30">→</span>}
       </div>
       <nav className="mb-6 flex justify-center gap-2">
         {DIFFICULTIES.map((d) => (
           <Link key={d} href={`/leaderboard?date=${date}&difficulty=${d}`}
-            className={`rounded-full px-4 py-1 text-sm ${d === difficulty ? 'bg-[var(--ink)] text-[var(--paper)]' : 'border border-[var(--line)]'}`}>
+            className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${d === difficulty ? DIFFICULTY_CHIP_CLASS[d] : 'border border-[var(--line)] text-[var(--ink-soft)] hover:bg-[var(--paper-raised)]'}`}>
             {DIFFICULTY_LABELS[d]}
           </Link>
         ))}
@@ -46,7 +50,7 @@ export default async function LeaderboardPage({ searchParams }: {
           <>
             <LeaderboardTable rows={board.top} myUsername={session?.user?.name} />
             {board.me && board.me.rank > 100 && (
-              <p className="mt-4 text-center text-sm">
+              <p className="mt-4 rounded-2xl border border-[var(--line)] bg-[var(--paper-raised)] px-4 py-3 text-center text-sm">
                 Senin sıran: <strong>{board.me.rank}.</strong> · {formatDuration(board.me.durationMs)}
               </p>
             )}
