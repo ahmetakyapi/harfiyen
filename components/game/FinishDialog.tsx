@@ -51,7 +51,7 @@ export function FinishDialog({ open, durationMs, rank, isRanked, isGuest, hintCo
             )}
             <div className="mt-6 flex flex-col gap-2">
               <button type="button" onClick={share}
-                className="rounded-lg bg-[var(--accent)] py-2.5 font-medium text-white">
+                className="rounded-lg bg-[var(--accent)] py-2.5 font-medium text-[var(--paper)]">
                 {copied ? 'Kopyalandı ✓' : 'Sonucu paylaş'}
               </button>
               <Link href={`/leaderboard?date=${date}&difficulty=${difficulty}`}

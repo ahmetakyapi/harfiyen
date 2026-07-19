@@ -45,10 +45,13 @@ export function Grid({ puzzle, letters, sel, activeCells, correctCells, flashCel
           const bg = isSel ? 'bg-[var(--cell-active)]'
             : activeCells.has(key) ? 'bg-[var(--cell-word)]'
             : 'bg-[var(--cell)]';
+          // Seçim yalnızca renkle değil, belirgin bir halkayla da işaretlenir —
+          // renk körlüğünde veya düşük kontrastlı ekranlarda bile "hangi hücredeyim" net kalsın.
+          const ring = isSel ? 'ring-2 ring-inset ring-[var(--accent)]' : '';
           return (
             <button key={key} type="button" role="gridcell"
               onPointerDown={(e) => { e.preventDefault(); onCellTap(r, c); }}
-              className={`relative aspect-square rounded-[3px] ${bg} outline-none transition-colors duration-100`}
+              className={`relative aspect-square rounded-[3px] ${bg} ${ring} outline-none transition-colors duration-100`}
               aria-label={`Satır ${r + 1}, sütun ${c + 1}`}>
               {isCorrect && (
                 <motion.span

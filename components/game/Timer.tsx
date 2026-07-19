@@ -16,7 +16,7 @@ export function Timer({ startedAt, serverNow, penaltyMs, finalMs }: {
   }, [finalMs]);
   const elapsed = finalMs ?? Math.max(0, nowMs + offset - Date.parse(startedAt)) + penaltyMs;
   return (
-    <span className="font-mono text-lg tabular-nums" aria-label="Geçen süre">
+    <span className="font-display text-xl font-semibold tabular-nums text-[var(--ink)]" aria-label="Geçen süre">
       {formatDuration(elapsed)}
     </span>
   );

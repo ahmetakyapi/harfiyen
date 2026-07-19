@@ -17,6 +17,15 @@ import { Keyboard } from './Keyboard';
 import { Timer } from './Timer';
 
 const LABELS: Record<Difficulty, string> = { easy: 'Kolay', medium: 'Orta', hard: 'Zor' };
+// Zorluk rozetleri "correct" (kolay) → "accent" (zor) ekseninde ilerler; oyuncu
+// bir bakışta hangi zorlukta olduğunu, kelime/ipucu bekelemeden renkten anlar.
+const DIFFICULTY_BADGE: Record<Difficulty, string> = {
+  easy: 'bg-[var(--correct-soft)] text-[var(--correct)]',
+  medium: 'bg-[var(--accent-soft)] text-[var(--ink)]',
+  // text-white DEĞİL: dark modda --accent açık bir turuncu olduğundan beyaz metin
+  // WCAG AA'yı geçemez (~2.8:1). --paper her iki temada da doğru yönde tersine döner.
+  hard: 'bg-[var(--accent)] text-[var(--paper)]',
+};
 
 type SessionInfo = {
   sessionId: number; startedAt: string; serverNow: string; existing: boolean;
@@ -203,10 +212,18 @@ export function GameBoard({ puzzle, puzzleNumber, isGuest, isArchive }: {
   }
 
   return (
-    <div className="mx-auto flex min-h-[100dvh] max-w-lg flex-col gap-3 px-2 pt-2">
-      <div className="flex items-center justify-between px-2">
-        <span className="text-sm text-[var(--ink-soft)]">
-          #{puzzleNumber} · {LABELS[puzzle.difficulty]}
+    // Sabit dvh + mt-auto YOK: klavye içeriğin doğal akışında, ipucu çubuğunun
+    // hemen altında durur. Önceki sürümde min-h-[100dvh] + mt-auto, geniş/uzun
+    // masaüstü pencerelerinde klavyeyi ekranın en altına itip görünmez kılıyordu.
+    <div className="mx-auto flex w-full max-w-lg flex-col gap-4 px-3 py-4">
+      <div className="flex items-center justify-between">
+        <span className="flex items-center gap-2">
+          <span className="font-display text-lg font-semibold text-[var(--ink)]">
+            #{puzzleNumber}
+          </span>
+          <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${DIFFICULTY_BADGE[puzzle.difficulty]}`}>
+            {LABELS[puzzle.difficulty]}
+          </span>
         </span>
         <div className="flex items-center gap-3">
           {session && (
@@ -214,12 +231,12 @@ export function GameBoard({ puzzle, puzzleNumber, isGuest, isArchive }: {
               penaltyMs={penaltyMs} finalMs={result?.durationMs ?? null} />
           )}
           <button type="button" onClick={hint} aria-label="İpucu al (+15 sn)"
-            className="flex min-h-11 items-center gap-1 rounded-full border border-[var(--line)] px-3 text-sm">
-            <Lightbulb className="h-4 w-4" />+15sn
+            className="flex min-h-11 items-center gap-1.5 rounded-full bg-[var(--accent-soft)] px-3 text-sm font-medium text-[var(--ink)] transition-opacity hover:opacity-80">
+            <Lightbulb className="h-4 w-4 text-[var(--accent)]" />+15sn
           </button>
         </div>
       </div>
-      {error && <p className="px-2 text-sm text-[var(--accent)]">{error}</p>}
+      {error && <p className="rounded-lg bg-[var(--accent-soft)] px-3 py-2 text-sm text-[var(--accent)]">{error}</p>}
       <Grid puzzle={puzzle} letters={state.letters} sel={state.sel}
         activeCells={activeCells} correctCells={correctCells} flashCell={flashCell}
         onCellTap={(row, col) => dispatch({ type: 'SELECT', row, col })} />
@@ -229,10 +246,8 @@ export function GameBoard({ puzzle, puzzleNumber, isGuest, isArchive }: {
           onNext={() => dispatch({ type: 'NEXT_ENTRY', delta: 1 })}
           onToggleDir={() => dispatch({ type: 'SELECT', row: state.sel.row, col: state.sel.col })} />
       )}
-      <div className="mt-auto">
-        <Keyboard onLetter={(l) => dispatch({ type: 'TYPE', letter: l })}
-          onDelete={() => dispatch({ type: 'DELETE' })} />
-      </div>
+      <Keyboard onLetter={(l) => dispatch({ type: 'TYPE', letter: l })}
+        onDelete={() => dispatch({ type: 'DELETE' })} />
       <FinishDialog open={phase === 'done'} durationMs={result?.durationMs ?? 0}
         rank={result?.rank ?? null} isRanked={result?.isRanked ?? false} isGuest={isGuest}
         hintCount={hintCount} puzzleNumber={puzzleNumber} difficulty={puzzle.difficulty}

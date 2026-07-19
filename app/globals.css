@@ -3,33 +3,33 @@
 @tailwind utilities;
 
 :root {
-  --paper: #f7f4ed;
-  --paper-raised: #fffdf7;
-  --ink: #211b13;
-  --ink-soft: #746a5c;
-  --line: #e3dccd;
-  --accent: #c04a1e;
-  --accent-soft: #f6e5d9;
-  --correct: #2e7d4f;
-  --correct-soft: #e3efe5;
-  --cell: #fffdf7;
-  --cell-active: #fbe7da;
-  --cell-word: #f1ebdd;
+  --paper: #f1ebdc;
+  --paper-raised: #ffffff;
+  --ink: #1c1712;
+  --ink-soft: #675a49;
+  --line: #dccfb2;
+  --accent: #b23e22;
+  --accent-soft: #f6ddd0;
+  --correct: #1f7a45;
+  --correct-soft: #c9ecd6;
+  --cell: #ffffff;
+  --cell-active: #ffddac;
+  --cell-word: #f8ecd6;
 }
 
 .dark {
-  --paper: #16120d;
-  --paper-raised: #201a13;
-  --ink: #ece4d6;
-  --ink-soft: #9c9284;
-  --line: #352d22;
-  --accent: #e06a3c;
-  --accent-soft: #3b2517;
-  --correct: #66bd8c;
-  --correct-soft: #1c3125;
-  --cell: #241d15;
-  --cell-active: #402c1e;
-  --cell-word: #2c251b;
+  --paper: #14100b;
+  --paper-raised: #251e15;
+  --ink: #f1e7d7;
+  --ink-soft: #ab9c86;
+  --line: #4a3d28;
+  --accent: #ea7e4c;
+  --accent-soft: #402616;
+  --correct: #5bcb8c;
+  --correct-soft: #1d3b28;
+  --cell: #201911;
+  --cell-active: #4d3018;
+  --cell-word: #2c2417;
 }
 
 html {
