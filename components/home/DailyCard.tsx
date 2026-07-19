@@ -15,7 +15,7 @@ export function DailyCard({ difficulty, size, wordCount, date, status, durationM
   const meta = META[difficulty];
   return (
     <Link href={`/play/${date}/${difficulty}`}
-      className="group flex items-center justify-between rounded-2xl border border-[var(--line)] bg-[var(--paper-raised)] p-5 transition-shadow hover:shadow-md">
+      className="group flex items-center justify-between rounded-2xl border border-[var(--line)] bg-[var(--paper-raised)] p-5 transition-[transform,box-shadow] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-0.5 hover:shadow-md">
       <div>
         <p className="font-display text-2xl">{meta.label}</p>
         <p className="mt-0.5 text-sm text-[var(--ink-soft)]">

@@ -48,6 +48,7 @@ export function GameBoard({ puzzle, puzzleNumber, isGuest, isArchive }: {
   const [result, setResult] = useState<{ durationMs: number; rank: number | null; isRanked: boolean } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [correctKeys, setCorrectKeys] = useState<Set<string>>(new Set());
+  const [flashCell, setFlashCell] = useState<string | null>(null);
   const submitting = useRef(false);
 
   const storageKey = session ? `harfiyen:letters:${session.sessionId}` : null;
@@ -136,7 +137,10 @@ export function GameBoard({ puzzle, puzzleNumber, isGuest, isArchive }: {
       );
       setPenaltyMs(r.penaltyMs);
       setHintCount(r.hintCount);
+      const key = `${state.sel.row}:${state.sel.col}`;
       dispatch({ type: 'REVEAL', row: state.sel.row, col: state.sel.col, letter: r.letter });
+      setFlashCell(key);
+      setTimeout(() => setFlashCell((current) => (current === key ? null : current)), 500);
     } catch {
       setError('İpucu alınamadı.');
     }
@@ -210,14 +214,14 @@ export function GameBoard({ puzzle, puzzleNumber, isGuest, isArchive }: {
               penaltyMs={penaltyMs} finalMs={result?.durationMs ?? null} />
           )}
           <button type="button" onClick={hint} aria-label="İpucu al (+15 sn)"
-            className="flex items-center gap-1 rounded-full border border-[var(--line)] px-3 py-1 text-sm">
+            className="flex min-h-11 items-center gap-1 rounded-full border border-[var(--line)] px-3 text-sm">
             <Lightbulb className="h-4 w-4" />+15sn
           </button>
         </div>
       </div>
       {error && <p className="px-2 text-sm text-[var(--accent)]">{error}</p>}
       <Grid puzzle={puzzle} letters={state.letters} sel={state.sel}
-        activeCells={activeCells} correctCells={correctCells}
+        activeCells={activeCells} correctCells={correctCells} flashCell={flashCell}
         onCellTap={(row, col) => dispatch({ type: 'SELECT', row, col })} />
       {entry && (
         <ClueBar entry={entry}

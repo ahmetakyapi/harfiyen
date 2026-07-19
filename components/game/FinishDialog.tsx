@@ -34,7 +34,10 @@ export function FinishDialog({ open, durationMs, rank, isRanked, isGuest, hintCo
               Harfiyen #{puzzleNumber} · {LABELS[difficulty]}
               {hintCount > 0 && ` · ${hintCount} ipucu`}
             </p>
-            <p className="mt-4 font-mono text-5xl tabular-nums">{formatDuration(durationMs)}</p>
+            <motion.p
+              initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 20, delay: 0.15 }}
+              className="mt-4 font-mono text-5xl tabular-nums">{formatDuration(durationMs)}</motion.p>
             {isRanked && rank !== null && (
               <p className="mt-2 text-sm">Bugün <strong>{rank}.</strong> sıradasın 🏅</p>
             )}

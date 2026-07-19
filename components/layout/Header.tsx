@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { auth } from '@/lib/auth';
+import { ThemeToggle } from '@/components/layout/ThemeToggle';
 
 export async function Header() {
   const session = await auth();
@@ -14,7 +15,8 @@ export async function Header() {
           <Link href="/archive">Arşiv</Link>
           {session
             ? <Link href={`/profile/${session.user.name}`} className="font-medium">{session.user.name}</Link>
-            : <Link href="/login" className="rounded-full border border-[var(--line)] px-3 py-1">Giriş</Link>}
+            : <Link href="/login" className="flex min-h-11 items-center rounded-full border border-[var(--line)] px-4">Giriş</Link>}
+          <ThemeToggle />
         </nav>
       </div>
     </header>

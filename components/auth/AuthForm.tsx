@@ -35,14 +35,15 @@ export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
   }
 
   return (
-    <form onSubmit={submit} className="mx-auto flex w-full max-w-sm flex-col gap-4">
+    <form onSubmit={submit}
+      className="mx-auto flex w-full max-w-sm flex-col gap-4 rounded-2xl border border-[var(--line)] bg-[var(--paper-raised)] p-6 shadow-sm">
       <label className="flex flex-col gap-1 text-sm">
         Kullanıcı adı
         <input
           value={username}
           onChange={(e) => setUsername(e.target.value.toLocaleLowerCase('tr-TR'))}
           autoComplete="username"
-          className="rounded-lg border border-[var(--line)] bg-transparent px-3 py-2"
+          className="min-h-11 rounded-lg border border-[var(--line)] bg-transparent px-3 py-2"
           required minLength={3} maxLength={20}
         />
       </label>
@@ -51,7 +52,7 @@ export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
         <input
           type="password" value={password} onChange={(e) => setPassword(e.target.value)}
           autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
-          className="rounded-lg border border-[var(--line)] bg-transparent px-3 py-2"
+          className="min-h-11 rounded-lg border border-[var(--line)] bg-transparent px-3 py-2"
           required minLength={8}
         />
       </label>
@@ -62,7 +63,7 @@ export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
       )}
       {error && <p className="text-sm text-[var(--accent)]">{error}</p>}
       <button type="submit" disabled={busy}
-        className="rounded-lg bg-[var(--ink)] py-2 font-medium text-[var(--paper)] disabled:opacity-50">
+        className="min-h-11 rounded-lg bg-[var(--ink)] py-2 font-medium text-[var(--paper)] disabled:opacity-50">
         {mode === 'register' ? 'Üye ol' : 'Giriş yap'}
       </button>
     </form>
