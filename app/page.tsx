@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { and, eq, inArray, isNull } from 'drizzle-orm';
+import { AutoRefresh } from '@/components/layout/AutoRefresh';
 import { Countdown } from '@/components/home/Countdown';
 import { DailyCard } from '@/components/home/DailyCard';
 import { StreakBadge } from '@/components/home/StreakBadge';
@@ -40,6 +41,7 @@ export default async function HomePage() {
 
   return (
     <main className="mx-auto max-w-lg px-4 py-10">
+      <AutoRefresh />
       <p className="mx-auto w-fit rounded-full bg-[var(--accent-soft)] px-4 py-1 text-center text-xs font-semibold uppercase tracking-widest text-[var(--accent)]">
         {formatTrtDate(today)} · #{puzzleNumber(today)}
       </p>

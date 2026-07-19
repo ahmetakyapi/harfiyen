@@ -45,7 +45,9 @@ export function DailyCard({ difficulty, size, wordCount, date, status, durationM
       </div>
       <div className="shrink-0 text-right text-sm">
         {status === 'bitti' && durationMs !== null && (
-          <span className="font-mono tabular-nums text-[var(--correct)]">✓ {formatDuration(durationMs)}</span>
+          <span className="flex items-center gap-1 rounded-full bg-[var(--correct-soft)] px-3 py-1.5 font-mono text-xs font-semibold tabular-nums text-[var(--correct)]">
+            ✓ {formatDuration(durationMs)}
+          </span>
         )}
         {status === 'devam' && <span className="font-medium text-[var(--accent)]">Devam Et →</span>}
         {status === 'yeni' && (

@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { and, eq, lt } from 'drizzle-orm';
 import { Check } from 'lucide-react';
 import { auth } from '@/lib/auth';
+import { AutoRefresh } from '@/components/layout/AutoRefresh';
 import { LetterTile } from '@/components/ui/LetterTile';
 import { formatTrtDate, gameDay, puzzleNumber } from '@/lib/date';
 import { DIFFICULTY_LABELS } from '@/lib/difficulty';
@@ -33,6 +34,7 @@ export default async function ArchivePage() {
 
   return (
     <main className="mx-auto max-w-lg px-4 py-10">
+      <AutoRefresh />
       <h1 className="bg-gradient-to-r from-[var(--title-from)] to-[var(--title-to)] bg-clip-text text-center font-display text-3xl text-transparent">
         Arşiv
       </h1>

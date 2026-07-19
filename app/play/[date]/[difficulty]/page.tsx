@@ -4,7 +4,7 @@ import { GameBoard } from '@/components/game/GameBoard';
 import { auth } from '@/lib/auth';
 import { gameDay, puzzleNumber } from '@/lib/date';
 import { getDb } from '@/lib/db';
-import { puzzles } from '@/lib/schema';
+import { playSessions, puzzles } from '@/lib/schema';
 import { DIFFICULTIES, type ClientPuzzle, type Difficulty, type Entry } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
@@ -40,7 +40,17 @@ export default async function PlayPage({ params }: {
     size: row.size, black: row.black as boolean[][], entries: row.entries as Entry[],
     wordHashes: row.wordHashes as Record<string, string>,
   };
+
+  // Bu bulmaca zaten bitirilmişse "Başla" kartı HİÇ gösterilmez: GameBoard
+  // sunucudan gelen bu bilgiyle açılışta doğrudan sonuç ekranına gider.
+  const [done] = await getDb().select({ id: playSessions.id }).from(playSessions).where(and(
+    eq(playSessions.puzzleId, row.id),
+    eq(playSessions.userId, Number(session.user.id)),
+    eq(playSessions.status, 'completed'),
+  )).limit(1);
+
   return (
-    <GameBoard puzzle={puzzle} puzzleNumber={puzzleNumber(date)} isArchive={date < today} />
+    <GameBoard puzzle={puzzle} puzzleNumber={puzzleNumber(date)} isArchive={date < today}
+      alreadyCompleted={done !== undefined} />
   );
 }

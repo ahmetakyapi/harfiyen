@@ -31,8 +31,8 @@ async function post<T>(url: string, body: unknown): Promise<T> {
   return (await res.json()) as T;
 }
 
-export function GameBoard({ puzzle, puzzleNumber, isArchive }: {
-  puzzle: ClientPuzzle; puzzleNumber: number; isArchive: boolean;
+export function GameBoard({ puzzle, puzzleNumber, isArchive, alreadyCompleted }: {
+  puzzle: ClientPuzzle; puzzleNumber: number; isArchive: boolean; alreadyCompleted: boolean;
 }) {
   const ctx = useMemo(
     () => ({ size: puzzle.size, black: puzzle.black, entries: puzzle.entries }),
@@ -91,6 +91,13 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive }: {
       setPhase('idle');
     }
   }, [puzzle.id, isArchive, dispatch, state.letters]);
+
+  // Bitirilmiş bulmacada "Başla" beklenmez — açılışta sonuç doğrudan yüklenir.
+  // error guard'ı, başarısız denemede sonsuz döngüyü keser (Tekrar Dene butonu
+  // start'ı elle çağırır ve error'u sıfırlar).
+  useEffect(() => {
+    if (alreadyCompleted && phase === 'idle' && !error) void start();
+  }, [alreadyCompleted, phase, error, start]);
 
   // harfler değiştikçe kaydet + doğru kelimeleri hash ile işaretle
   useEffect(() => {
@@ -243,6 +250,25 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive }: {
   }, [phase, dispatch, state.sel]);
 
   if (phase === 'idle' || phase === 'starting') {
+    if (alreadyCompleted) {
+      // Bitirilmiş bulmacada "Başla" kartı kafa karıştırır (başlayacak bir şey
+      // yok) — sonuç yüklenirken sade bir bekleme durumu gösterilir; start()
+      // aşağıdaki efektle otomatik tetiklenir ve 'revisit' ekranına düşer.
+      return (
+        <div className="mx-auto max-w-sm px-4 py-24 text-center">
+          <p className="text-sm text-[var(--ink-soft)]">Sonucun yükleniyor…</p>
+          {error && (
+            <>
+              <p className="mt-3 text-sm text-[var(--accent)]">{error}</p>
+              <button type="button" onClick={start}
+                className="mt-4 rounded-xl border border-[var(--line)] px-5 py-2 text-sm font-medium">
+                Tekrar Dene
+              </button>
+            </>
+          )}
+        </div>
+      );
+    }
     return (
       <div className="mx-auto max-w-sm px-4 py-12">
         <div className="rounded-[1.8rem] border border-[var(--line)] bg-[var(--paper-raised)] p-8 text-center shadow-[0_28px_70px_-45px_var(--diff-hard)]">
