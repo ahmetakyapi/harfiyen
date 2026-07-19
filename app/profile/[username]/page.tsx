@@ -25,7 +25,7 @@ export default async function ProfilePage({ params }: { params: { username: stri
         {[
           { label: 'Çözülen', value: String(stats.totalSolved) },
           { label: 'Seri', value: String(stats.currentStreak) },
-          { label: 'En iyi seri', value: String(stats.bestStreak) },
+          { label: 'En İyi Seri', value: String(stats.bestStreak) },
         ].map((s) => (
           <div key={s.label} className="rounded-xl border border-[var(--line)] bg-[var(--paper-raised)] p-4">
             <p className="font-display text-3xl">{s.value}</p>
@@ -36,7 +36,7 @@ export default async function ProfilePage({ params }: { params: { username: stri
       <table className="mt-6 w-full text-sm">
         <thead>
           <tr className="text-left text-xs uppercase tracking-wide text-[var(--ink-soft)]">
-            <th className="py-2">Zorluk</th><th>Çözülen</th><th>En iyi</th><th>Ortalama</th>
+            <th className="py-2">Zorluk</th><th>Çözülen</th><th>En İyi</th><th>Ortalama</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-[var(--line)]">
@@ -55,7 +55,7 @@ export default async function ProfilePage({ params }: { params: { username: stri
       </table>
       {stats.recent.length > 0 && (
         <>
-          <h2 className="mt-8 text-sm font-medium uppercase tracking-wide text-[var(--ink-soft)]">Son oyunlar</h2>
+          <h2 className="mt-8 text-sm font-medium uppercase tracking-wide text-[var(--ink-soft)]">Son Oyunlar</h2>
           <ul className="mt-2 divide-y divide-[var(--line)] text-sm">
             {stats.recent.map((r) => (
               <li key={`${r.date}:${r.difficulty}`} className="flex justify-between py-2">
@@ -69,7 +69,7 @@ export default async function ProfilePage({ params }: { params: { username: stri
       {isOwn && (
         <form className="mt-10 text-center"
           action={async () => { 'use server'; await signOut({ redirectTo: '/' }); }}>
-          <button type="submit" className="text-sm text-[var(--ink-soft)] underline">Çıkış yap</button>
+          <button type="submit" className="text-sm text-[var(--ink-soft)] underline">Çıkış Yap</button>
         </form>
       )}
     </main>

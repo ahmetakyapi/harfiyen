@@ -17,7 +17,7 @@ const plexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: { default: 'Harfiyen — günlük kelime bulmacası', template: '%s — Harfiyen' },
+  title: { default: 'Harfiyen — Günlük Kelime Bulmacası', template: '%s — Harfiyen' },
   description: 'Her gün 09:00\'da üç yeni Türkçe kare bulmaca. Çöz, süreni gör, sıralamaya gir.',
   icons: { icon: '/icon.svg' },
 };

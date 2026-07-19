@@ -3,9 +3,9 @@ import { formatDuration } from '@/lib/share';
 import type { Difficulty } from '@/lib/types';
 
 const META: Record<Difficulty, { label: string; blurb: string }> = {
-  easy: { label: 'Kolay', blurb: 'Isınma turu' },
-  medium: { label: 'Orta', blurb: 'Kahve molası' },
-  hard: { label: 'Zor', blurb: 'Günün sınavı' },
+  easy: { label: 'Kolay', blurb: 'Isınma Turu' },
+  medium: { label: 'Orta', blurb: 'Kahve Molası' },
+  hard: { label: 'Zor', blurb: 'Günün Sınavı' },
 };
 
 export function DailyCard({ difficulty, size, wordCount, date, status, durationMs }: {
@@ -26,7 +26,7 @@ export function DailyCard({ difficulty, size, wordCount, date, status, durationM
         {status === 'bitti' && durationMs !== null && (
           <span className="font-mono tabular-nums text-[var(--correct)]">✓ {formatDuration(durationMs)}</span>
         )}
-        {status === 'devam' && <span className="text-[var(--accent)]">Devam et →</span>}
+        {status === 'devam' && <span className="text-[var(--accent)]">Devam Et →</span>}
         {status === 'yeni' && <span className="text-[var(--ink-soft)] group-hover:text-[var(--accent)]">Oyna →</span>}
       </div>
     </Link>

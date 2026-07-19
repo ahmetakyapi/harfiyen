@@ -43,12 +43,12 @@ export default async function HomePage() {
       <p className="text-center text-sm uppercase tracking-widest text-[var(--ink-soft)]">
         {formatTrtDate(today)} · #{puzzleNumber(today)}
       </p>
-      <h1 className="font-display-flourish mt-2 text-center font-display text-4xl sm:text-5xl">Günün bulmacaları</h1>
+      <h1 className="font-display-flourish mt-2 text-center font-display text-4xl sm:text-5xl">Günün Bulmacaları</h1>
       <div className="mt-4 flex justify-center">
         {streak
           ? <StreakBadge current={streak.currentStreak} best={streak.bestStreak} />
           : <p className="text-sm text-[var(--ink-soft)]">
-              <Link href="/register" className="underline">Üye ol</Link> — süreni sıralamada gör, serini başlat.
+              <Link href="/register" className="underline">Üye Ol</Link> — süreni sıralamada gör, serini başlat.
             </p>}
       </div>
       <div className="mt-8 flex flex-col gap-3">
@@ -73,7 +73,7 @@ export default async function HomePage() {
         Yeni bulmacalara <Countdown /> kaldı
       </p>
       <p className="mt-2 text-center text-sm">
-        <Link href="/how-to-play" className="underline">Nasıl oynanır?</Link>
+        <Link href="/how-to-play" className="underline">Nasıl Oynanır?</Link>
       </p>
     </main>
   );

@@ -1,18 +1,13 @@
-// Harfiyen'in imzası: oyunun kendi ızgara diline ait üç hücrelik bir "L" parçası —
-// gerçek gridde kullandığımız üç durumu (dolu/vurgu/kelime) birebir yansıtır,
-// jenerik bir "kutu içinde harf" logosu yerine ürünün kendi görsel dilinden
-// damıtılmış bir işaret olsun diye.
+// Harfiyen'in imzası: tek parça, yuvarlatılmış geometrik bir "H" monogramı.
+// Kollar ink renginde, ortadaki çubuk vurgu renginde — kesişme fikrini (kelimelerin
+// birbirini kestiği an) tek bir zarif çizgiyle taşır; harf-kutucuklu ilk sürüm
+// "oyuncak blok" gibi durduğu için tek parça, sade bir monograma geçildi.
 export function Logo({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 64 64" className={className} aria-hidden focusable="false">
-      <rect x="6" y="6" width="26" height="26" rx="4" fill="var(--accent)" />
-      <rect x="35" y="6" width="26" height="26" rx="4" fill="var(--paper-raised)" stroke="var(--line)" />
-      <rect x="6" y="35" width="26" height="26" rx="4" fill="var(--ink)" />
-      <text x="48" y="27" textAnchor="middle" dominantBaseline="central"
-        fontFamily="var(--font-fraunces), Georgia, serif" fontWeight="600" fontSize="20"
-        fill="var(--ink)">
-        H
-      </text>
+      <rect x="13" y="9" width="11" height="46" rx="5.5" fill="var(--ink)" />
+      <rect x="40" y="9" width="11" height="46" rx="5.5" fill="var(--ink)" />
+      <rect x="13" y="26.5" width="38" height="11" rx="5.5" fill="var(--accent)" />
     </svg>
   );
 }

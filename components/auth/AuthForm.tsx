@@ -44,7 +44,7 @@ export function AuthForm({ mode, next }: { mode: 'login' | 'register'; next?: st
     <form onSubmit={submit}
       className="mx-auto flex w-full max-w-sm flex-col gap-4 rounded-2xl border border-[var(--line)] bg-[var(--paper-raised)] p-6 shadow-sm">
       <label className="flex flex-col gap-1 text-sm">
-        Kullanıcı adı
+        Kullanıcı Adı
         <input
           value={username}
           onChange={(e) => setUsername(e.target.value.toLocaleLowerCase('tr-TR'))}
@@ -70,7 +70,7 @@ export function AuthForm({ mode, next }: { mode: 'login' | 'register'; next?: st
       {error && <p className="text-sm text-[var(--accent)]">{error}</p>}
       <button type="submit" disabled={busy}
         className="min-h-11 rounded-lg bg-[var(--ink)] py-2 font-medium text-[var(--paper)] disabled:opacity-50">
-        {mode === 'register' ? 'Üye ol' : 'Giriş yap'}
+        {mode === 'register' ? 'Üye Ol' : 'Giriş Yap'}
       </button>
     </form>
   );

@@ -75,14 +75,14 @@ export function FinishDialog({ open, durationMs, rank, isRanked, hintCount, puzz
                 <button type="button" onClick={share}
                   className="flex items-center justify-center gap-2 rounded-xl bg-[var(--accent)] py-3 font-medium text-[var(--paper)] transition-transform active:scale-[0.98]">
                   {copied ? <Check className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}
-                  {copied ? 'Kopyalandı' : 'Sonucu paylaş'}
+                  {copied ? 'Kopyalandı' : 'Sonucu Paylaş'}
                 </button>
                 <Link href={`/leaderboard?date=${date}&difficulty=${difficulty}`}
                   className="rounded-xl border border-[var(--line)] py-2.5 text-sm font-medium">
-                  Sıralamayı gör
+                  Sıralamayı Gör
                 </Link>
                 <Link href="/" className="py-1 text-sm text-[var(--ink-soft)] underline">
-                  Günün diğer bulmacaları
+                  Günün Diğer Bulmacaları
                 </Link>
               </div>
             </div>
