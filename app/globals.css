@@ -3,33 +3,44 @@
 @tailwind utilities;
 
 :root {
-  --paper: #f1ebdc;
+  --paper: #eef6fb;
   --paper-raised: #ffffff;
-  --ink: #1c1712;
-  --ink-soft: #675a49;
-  --line: #dccfb2;
-  --accent: #b23e22;
-  --accent-soft: #f6ddd0;
-  --correct: #1f7a45;
-  --correct-soft: #c9ecd6;
+  --ink: #10182a;
+  --ink-soft: #56677e;
+  --line: #c3d9e8;
+  --accent: #023e8a;
+  --accent-soft: #d3e8f7;
+  --correct: #0f7a5c;
+  --correct-soft: #cdeee0;
   --cell: #ffffff;
-  --cell-active: #ffddac;
-  --cell-word: #f8ecd6;
+  --cell-active: #f7c59f;
+  --cell-word: #dcedf7;
+  /* Zorluk seviyesi renk merdiveni — açık (kolay) → koyu (zor), tek bakışta
+     zorluğu renkten okunabilir kılar. easy/medium bilinçli olarak temayla
+     dönüşmez (her iki temada da parlak kalır); hard=--accent zaten dönüşüyor. */
+  --diff-easy: #00b4d8;
+  --diff-easy-soft: #d7f3fa;
+  --diff-medium: #0077b6;
+  --diff-medium-soft: #d3e8f5;
 }
 
 .dark {
-  --paper: #14100b;
-  --paper-raised: #251e15;
-  --ink: #f1e7d7;
-  --ink-soft: #ab9c86;
-  --line: #4a3d28;
-  --accent: #ea7e4c;
-  --accent-soft: #402616;
-  --correct: #5bcb8c;
-  --correct-soft: #1d3b28;
-  --cell: #201911;
-  --cell-active: #4d3018;
-  --cell-word: #2c2417;
+  --paper: #0a0f1a;
+  --paper-raised: #121a2c;
+  --ink: #eef3f8;
+  --ink-soft: #93a3ba;
+  --line: #22324a;
+  --accent: #3bbaff;
+  --accent-soft: #142a42;
+  --correct: #34d399;
+  --correct-soft: #103b34;
+  --cell: #141d30;
+  --cell-active: #47301c;
+  --cell-word: #1b2947;
+  --diff-easy: #00b4d8;
+  --diff-easy-soft: #123244;
+  --diff-medium: #0077b6;
+  --diff-medium-soft: #142a42;
 }
 
 html {
