@@ -38,6 +38,27 @@ html {
 
 body {
   touch-action: manipulation; /* mobil çift dokunuş zoom'unu engelle */
+  position: relative;
+}
+
+/* Çok hafif kağıt dokusu (spec §2'de tanımlı, hiç uygulanmamıştı) — SVG
+   feTurbulence gürültüsü, sabit konumlu ve çok düşük opaklıkta; okunabilirliği
+   asla etkilemeyecek kadar ince, ama düz renk yüzeyleri "basılı kağıt" gibi
+   hissettirir. prefers-reduced-motion'dan bağımsız (statik, animasyonsuz). */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0.035;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.dark body::before {
+  mix-blend-mode: overlay;
+  opacity: 0.05;
 }
 
 ::selection {
@@ -47,6 +68,13 @@ body {
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 999px; }
 ::-webkit-scrollbar-track { background: transparent; }
+
+/* Fraunces'in SOFT/WONK eksenleri — ürünün iki duygusal anında (karşılama,
+   kutlama) sıcak/"el yapımı" bir karakter vermek için; her yerde kullanılmaz,
+   tek bir imza vurgusu olarak kalsın diye bilinçli olarak sınırlı tutuldu. */
+.font-display-flourish {
+  font-variation-settings: 'SOFT' 60, 'WONK' 1;
+}
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

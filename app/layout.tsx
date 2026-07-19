@@ -1,11 +1,20 @@
 import type { Metadata, Viewport } from 'next';
-import { Fraunces, Inter } from 'next/font/google';
+import { Fraunces, IBM_Plex_Mono, Inter } from 'next/font/google';
 import { Header } from '@/components/layout/Header';
 import { ThemeProvider } from '@/components/layout/ThemeProvider';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin', 'latin-ext'], variable: '--font-inter' });
-const fraunces = Fraunces({ subsets: ['latin', 'latin-ext'], variable: '--font-fraunces', axes: ['opsz'] });
+// SOFT + WONK: Fraunces'in düz "büyük serif başlık" hissinden çıkıp gerçek bir
+// karakter kazanmasını sağlayan değişken eksenler — sıcak, biraz "el yapımı"
+// bir editoryal ton (yalnızca büyük başlık anlarında kullanılıyor, aşırıya kaçmadan).
+const fraunces = Fraunces({
+  subsets: ['latin', 'latin-ext'], variable: '--font-fraunces',
+  axes: ['opsz', 'SOFT', 'WONK'],
+});
+const plexMono = IBM_Plex_Mono({
+  subsets: ['latin', 'latin-ext'], variable: '--font-plex-mono', weight: ['500', '600'],
+});
 
 export const metadata: Metadata = {
   title: { default: 'Harfiyen — günlük kelime bulmacası', template: '%s — Harfiyen' },
@@ -23,7 +32,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="tr" suppressHydrationWarning>
-      <body className={`${inter.variable} ${fraunces.variable} min-h-dvh bg-[var(--paper)] font-sans text-[var(--ink)] antialiased`}>
+      <body className={`${inter.variable} ${fraunces.variable} ${plexMono.variable} min-h-dvh bg-[var(--paper)] font-sans text-[var(--ink)] antialiased`}>
         <ThemeProvider>
           <Header />
           {children}

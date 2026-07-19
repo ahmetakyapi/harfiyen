@@ -29,7 +29,7 @@ export function FinishDialog({ open, durationMs, rank, isRanked, isGuest, hintCo
             initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
             className="w-full max-w-sm rounded-2xl bg-[var(--paper-raised)] p-6 text-center shadow-xl">
-            <p className="font-display text-3xl">Bitirdin!</p>
+            <p className="font-display-flourish font-display text-4xl">Bitirdin!</p>
             <p className="mt-1 text-sm text-[var(--ink-soft)]">
               Harfiyen #{puzzleNumber} · {LABELS[difficulty]}
               {hintCount > 0 && ` · ${hintCount} ipucu`}

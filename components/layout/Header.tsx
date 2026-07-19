@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { auth } from '@/lib/auth';
+import { Logo } from '@/components/layout/Logo';
 import { ThemeToggle } from '@/components/layout/ThemeToggle';
 
 export async function Header() {
@@ -7,8 +8,9 @@ export async function Header() {
   return (
     <header className="border-b border-[var(--line)]">
       <div className="mx-auto flex h-14 max-w-3xl items-center justify-between px-4">
-        <Link href="/" className="font-display text-xl tracking-tight">
-          Harfiyen<span className="text-[var(--accent)]">.</span>
+        <Link href="/" className="flex items-center gap-2.5">
+          <Logo className="h-8 w-8" />
+          <span className="font-display text-xl font-semibold tracking-tight">Harfiyen</span>
         </Link>
         <nav className="flex items-center gap-4 text-sm">
           <Link href="/leaderboard">Sıralama</Link>

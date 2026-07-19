@@ -43,7 +43,7 @@ export default async function HomePage() {
       <p className="text-center text-sm uppercase tracking-widest text-[var(--ink-soft)]">
         {formatTrtDate(today)} · #{puzzleNumber(today)}
       </p>
-      <h1 className="mt-2 text-center font-display text-4xl">Günün bulmacaları</h1>
+      <h1 className="font-display-flourish mt-2 text-center font-display text-4xl sm:text-5xl">Günün bulmacaları</h1>
       <div className="mt-4 flex justify-center">
         {streak
           ? <StreakBadge current={streak.currentStreak} best={streak.bestStreak} />

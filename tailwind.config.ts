@@ -12,7 +12,7 @@ const config: Config = {
       fontFamily: {
         sans: ['var(--font-inter)', 'system-ui', 'sans-serif'],
         display: ['var(--font-fraunces)', 'Georgia', 'serif'],
-        mono: ['ui-monospace', 'SFMono-Regular', 'monospace'],
+        mono: ['var(--font-plex-mono)', 'ui-monospace', 'SFMono-Regular', 'monospace'],
       },
     },
   },
