@@ -24,12 +24,22 @@ export const WHITE_RATIO_MAX = 0.8;
 
 type Candidate = { entry: BankEntry; placement: Placement; crossings: number };
 
+// Bir kelimenin harfleri, aynı hücrede aynı yönde daha önce yerleşmiş başka bir
+// kelimenin ÖN EKİ olabilir (örn. "ÇAM" / "ÇAMUR") — canPlace bunu geçerli bir
+// "kesişim" sanır (her harf zaten grid'de var), ama sonuçta iki farklı entry
+// tam olarak aynı (row,col,dir) üzerinde başlar. hashKey(no,dir) bu ikisini
+// AYNI anahtara düşürdüğü için istemci ikisini asla birlikte doğrulayamaz ve
+// oyun hiçbir zaman bitmez (gerçek bir üretim canlı hatası — bkz. Task 18
+// sonrası kullanıcı raporu). Bu yüzden aynı başlangıç hücresi+yön ikinci kez
+// kabul edilmez.
+const startKey = (p: Placement): string => `${p.row}:${p.col}:${p.dir}`;
+
 // tek bir kelimenin ızgaradaki en iyi (en çok kesişimli) yerleşimini bulur.
 // not: TS'in kontrol akışı analizi çok derin iç içe döngülerde `best`
 // değişkeninin tipini yanlışlıkla `never`e daraltıyor (bkz. strict tsc hatası);
 // bu yardımcı fonksiyon aynı mantığı, aynı sonucu üreterek ayırır.
 function bestPlacementForEntry(
-  entry: BankEntry, letters: Letters, size: number,
+  entry: BankEntry, letters: Letters, size: number, usedStarts: Set<string>,
 ): { placement: Placement; crossings: number } | null {
   let best: { placement: Placement; crossings: number } | null = null;
   for (let r = 0; r < size; r++) {
@@ -43,6 +53,7 @@ function bestPlacementForEntry(
             row: dir === 'down' ? r - i : r,
             col: dir === 'across' ? c - i : c,
           };
+          if (usedStarts.has(startKey(placement))) continue;
           const crossings = canPlace(letters, size, placement);
           if (crossings > 0 && (best === null || crossings > best.crossings)) {
             best = { placement, crossings };
@@ -60,7 +71,7 @@ function bestPlacementForEntry(
 // seçiminin yerleşimleri tek bir kümede toplayıp geri kalan kelimeler için
 // geçerli kesişim noktası bırakmama sorununu (bkz. task-9-report.md) giderir.
 function firstPlacementForEntry(
-  entry: BankEntry, letters: Letters, size: number, rng: Rng,
+  entry: BankEntry, letters: Letters, size: number, rng: Rng, usedStarts: Set<string>,
 ): Placement | null {
   const rows = shuffle(rng, Array.from({ length: size }, (_, i) => i));
   const cols = shuffle(rng, Array.from({ length: size }, (_, i) => i));
@@ -76,6 +87,7 @@ function firstPlacementForEntry(
             row: dir === 'down' ? r - i : r,
             col: dir === 'across' ? c - i : c,
           };
+          if (usedStarts.has(startKey(placement))) continue;
           if (canPlace(letters, size, placement) > 0) return placement;
         }
       }
@@ -104,6 +116,7 @@ export function generatePuzzle(opts: {
   const letters: Letters = emptyLetters(size);
   const placed: { entry: BankEntry; placement: Placement }[] = [];
   const used = new Set<string>();
+  const usedStarts = new Set<string>(); // aynı (row,col,dir) ikinci kez kullanılmasın
 
   // ilk kelime: havuzdaki en uzunlardan biri, merkeze yatay
   const maxLen = Math.max(...pool.map((e) => e.word.length));
@@ -117,6 +130,7 @@ export function generatePuzzle(opts: {
   applyPlacement(letters, firstPlacement);
   placed.push({ entry: firstEntry, placement: firstPlacement });
   used.add(firstEntry.word);
+  usedStarts.add(startKey(firstPlacement));
 
   // FAZ A — iskelet: sadece bir kaç uzun kelimeyi (len >= size-2) en-çok-kesişimli
   // (greedy) seçimle yerleştir. Amaç yayılmış birkaç "omurga" kelimesi bırakmak;
@@ -129,7 +143,7 @@ export function generatePuzzle(opts: {
     let best: Candidate | null = null;
     for (const entry of pool) {
       if (used.has(entry.word) || entry.word.length < skeletonMinLen) continue;
-      const candidate = bestPlacementForEntry(entry, letters, size);
+      const candidate = bestPlacementForEntry(entry, letters, size, usedStarts);
       if (candidate !== null && (best === null || candidate.crossings > best.crossings)) {
         best = { entry, placement: candidate.placement, crossings: candidate.crossings };
       }
@@ -138,6 +152,7 @@ export function generatePuzzle(opts: {
     applyPlacement(letters, best.placement);
     placed.push({ entry: best.entry, placement: best.placement });
     used.add(best.entry.word);
+    usedStarts.add(startKey(best.placement));
   }
 
   // FAZ B — doldurma: kalan kelimeler arasından her turda en KISA olanı tercih
@@ -153,11 +168,12 @@ export function generatePuzzle(opts: {
       .sort((a, b) => a.word.length - b.word.length);
     for (const entry of remaining) {
       if (placed.length >= preset.maxWords) break;
-      const placement = firstPlacementForEntry(entry, letters, size, rng);
+      const placement = firstPlacementForEntry(entry, letters, size, rng, usedStarts);
       if (placement === null) continue;
       applyPlacement(letters, placement);
       placed.push({ entry, placement });
       used.add(entry.word);
+      usedStarts.add(startKey(placement));
       progressed = true;
     }
   }
@@ -206,6 +222,17 @@ export function validateGenerated(p: GeneratedPuzzle): string[] {
     if (w.word.length < 3) errors.push(`kısa kelime: ${w.word}`);
     if (seen.has(w.word)) errors.push(`tekrar: ${w.word}`);
     seen.add(w.word);
+  }
+
+  // 1b) iki farklı entry aynı (row,col,dir) üzerinde başlayamaz — biri diğerinin
+  // ön eki olduğunda (ör. "ÇAM"/"ÇAMUR") canPlace bunu geçerli kesişim sanabilir,
+  // ama hashKey(no,dir) ikisini aynı anahtara düşürür ve istemci ikisini birden
+  // asla doğrulayamaz (oyun hiç bitmeyen bir çıkmaza girer).
+  const startSeen = new Set<string>();
+  for (const w of words) {
+    const key = `${w.row}:${w.col}:${w.dir}`;
+    if (startSeen.has(key)) errors.push(`aynı başlangıçta çakışan entry: ${key} (${w.word})`);
+    startSeen.add(key);
   }
 
   // 2) her maksimal ≥2 dizi yerleştirilmiş bir kelimeye karşılık gelir

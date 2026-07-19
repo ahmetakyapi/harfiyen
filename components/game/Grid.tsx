@@ -45,13 +45,14 @@ export function Grid({ puzzle, letters, sel, activeCells, correctCells, flashCel
           const bg = isSel ? 'bg-[var(--cell-active)]'
             : activeCells.has(key) ? 'bg-[var(--cell-word)]'
             : 'bg-[var(--cell)]';
-          // Seçim yalnızca renkle değil, belirgin bir halkayla da işaretlenir —
-          // renk körlüğünde veya düşük kontrastlı ekranlarda bile "hangi hücredeyim" net kalsın.
-          const ring = isSel ? 'ring-2 ring-inset ring-[var(--accent)]' : '';
+          // Seçim yalnızca renkle değil, kalın bir halka + hafif büyütmeyle de
+          // işaretlenir — renk körlüğünde veya düşük kontrastlı ekranlarda bile
+          // "hangi hücredeyim" tek bakışta net olsun.
+          const ring = isSel ? 'z-20 scale-[1.06] ring-[3px] ring-inset ring-[var(--accent)] shadow-md' : '';
           return (
             <button key={key} type="button" role="gridcell"
               onPointerDown={(e) => { e.preventDefault(); onCellTap(r, c); }}
-              className={`relative aspect-square rounded-[3px] ${bg} ${ring} outline-none transition-colors duration-100`}
+              className={`relative aspect-square rounded-[3px] ${bg} ${ring} outline-none transition-all duration-100`}
               aria-label={`Satır ${r + 1}, sütun ${c + 1}`}>
               {isCorrect && (
                 <motion.span
@@ -72,7 +73,7 @@ export function Grid({ puzzle, letters, sel, activeCells, correctCells, flashCel
                 />
               )}
               {numberAt.has(key) && (
-                <span className="pointer-events-none absolute left-0.5 top-0 z-10 text-[0.5rem] leading-tight text-[var(--ink-soft)]">
+                <span className="pointer-events-none absolute left-1 top-0.5 z-10 text-[0.7rem] font-bold leading-tight text-[var(--ink)]">
                   {numberAt.get(key)}
                 </span>
               )}
