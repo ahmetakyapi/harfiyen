@@ -1,12 +1,12 @@
 'use client';
 
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Eraser } from 'lucide-react';
 import type { Entry } from '@/lib/types';
 
 const DIR_LABEL = { across: 'Soldan sağa', down: 'Yukarıdan aşağıya' } as const;
 
-export function ClueBar({ entry, onPrev, onNext, onToggleDir }: {
-  entry: Entry; onPrev: () => void; onNext: () => void; onToggleDir: () => void;
+export function ClueBar({ entry, onPrev, onNext, onToggleDir, onClearWord }: {
+  entry: Entry; onPrev: () => void; onNext: () => void; onToggleDir: () => void; onClearWord: () => void;
 }) {
   return (
     <div className="flex min-h-14 items-stretch gap-1 rounded-xl bg-[var(--ink)] pl-1 pr-1 text-[var(--paper)] shadow-sm">
@@ -28,6 +28,11 @@ export function ClueBar({ entry, onPrev, onNext, onToggleDir }: {
           </span>
           <span className="block text-base font-medium leading-snug">{entry.clue}</span>
         </span>
+      </button>
+      <button type="button" onClick={onClearWord} aria-label="Bu kelimeyi temizle (doğrular korunur)"
+        title="Kelimeyi temizle"
+        className="flex min-w-11 items-center justify-center rounded-lg px-1.5 opacity-70 hover:opacity-100">
+        <Eraser className="h-4 w-4" />
       </button>
       <button type="button" onClick={onNext} aria-label="Sonraki ipucu"
         className="flex min-w-11 items-center justify-center rounded-lg px-2 opacity-70 hover:opacity-100">

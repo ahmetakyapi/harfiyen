@@ -1,6 +1,9 @@
 import type { Difficulty } from './types';
 
 const LABELS: Record<Difficulty, string> = { easy: 'Kolay', medium: 'Orta', hard: 'Zor' };
+// Wordle'ın renkli kare mantığının Harfiyen karşılığı: zorluk seviyesi renkli bir
+// yuvarlakla anında okunur, cevaplara dair hiçbir sızıntı içermez.
+const DIFFICULTY_EMOJI: Record<Difficulty, string> = { easy: '🟢', medium: '🟡', hard: '🔴' };
 export const SITE_URL = 'harfiyen.vercel.app';
 
 export function formatDuration(ms: number): string {
@@ -13,11 +16,13 @@ export function formatDuration(ms: number): string {
 }
 
 export function buildShareText(opts: {
-  number: number; difficulty: Difficulty; durationMs: number; rank?: number | null;
+  number: number; difficulty: Difficulty; durationMs: number; rank?: number | null; hintCount?: number;
 }): string {
-  const parts = [
-    `Harfiyen #${opts.number}`, LABELS[opts.difficulty], `⏱ ${formatDuration(opts.durationMs)}`,
+  const lines = [
+    `🧩 Harfiyen #${opts.number} · ${DIFFICULTY_EMOJI[opts.difficulty]} ${LABELS[opts.difficulty]}`,
+    `⏱ ${formatDuration(opts.durationMs)}${opts.rank != null ? ` · 🏅 ${opts.rank}. sıra` : ''}`,
   ];
-  if (opts.rank != null) parts.push(`🏅 ${opts.rank}.`);
-  return `${parts.join(' · ')}\n${SITE_URL}`;
+  if (opts.hintCount) lines.push(`💡 ${opts.hintCount} ipucu`);
+  lines.push('', SITE_URL);
+  return lines.join('\n');
 }

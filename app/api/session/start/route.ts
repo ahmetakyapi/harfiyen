@@ -11,6 +11,13 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (!parsed.success) return NextResponse.json({ error: 'Geçersiz istek.' }, { status: 400 });
   try {
     const identity = await ensureIdentity();
+    // Sayfa seviyesindeki üyelik kapısını atlayıp API'ye doğrudan istek atan bir
+    // misafiri de reddet: aksi halde misafir → üye geçişiyle aynı bulmacayı
+    // "temiz" bir kimlikle tekrar oynama açığı (bkz. play/page.tsx) API'den
+    // hâlâ mümkün olurdu.
+    if (identity.userId === null) {
+      return NextResponse.json({ error: 'GİRİŞ_GEREKLİ' }, { status: 401 });
+    }
     const result = await startSession(getDb(), { ...parsed.data, identity });
     return NextResponse.json(result);
   } catch (err) {

@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { auth } from '@/lib/auth';
 import { addDays, formatTrtDate, gameDay } from '@/lib/date';
+import { DIFFICULTY_LABELS } from '@/lib/difficulty';
 import { getDb } from '@/lib/db';
 import { getLeaderboard } from '@/lib/game/leaderboard';
 import { DIFFICULTIES, type Difficulty } from '@/lib/types';
@@ -9,8 +10,6 @@ import { formatDuration } from '@/lib/share';
 
 export const metadata = { title: 'Sıralama — Harfiyen' };
 export const dynamic = 'force-dynamic';
-
-const LABELS: Record<Difficulty, string> = { easy: 'Kolay', medium: 'Orta', hard: 'Zor' };
 
 export default async function LeaderboardPage({ searchParams }: {
   searchParams: { date?: string; difficulty?: string };
@@ -37,7 +36,7 @@ export default async function LeaderboardPage({ searchParams }: {
         {DIFFICULTIES.map((d) => (
           <Link key={d} href={`/leaderboard?date=${date}&difficulty=${d}`}
             className={`rounded-full px-4 py-1 text-sm ${d === difficulty ? 'bg-[var(--ink)] text-[var(--paper)]' : 'border border-[var(--line)]'}`}>
-            {LABELS[d]}
+            {DIFFICULTY_LABELS[d]}
           </Link>
         ))}
       </nav>

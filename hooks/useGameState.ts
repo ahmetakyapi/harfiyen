@@ -14,7 +14,9 @@ export type GameAction =
   | { type: 'NEXT_ENTRY'; delta: 1 | -1 }
   | { type: 'MOVE'; dRow: number; dCol: number }
   | { type: 'SET_LETTERS'; letters: Letters }
-  | { type: 'REVEAL'; row: number; col: number; letter: string };
+  | { type: 'REVEAL'; row: number; col: number; letter: string }
+  | { type: 'CLEAR_WORD'; protectedCells: Set<string> }
+  | { type: 'CLEAR_ALL'; protectedCells: Set<string> };
 
 const other = (d: Direction): Direction => (d === 'across' ? 'down' : 'across');
 
@@ -153,6 +155,23 @@ export function createReducer(ctx: GridCtx) {
       }
       case 'SET_LETTERS':
         return { ...state, letters: action.letters };
+      case 'CLEAR_WORD': {
+        const letters = cloneLetters(state.letters);
+        for (const c of cellsOf(activeEntry(ctx, state.sel))) {
+          if (!action.protectedCells.has(`${c.row}:${c.col}`)) letters[c.row][c.col] = null;
+        }
+        return { ...state, letters };
+      }
+      case 'CLEAR_ALL': {
+        const letters = cloneLetters(state.letters);
+        for (let r = 0; r < ctx.size; r++) {
+          for (let c = 0; c < ctx.size; c++) {
+            if (ctx.black[r][c] || action.protectedCells.has(`${r}:${c}`)) continue;
+            letters[r][c] = null;
+          }
+        }
+        return { ...state, letters };
+      }
       default:
         return state;
     }

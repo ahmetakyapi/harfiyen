@@ -10,10 +10,20 @@ describe('formatDuration', () => {
 });
 
 describe('buildShareText', () => {
-  it('spoiler içermeyen paylaşım metni üretir', () => {
-    const text = buildShareText({ number: 42, difficulty: 'hard', durationMs: 134_000, rank: 12 });
-    expect(text).toBe('Harfiyen #42 · Zor · ⏱ 2:14 · 🏅 12.\nharfiyen.vercel.app');
-    const noRank = buildShareText({ number: 42, difficulty: 'easy', durationMs: 61_000 });
-    expect(noRank).toBe('Harfiyen #42 · Kolay · ⏱ 1:01\nharfiyen.vercel.app');
+  it('spoiler içermeyen, Wordle-tarzı renkli-zorluk paylaşım metni üretir', () => {
+    const text = buildShareText({ number: 42, difficulty: 'hard', durationMs: 134_000, rank: 12, hintCount: 1 });
+    expect(text).toBe(
+      '🧩 Harfiyen #42 · 🔴 Zor\n⏱ 2:14 · 🏅 12. sıra\n💡 1 ipucu\n\nharfiyen.vercel.app',
+    );
+  });
+  it('sıra ve ipucu olmadan da doğru biçimlenir', () => {
+    const text = buildShareText({ number: 42, difficulty: 'easy', durationMs: 61_000 });
+    expect(text).toBe('🧩 Harfiyen #42 · 🟢 Kolay\n⏱ 1:01\n\nharfiyen.vercel.app');
+  });
+  it('cevap/kelime içeriği asla üretilen metinde yer almaz', () => {
+    const text = buildShareText({ number: 1, difficulty: 'medium', durationMs: 10_000, rank: 1, hintCount: 3 });
+    // fonksiyon yalnızca number/difficulty/durationMs/rank/hintCount alır —
+    // bulmaca cevaplarına erişimi bile yok, bu test o sözleşmeyi belgeler.
+    expect(text).not.toMatch(/[A-ZÇĞİÖŞÜ]{3,}/);
   });
 });

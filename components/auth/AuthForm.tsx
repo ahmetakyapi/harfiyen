@@ -4,7 +4,13 @@ import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
-export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
+// Yalnızca site-içi göreli yollara izin verilir — açık yönlendirme (open
+// redirect) riskine karşı ("//evil.com" gibi protokol-göreli yollar reddedilir).
+function safeNext(next: string | undefined): string {
+  return next && next.startsWith('/') && !next.startsWith('//') ? next : '/';
+}
+
+export function AuthForm({ mode, next }: { mode: 'login' | 'register'; next?: string }) {
   const router = useRouter();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -31,7 +37,7 @@ export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
     const result = await signIn('credentials', { username, password, redirect: false });
     setBusy(false);
     if (result?.error) setError('Kullanıcı adı veya şifre hatalı.');
-    else { router.push('/'); router.refresh(); }
+    else { router.push(safeNext(next)); router.refresh(); }
   }
 
   return (

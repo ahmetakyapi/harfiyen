@@ -94,6 +94,43 @@ describe('MOVE', () => {
   });
 });
 
+describe('CLEAR_WORD', () => {
+  it('yalnızca aktif kelimenin hücrelerini temizler, korunanları atlar', () => {
+    let s = initialState(ctx);
+    for (const l of ['K', 'A', 'L', 'E', 'M']) s = reduce(s, { type: 'TYPE', letter: l });
+    // sel şu an 1-down'a geçmiş olabilir; 1-across'u temizlemek için oraya seç
+    s = reduce(s, { type: 'SELECT', row: 0, col: 1 });
+    const cleared = reduce(s, { type: 'CLEAR_WORD', protectedCells: new Set() });
+    expect(cleared.letters[0]).toEqual([null, null, null, null, null]);
+  });
+  it('korunan (doğru) hücreyi silmez, aynı kelimenin diğer hücrelerini siler', () => {
+    let s = initialState(ctx);
+    for (const l of ['K', 'A', 'L', 'E', 'M']) s = reduce(s, { type: 'TYPE', letter: l });
+    s = reduce(s, { type: 'SELECT', row: 0, col: 1 });
+    const cleared = reduce(s, { type: 'CLEAR_WORD', protectedCells: new Set(['0:0']) });
+    expect(cleared.letters[0][0]).toBe('K');
+    expect(cleared.letters[0].slice(1)).toEqual([null, null, null, null]);
+  });
+});
+
+describe('CLEAR_ALL', () => {
+  it('siyah olmayan tüm hücreleri temizler', () => {
+    let s = initialState(ctx);
+    for (const l of ['K', 'A', 'L', 'E', 'M']) s = reduce(s, { type: 'TYPE', letter: l });
+    s = reduce(s, { type: 'SELECT', row: 1, col: 2 });
+    s = reduce(s, { type: 'TYPE', letter: 'A' });
+    const cleared = reduce(s, { type: 'CLEAR_ALL', protectedCells: new Set() });
+    expect(cleared.letters[0]).toEqual([null, null, null, null, null]);
+    expect(cleared.letters[1][2]).toBeNull();
+  });
+  it('korunan hücreleri her kelimede atlar', () => {
+    let s = initialState(ctx);
+    for (const l of ['K', 'A', 'L', 'E', 'M']) s = reduce(s, { type: 'TYPE', letter: l });
+    const cleared = reduce(s, { type: 'CLEAR_ALL', protectedCells: new Set(['0:0', '0:4']) });
+    expect(cleared.letters[0]).toEqual(['K', null, null, null, 'M']);
+  });
+});
+
 describe('yardımcılar', () => {
   it('entryString eksikte null, tamamda kelime döner', () => {
     let s = initialState(ctx);

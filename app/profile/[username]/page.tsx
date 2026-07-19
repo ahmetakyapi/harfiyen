@@ -1,14 +1,13 @@
 import { notFound } from 'next/navigation';
 import { auth, signOut } from '@/lib/auth';
+import { DIFFICULTY_LABELS } from '@/lib/difficulty';
 import { getDb } from '@/lib/db';
 import { getProfileStats } from '@/lib/game/stats';
 import { formatDuration } from '@/lib/share';
 import { formatTrtDate } from '@/lib/date';
-import { DIFFICULTIES, type Difficulty } from '@/lib/types';
+import { DIFFICULTIES } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
-
-const LABELS: Record<Difficulty, string> = { easy: 'Kolay', medium: 'Orta', hard: 'Zor' };
 
 export default async function ProfilePage({ params }: { params: { username: string } }) {
   const stats = await getProfileStats(getDb(), params.username.toLocaleLowerCase('tr-TR'));
@@ -45,7 +44,7 @@ export default async function ProfilePage({ params }: { params: { username: stri
             const p = stats.perDifficulty[d];
             return (
               <tr key={d}>
-                <td className="py-2 font-medium">{LABELS[d]}</td>
+                <td className="py-2 font-medium">{DIFFICULTY_LABELS[d]}</td>
                 <td>{p.solved}</td>
                 <td className="font-mono tabular-nums">{p.bestMs !== null ? formatDuration(p.bestMs) : '—'}</td>
                 <td className="font-mono tabular-nums">{p.avgMs !== null ? formatDuration(p.avgMs) : '—'}</td>
@@ -60,7 +59,7 @@ export default async function ProfilePage({ params }: { params: { username: stri
           <ul className="mt-2 divide-y divide-[var(--line)] text-sm">
             {stats.recent.map((r) => (
               <li key={`${r.date}:${r.difficulty}`} className="flex justify-between py-2">
-                <span>{formatTrtDate(r.date)} · {LABELS[r.difficulty]}</span>
+                <span>{formatTrtDate(r.date)} · {DIFFICULTY_LABELS[r.difficulty]}</span>
                 <span className="font-mono tabular-nums">{formatDuration(r.durationMs)}</span>
               </li>
             ))}

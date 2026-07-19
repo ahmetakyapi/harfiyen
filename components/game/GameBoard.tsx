@@ -1,14 +1,13 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Lightbulb } from 'lucide-react';
+import { Eraser, Lightbulb } from 'lucide-react';
 import { activeEntry, allCellsFilled, cellsOf, entryString, useGameState } from '@/hooks/useGameState';
+import { DIFFICULTY_BADGE_CLASS, DIFFICULTY_LABELS } from '@/lib/difficulty';
 import { wordHash } from '@/lib/hash';
 import { trUpper } from '@/lib/tr';
 import { formatTrtDate } from '@/lib/date';
-import {
-  type ClientPuzzle, type Difficulty, type Letters, hashKey,
-} from '@/lib/types';
+import { type ClientPuzzle, type Letters, hashKey } from '@/lib/types';
 import { ClueBar } from './ClueBar';
 import { FinishDialog } from './FinishDialog';
 import { Grid } from './Grid';
@@ -16,23 +15,12 @@ import { HowToModal } from './HowToModal';
 import { Keyboard } from './Keyboard';
 import { Timer } from './Timer';
 
-const LABELS: Record<Difficulty, string> = { easy: 'Kolay', medium: 'Orta', hard: 'Zor' };
-// Zorluk rozetleri "correct" (kolay) → "accent" (zor) ekseninde ilerler; oyuncu
-// bir bakışta hangi zorlukta olduğunu, kelime/ipucu bekelemeden renkten anlar.
-const DIFFICULTY_BADGE: Record<Difficulty, string> = {
-  easy: 'bg-[var(--correct-soft)] text-[var(--correct)]',
-  medium: 'bg-[var(--accent-soft)] text-[var(--ink)]',
-  // text-white DEĞİL: dark modda --accent açık bir turuncu olduğundan beyaz metin
-  // WCAG AA'yı geçemez (~2.8:1). --paper her iki temada da doğru yönde tersine döner.
-  hard: 'bg-[var(--accent)] text-[var(--paper)]',
-};
-
 type SessionInfo = {
   sessionId: number; startedAt: string; serverNow: string; existing: boolean;
   status: 'active' | 'completed'; hintCount: number; penaltyMs: number;
   durationMs: number | null; isRanked: boolean;
 };
-type Phase = 'idle' | 'starting' | 'playing' | 'submitting' | 'done';
+type Phase = 'idle' | 'starting' | 'playing' | 'submitting' | 'done' | 'revisit';
 
 async function post<T>(url: string, body: unknown): Promise<T> {
   const res = await fetch(url, {
@@ -42,8 +30,8 @@ async function post<T>(url: string, body: unknown): Promise<T> {
   return (await res.json()) as T;
 }
 
-export function GameBoard({ puzzle, puzzleNumber, isGuest, isArchive }: {
-  puzzle: ClientPuzzle; puzzleNumber: number; isGuest: boolean; isArchive: boolean;
+export function GameBoard({ puzzle, puzzleNumber, isArchive }: {
+  puzzle: ClientPuzzle; puzzleNumber: number; isArchive: boolean;
 }) {
   const ctx = useMemo(
     () => ({ size: puzzle.size, black: puzzle.black, entries: puzzle.entries }),
@@ -58,6 +46,7 @@ export function GameBoard({ puzzle, puzzleNumber, isGuest, isArchive }: {
   const [error, setError] = useState<string | null>(null);
   const [correctKeys, setCorrectKeys] = useState<Set<string>>(new Set());
   const [flashCell, setFlashCell] = useState<string | null>(null);
+  const [hintBusy, setHintBusy] = useState(false);
   const submitting = useRef(false);
 
   const storageKey = session ? `harfiyen:letters:${session.sessionId}` : null;
@@ -71,8 +60,22 @@ export function GameBoard({ puzzle, puzzleNumber, isGuest, isArchive }: {
       setPenaltyMs(s.penaltyMs);
       setHintCount(s.hintCount);
       if (s.status === 'completed') {
-        setResult({ durationMs: s.durationMs ?? 0, rank: null, isRanked: s.isRanked });
-        setPhase('done');
+        // Daha önce bitirilmiş bir bölüme dönüldüğünde grid HİÇBİR ZAMAN
+        // render edilmez (aşağıdaki 'revisit' dalı) — cevapların ekran
+        // görüntüsüyle başkasına sızması engellenir. Sırayı/puanı yine de
+        // göstermek için submit'i idempotent olarak tekrar çağırıyoruz:
+        // tamamlanmış bir oturumda letters hiç karşılaştırılmadan önbellekten
+        // rank döner (bkz. lib/game/session.ts finishSession).
+        try {
+          const r = await post<
+            { correct: false } | { correct: true; durationMs: number; rank: number | null; isRanked: boolean }
+          >('/api/session/submit', { sessionId: s.sessionId, letters: state.letters });
+          if (r.correct) setResult({ durationMs: r.durationMs, rank: r.rank, isRanked: r.isRanked });
+          else setResult({ durationMs: s.durationMs ?? 0, rank: null, isRanked: s.isRanked });
+        } catch {
+          setResult({ durationMs: s.durationMs ?? 0, rank: null, isRanked: s.isRanked });
+        }
+        setPhase('revisit');
         return;
       }
       const saved = localStorage.getItem(`harfiyen:letters:${s.sessionId}`);
@@ -82,7 +85,7 @@ export function GameBoard({ puzzle, puzzleNumber, isGuest, isArchive }: {
       setError('Bağlantı kurulamadı. Tekrar dene.');
       setPhase('idle');
     }
-  }, [puzzle.id, isArchive, dispatch]);
+  }, [puzzle.id, isArchive, dispatch, state.letters]);
 
   // harfler değiştikçe kaydet + doğru kelimeleri hash ile işaretle
   useEffect(() => {
@@ -136,24 +139,59 @@ export function GameBoard({ puzzle, puzzleNumber, isGuest, isArchive }: {
     })();
   }, [correctKeys, phase, session, state.letters, ctx, puzzle.entries.length, storageKey]);
 
+  const entry = phase === 'playing' ? activeEntry(ctx, state.sel) : null;
+  const activeCells = new Set(entry ? cellsOf(entry).map((c) => `${c.row}:${c.col}`) : []);
+  const correctCells = new Set<string>();
+  for (const e of puzzle.entries) {
+    if (correctKeys.has(hashKey(e.no, e.dir))) {
+      for (const c of cellsOf(e)) correctCells.add(`${c.row}:${c.col}`);
+    }
+  }
+
   const hint = useCallback(async () => {
-    if (!session || phase !== 'playing') return;
-    if (state.letters[state.sel.row][state.sel.col] !== null) return; // dolu hücreye ipucu yok
+    if (!session || phase !== 'playing' || hintBusy) return;
+    // Seçili hücre zaten yeşilse (doğrulanmış), ipucu boşa gitmesin — kelimenin
+    // sıradaki boş hücresine geç. Eskiden bu durumda buton sessizce hiçbir şey
+    // yapmıyordu ("basınca hemen olmuyor" şikâyeti tam da buydu); artık ya
+    // anlamlı bir hücreyi açar ya da neden yapamadığını söyler.
+    let target = state.sel;
+    const filled = state.letters[target.row][target.col] !== null;
+    if (filled && correctCells.has(`${target.row}:${target.col}`)) {
+      const active = activeEntry(ctx, state.sel);
+      const nextEmpty = cellsOf(active).find((c) => state.letters[c.row][c.col] === null);
+      if (!nextEmpty) { setError('Bu kelime zaten tamamlandı.'); return; }
+      target = { ...state.sel, row: nextEmpty.row, col: nextEmpty.col };
+    }
+    setHintBusy(true);
+    setError(null);
     try {
       const r = await post<{ letter: string; hintCount: number; penaltyMs: number }>(
         '/api/session/hint',
-        { sessionId: session.sessionId, row: state.sel.row, col: state.sel.col },
+        { sessionId: session.sessionId, row: target.row, col: target.col },
       );
       setPenaltyMs(r.penaltyMs);
       setHintCount(r.hintCount);
-      const key = `${state.sel.row}:${state.sel.col}`;
-      dispatch({ type: 'REVEAL', row: state.sel.row, col: state.sel.col, letter: r.letter });
+      const key = `${target.row}:${target.col}`;
+      dispatch({ type: 'REVEAL', row: target.row, col: target.col, letter: r.letter });
+      if (target.row !== state.sel.row || target.col !== state.sel.col) {
+        dispatch({ type: 'SELECT', row: target.row, col: target.col });
+      }
       setFlashCell(key);
       setTimeout(() => setFlashCell((current) => (current === key ? null : current)), 500);
     } catch {
-      setError('İpucu alınamadı.');
+      setError('İpucu alınamadı. Tekrar dene.');
+    } finally {
+      setHintBusy(false);
     }
-  }, [session, phase, state.sel, state.letters, dispatch]);
+  }, [session, phase, hintBusy, state.sel, state.letters, correctCells, ctx, dispatch]);
+
+  const clearWord = useCallback(() => {
+    dispatch({ type: 'CLEAR_WORD', protectedCells: correctCells });
+  }, [dispatch, correctCells]);
+
+  const clearAll = useCallback(() => {
+    dispatch({ type: 'CLEAR_ALL', protectedCells: correctCells });
+  }, [dispatch, correctCells]);
 
   // fiziksel klavye
   useEffect(() => {
@@ -182,21 +220,12 @@ export function GameBoard({ puzzle, puzzleNumber, isGuest, isArchive }: {
     return () => window.removeEventListener('keydown', onKey);
   }, [phase, dispatch, state.sel]);
 
-  const entry = phase === 'playing' ? activeEntry(ctx, state.sel) : null;
-  const activeCells = new Set(entry ? cellsOf(entry).map((c) => `${c.row}:${c.col}`) : []);
-  const correctCells = new Set<string>();
-  for (const e of puzzle.entries) {
-    if (correctKeys.has(hashKey(e.no, e.dir))) {
-      for (const c of cellsOf(e)) correctCells.add(`${c.row}:${c.col}`);
-    }
-  }
-
   if (phase === 'idle' || phase === 'starting') {
     return (
       <div className="mx-auto max-w-sm px-4 py-16 text-center">
         <p className="font-display text-4xl">Harfiyen #{puzzleNumber}</p>
         <p className="mt-2 text-[var(--ink-soft)]">
-          {LABELS[puzzle.difficulty]} · {puzzle.size}×{puzzle.size} · {puzzle.entries.length} kelime
+          {DIFFICULTY_LABELS[puzzle.difficulty]} · {puzzle.size}×{puzzle.size} · {puzzle.entries.length} kelime
           <br />{formatTrtDate(puzzle.date)}
         </p>
         {isArchive && <p className="mt-3 text-sm text-[var(--ink-soft)]">Arşiv oyunu — sıralamaya girmez.</p>}
@@ -211,6 +240,19 @@ export function GameBoard({ puzzle, puzzleNumber, isGuest, isArchive }: {
     );
   }
 
+  if (phase === 'revisit') {
+    // Grid/Keyboard/ClueBar BİLEREK hiç render edilmiyor — daha önce çözülmüş
+    // bir bölüme dönüldüğünde cevapların ekran görüntüsüyle sızması engellenir.
+    // FinishDialog kendi başına tam ekran (fixed inset-0) bir katman olduğundan
+    // sarmalayıcı bir kapsayıcıya gerek yok. Sıra/puan/ipucu sayısı yine de
+    // gösterilir (start()'taki idempotent submit çağrısından gelir).
+    return (
+      <FinishDialog open durationMs={result?.durationMs ?? 0} rank={result?.rank ?? null}
+        isRanked={result?.isRanked ?? false} hintCount={hintCount} puzzleNumber={puzzleNumber}
+        difficulty={puzzle.difficulty} date={puzzle.date} />
+    );
+  }
+
   return (
     // Sabit dvh + mt-auto YOK: klavye içeriğin doğal akışında, ipucu çubuğunun
     // hemen altında durur. Önceki sürümde min-h-[100dvh] + mt-auto, geniş/uzun
@@ -221,18 +263,24 @@ export function GameBoard({ puzzle, puzzleNumber, isGuest, isArchive }: {
           <span className="font-display text-lg font-semibold text-[var(--ink)]">
             #{puzzleNumber}
           </span>
-          <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${DIFFICULTY_BADGE[puzzle.difficulty]}`}>
-            {LABELS[puzzle.difficulty]}
+          <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${DIFFICULTY_BADGE_CLASS[puzzle.difficulty]}`}>
+            {DIFFICULTY_LABELS[puzzle.difficulty]}
           </span>
         </span>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           {session && (
             <Timer startedAt={session.startedAt} serverNow={session.serverNow}
               penaltyMs={penaltyMs} finalMs={result?.durationMs ?? null} />
           )}
-          <button type="button" onClick={hint} aria-label="İpucu al (+15 sn)"
-            className="flex min-h-11 items-center gap-1.5 rounded-full bg-[var(--accent-soft)] px-3 text-sm font-medium text-[var(--ink)] transition-opacity hover:opacity-80">
-            <Lightbulb className="h-4 w-4 text-[var(--accent)]" />+15sn
+          <button type="button" onClick={clearAll} aria-label="Tümünü temizle (doğrular korunur)"
+            title="Tümünü temizle"
+            className="flex h-11 w-11 items-center justify-center rounded-full border border-[var(--line)] text-[var(--ink-soft)] transition-colors hover:bg-[var(--paper-raised)]">
+            <Eraser className="h-4 w-4" />
+          </button>
+          <button type="button" onClick={hint} disabled={hintBusy} aria-label="İpucu al (+15 sn)"
+            className="flex min-h-11 items-center gap-1.5 rounded-full bg-[var(--accent-soft)] px-3 text-sm font-medium text-[var(--ink)] transition-all active:scale-95 disabled:opacity-60">
+            <Lightbulb className={`h-4 w-4 text-[var(--accent)] ${hintBusy ? 'animate-pulse' : ''}`} />
+            {hintBusy ? '…' : '+15sn'}
           </button>
         </div>
       </div>
@@ -241,7 +289,7 @@ export function GameBoard({ puzzle, puzzleNumber, isGuest, isArchive }: {
         activeCells={activeCells} correctCells={correctCells} flashCell={flashCell}
         onCellTap={(row, col) => dispatch({ type: 'SELECT', row, col })} />
       {entry && (
-        <ClueBar entry={entry}
+        <ClueBar entry={entry} onClearWord={clearWord}
           onPrev={() => dispatch({ type: 'NEXT_ENTRY', delta: -1 })}
           onNext={() => dispatch({ type: 'NEXT_ENTRY', delta: 1 })}
           onToggleDir={() => dispatch({ type: 'SELECT', row: state.sel.row, col: state.sel.col })} />
@@ -249,7 +297,7 @@ export function GameBoard({ puzzle, puzzleNumber, isGuest, isArchive }: {
       <Keyboard onLetter={(l) => dispatch({ type: 'TYPE', letter: l })}
         onDelete={() => dispatch({ type: 'DELETE' })} />
       <FinishDialog open={phase === 'done'} durationMs={result?.durationMs ?? 0}
-        rank={result?.rank ?? null} isRanked={result?.isRanked ?? false} isGuest={isGuest}
+        rank={result?.rank ?? null} isRanked={result?.isRanked ?? false}
         hintCount={hintCount} puzzleNumber={puzzleNumber} difficulty={puzzle.difficulty}
         date={puzzle.date} />
     </div>
