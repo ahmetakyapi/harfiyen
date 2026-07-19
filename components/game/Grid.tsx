@@ -39,9 +39,11 @@ export function Grid({ puzzle, letters, sel, activeCells, correctCells, flashCel
           if (isBlack) return <div key={key} className="aspect-square rounded-[3px] bg-[var(--ink)]" />;
           const isSel = sel.row === r && sel.col === c;
           const isCorrect = correctCells.has(key);
+          // NOT: isCorrect burada base rengi belirlemez — hücre normal rengini korur,
+          // --correct-soft'a geçişi SADECE aşağıdaki stagger'lı motion.span overlay taşır.
+          // Aksi halde base className aynı anda --correct-soft'a atlar ve dalga görünmez olur.
           const bg = isSel ? 'bg-[var(--cell-active)]'
             : activeCells.has(key) ? 'bg-[var(--cell-word)]'
-            : isCorrect ? 'bg-[var(--correct-soft)]'
             : 'bg-[var(--cell)]';
           return (
             <button key={key} type="button" role="gridcell"
