@@ -1,40 +1,19 @@
-import type { Metadata } from 'next'
-import { Manrope, IBM_Plex_Mono } from 'next/font/google'
-import { ThemeProvider } from 'next-themes'
-import './globals.css'
-
-const manrope = Manrope({
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700', '800'],
-  variable: '--font-sans',
-  display: 'swap',
-})
-
-const ibmPlexMono = IBM_Plex_Mono({
-  subsets: ['latin'],
-  weight: ['400', '500', '600'],
-  variable: '--font-mono',
-  display: 'swap',
-})
+import type { Metadata } from 'next';
+import { Header } from '@/components/layout/Header';
+import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'PROJECT_NAME',
-  description: 'PROJECT_DESCRIPTION',
-}
+  title: { default: 'Harfiyen — günlük kelime bulmacası', template: '%s — Harfiyen' },
+  description: 'Her gün 09:00\'da üç yeni Türkçe kare bulmaca. Çöz, süreni gör, sıralamaya gir.',
+};
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    // suppressHydrationWarning — next-themes için zorunlu (mistakes.md #1)
-    <html lang="tr" suppressHydrationWarning className={`${manrope.variable} ${ibmPlexMono.variable}`}>
-      <body className={manrope.className}>
-        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
-          {children}
-        </ThemeProvider>
+    <html lang="tr" suppressHydrationWarning>
+      <body className="min-h-dvh bg-[var(--paper)] text-[var(--ink)] antialiased">
+        <Header />
+        {children}
       </body>
     </html>
-  )
+  );
 }

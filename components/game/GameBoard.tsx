@@ -12,6 +12,7 @@ import {
 import { ClueBar } from './ClueBar';
 import { FinishDialog } from './FinishDialog';
 import { Grid } from './Grid';
+import { HowToModal } from './HowToModal';
 import { Keyboard } from './Keyboard';
 import { Timer } from './Timer';
 
@@ -192,6 +193,7 @@ export function GameBoard({ puzzle, puzzleNumber, isGuest, isArchive }: {
           className="mt-6 w-full rounded-xl bg-[var(--ink)] py-3 text-lg font-medium text-[var(--paper)] disabled:opacity-50">
           {phase === 'starting' ? 'Hazırlanıyor…' : 'Başla'}
         </button>
+        <HowToModal />
       </div>
     );
   }

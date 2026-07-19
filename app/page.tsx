@@ -1,120 +1,80 @@
-'use client'
+import Link from 'next/link';
+import { and, eq, inArray, isNull } from 'drizzle-orm';
+import { Countdown } from '@/components/home/Countdown';
+import { DailyCard } from '@/components/home/DailyCard';
+import { StreakBadge } from '@/components/home/StreakBadge';
+import { formatTrtDate, gameDay, puzzleNumber } from '@/lib/date';
+import { getDb } from '@/lib/db';
+import { getIdentity } from '@/lib/game/identity';
+import { playSessions, puzzles, users } from '@/lib/schema';
+import { DIFFICULTIES, type Entry } from '@/lib/types';
 
-import { motion } from 'framer-motion'
-import { useSpotlight } from '@/hooks/useSpotlight'
-import { fadeUp, staggerContainer } from '@/lib/variants'
-import Header from '@/components/layout/Header'
-import Footer from '@/components/layout/Footer'
-import CustomCursor from '@/components/CustomCursor'
+export const dynamic = 'force-dynamic';
 
-export default function Home() {
-  const spotlight = useSpotlight()
+export default async function HomePage() {
+  const db = getDb();
+  const today = gameDay();
+  const rows = await db.select({
+    id: puzzles.id, difficulty: puzzles.difficulty, size: puzzles.size, entries: puzzles.entries,
+  }).from(puzzles).where(eq(puzzles.date, today));
+
+  const identity = await getIdentity(); // RSC: cookie sadece OKUNUR (yazma /api/session/start'ta)
+  const sessionByPuzzle = new Map<number, { status: string; durationMs: number | null }>();
+  if (rows.length > 0 && (identity.userId !== null || identity.anonId !== null)) {
+    const mine = await db.select().from(playSessions).where(and(
+      inArray(playSessions.puzzleId, rows.map((r) => r.id)),
+      identity.userId !== null
+        ? eq(playSessions.userId, identity.userId)
+        : and(isNull(playSessions.userId), eq(playSessions.anonId, identity.anonId ?? '')),
+    ));
+    for (const s of mine) {
+      const prev = sessionByPuzzle.get(s.puzzleId);
+      if (!prev || s.status === 'completed') {
+        sessionByPuzzle.set(s.puzzleId, { status: s.status, durationMs: s.durationMs });
+      }
+    }
+  }
+  const streak = identity.userId !== null
+    ? (await db.select().from(users).where(eq(users.id, identity.userId)))[0] ?? null
+    : null;
 
   return (
-    <>
-      <CustomCursor />
-      <Header />
-
-      <main className="relative min-h-screen overflow-hidden">
-        {/* Spotlight overlay */}
-        <motion.div
-          className="pointer-events-none fixed inset-0 z-0"
-          style={{ background: spotlight }}
-        />
-
-        {/* Hero */}
-        <section className="relative z-10 flex min-h-[calc(100vh-64px)] flex-col items-center justify-center px-6 text-center">
-          <motion.div
-            variants={staggerContainer(0.12)}
-            initial="hidden"
-            animate="visible"
-            className="max-w-3xl"
-          >
-            {/* Badge */}
-            <motion.div variants={fadeUp} className="mb-6 flex justify-center">
-              <span className="chip">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                Projeye hoş geldin
-              </span>
-            </motion.div>
-
-            {/* Başlık */}
-            <motion.h1
-              variants={fadeUp}
-              className="mb-6 text-5xl font-extrabold leading-tight tracking-tight text-slate-100 dark:text-slate-100 sm:text-6xl"
-            >
-              PROJECT_NAME{' '}
-              <span className="bg-gradient-to-r from-indigo-400 via-sky-400 to-cyan-400 bg-clip-text text-transparent">
-                başladı
-              </span>
-            </motion.h1>
-
-            {/* Alt yazı */}
-            <motion.p
-              variants={fadeUp}
-              className="mx-auto mb-10 max-w-xl text-base leading-relaxed text-slate-400"
-            >
-              PROJECT_DESCRIPTION
-            </motion.p>
-
-            {/* CTA Butonları */}
-            <motion.div
-              variants={fadeUp}
-              className="flex flex-wrap items-center justify-center gap-4"
-            >
-              <button className="rounded-xl bg-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-500/20 transition-all hover:bg-indigo-500 hover:shadow-indigo-500/40 active:scale-95">
-                Başla
-              </button>
-              <button className="glass rounded-xl px-6 py-3 text-sm font-semibold text-slate-300 transition-all hover:text-white active:scale-95">
-                Daha Fazla
-              </button>
-            </motion.div>
-          </motion.div>
-        </section>
-
-        {/* Feature Cards */}
-        <section className="relative z-10 mx-auto max-w-5xl px-6 pb-24">
-          <motion.div
-            variants={staggerContainer(0.1)}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: '-80px' }}
-            className="grid gap-4 sm:grid-cols-3"
-          >
-            {FEATURES.map((f) => (
-              <motion.div
-                key={f.title}
-                variants={fadeUp}
-                className="glass rounded-2xl p-6"
-              >
-                <div className="mb-3 text-2xl">{f.icon}</div>
-                <h3 className="mb-2 font-semibold text-slate-100">{f.title}</h3>
-                <p className="text-sm leading-relaxed text-slate-400">{f.desc}</p>
-              </motion.div>
-            ))}
-          </motion.div>
-        </section>
-      </main>
-
-      <Footer />
-    </>
-  )
+    <main className="mx-auto max-w-lg px-4 py-10">
+      <p className="text-center text-sm uppercase tracking-widest text-[var(--ink-soft)]">
+        {formatTrtDate(today)} · #{puzzleNumber(today)}
+      </p>
+      <h1 className="mt-2 text-center font-display text-4xl">Günün bulmacaları</h1>
+      <div className="mt-4 flex justify-center">
+        {streak
+          ? <StreakBadge current={streak.currentStreak} best={streak.bestStreak} />
+          : <p className="text-sm text-[var(--ink-soft)]">
+              <Link href="/register" className="underline">Üye ol</Link> — süreni sıralamada gör, serini başlat.
+            </p>}
+      </div>
+      <div className="mt-8 flex flex-col gap-3">
+        {rows.length === 0 && (
+          <p className="py-12 text-center text-[var(--ink-soft)]">
+            Bugünün bulmacaları henüz yüklenmedi. Birazdan tekrar bak.
+          </p>
+        )}
+        {DIFFICULTIES.map((d) => {
+          const row = rows.find((r) => r.difficulty === d);
+          if (!row) return null;
+          const s = sessionByPuzzle.get(row.id);
+          return (
+            <DailyCard key={d} difficulty={d} size={row.size}
+              wordCount={(row.entries as Entry[]).length} date={today}
+              status={s?.status === 'completed' ? 'bitti' : s ? 'devam' : 'yeni'}
+              durationMs={s?.durationMs ?? null} />
+          );
+        })}
+      </div>
+      <p className="mt-8 text-center text-sm text-[var(--ink-soft)]">
+        Yeni bulmacalara <Countdown /> kaldı
+      </p>
+      <p className="mt-2 text-center text-sm">
+        <Link href="/how-to-play" className="underline">Nasıl oynanır?</Link>
+      </p>
+    </main>
+  );
 }
-
-const FEATURES = [
-  {
-    icon: '⚡',
-    title: 'Hızlı Başlangıç',
-    desc: 'Next.js 14 App Router, Tailwind CSS ve Drizzle ORM ile hazır.',
-  },
-  {
-    icon: '🎨',
-    title: 'Tema Sistemi',
-    desc: 'Dark/light mode, glassmorphism ve tutarlı animasyon sistemi.',
-  },
-  {
-    icon: '🗄️',
-    title: 'Veritabanı Hazır',
-    desc: 'Neon Postgres + Drizzle ORM — serverless için optimize.',
-  },
-]
