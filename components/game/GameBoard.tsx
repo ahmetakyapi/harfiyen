@@ -13,7 +13,6 @@ import { ClueBar } from './ClueBar';
 import { FinishDialog } from './FinishDialog';
 import { Grid } from './Grid';
 import { HowToModal } from './HowToModal';
-import { Keyboard } from './Keyboard';
 import { Timer } from './Timer';
 
 type SessionInfo = {
@@ -167,6 +166,37 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive, alreadyCompleted }:
   const lockedRef = useRef(lockedCells);
   lockedRef.current = lockedCells;
 
+  // Mobilde ekran klavyesi yerine kullanıcının KENDİ klavyesi: grid'in içine
+  // gömülü, görünmez bir input odak tutar; hücreye dokununca odaklanır ve
+  // işletim sisteminin klavyesi açılır. Girdi, sentinel (tek boşluk) diff'iyle
+  // okunur — beforeinput/keydown farklılıklarından (iOS/GBoard/IME) etkilenmez:
+  //   değer boşaldıysa → backspace; boşluk dışı karakter geldiyse → harf(ler).
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const SENTINEL = ' ';
+  const resetNativeInput = (el: HTMLInputElement): void => {
+    el.value = SENTINEL;
+    el.setSelectionRange(SENTINEL.length, SENTINEL.length);
+  };
+  const onNativeInput = (e: React.FormEvent<HTMLInputElement>): void => {
+    const el = e.currentTarget;
+    const v = el.value;
+    if (v.length === 0) {
+      dispatch({ type: 'DELETE', protectedCells: lockedRef.current });
+    } else {
+      for (const ch of v) {
+        if (ch === SENTINEL) continue;
+        dispatch({ type: 'TYPE', letter: trUpper(ch), protectedCells: lockedRef.current });
+      }
+    }
+    resetNativeInput(el);
+  };
+
+  // Oyun başlayınca klavye açılsın; bitince kapanabilsin.
+  useEffect(() => {
+    if (phase === 'playing') inputRef.current?.focus();
+    if (phase === 'done') inputRef.current?.blur();
+  }, [phase]);
+
   const hint = useCallback(async () => {
     if (!session || phase !== 'playing' || hintBusy) return;
     // Seçili hücre zaten yeşilse (doğrulanmış), ipucu boşa gitmesin — kelimenin
@@ -243,7 +273,14 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive, alreadyCompleted }:
         dispatch({ type: 'MOVE', dRow, dCol });
         return;
       }
-      if (e.key.length === 1) dispatch({ type: 'TYPE', letter: trUpper(e.key), protectedCells: lockedRef.current });
+      if (e.key.length === 1) {
+        // preventDefault şart: odak gizli input'tayken karakter input'a da
+        // düşer ve onNativeInput ikinci bir TYPE üretirdi (çift harf).
+        // Mobil IME'ler keydown'u 'Unidentified' gönderir → bu dala girmez,
+        // harf yalnızca onNativeInput yolundan işlenir; çakışma olmaz.
+        e.preventDefault();
+        dispatch({ type: 'TYPE', letter: trUpper(e.key), protectedCells: lockedRef.current });
+      }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -302,7 +339,7 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive, alreadyCompleted }:
   }
 
   if (phase === 'revisit') {
-    // Grid/Keyboard/ClueBar BİLEREK hiç render edilmiyor — daha önce çözülmüş
+    // Grid/ClueBar BİLEREK hiç render edilmiyor — daha önce çözülmüş
     // bir bölüme dönüldüğünde cevapların ekran görüntüsüyle sızması engellenir.
     // FinishDialog kendi başına tam ekran (fixed inset-0) bir katman olduğundan
     // sarmalayıcı bir kapsayıcıya gerek yok. Sıra/puan/ipucu sayısı yine de
@@ -334,12 +371,13 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive, alreadyCompleted }:
                 penaltyMs={penaltyMs} finalMs={result?.durationMs ?? null} />
             </span>
           )}
-          <button type="button" onClick={clearAll} aria-label="Tümünü temizle (doğrular korunur)"
-            title="Tümünü temizle"
+          <button type="button" onClick={clearAll} onPointerDown={(e) => e.preventDefault()}
+            aria-label="Tümünü temizle (doğrular korunur)" title="Tümünü temizle"
             className="flex h-11 w-11 items-center justify-center rounded-full border border-[var(--line)] text-[var(--ink-soft)] transition-colors hover:bg-[var(--paper-raised)]">
             <Eraser className="h-4 w-4" />
           </button>
-          <button type="button" onClick={hint} disabled={hintBusy} aria-label="İpucu al (+15 sn)"
+          <button type="button" onClick={hint} disabled={hintBusy}
+            onPointerDown={(e) => e.preventDefault()} aria-label="İpucu al (+15 sn)"
             className="flex min-h-11 items-center gap-1.5 rounded-full bg-[var(--accent-soft)] px-3 text-sm font-medium text-[var(--ink)] transition-all active:scale-95 disabled:opacity-60">
             <Lightbulb className={`h-4 w-4 text-[var(--accent)] ${hintBusy ? 'animate-pulse' : ''}`} />
             {hintBusy ? '…' : '+15sn'}
@@ -347,18 +385,36 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive, alreadyCompleted }:
         </div>
       </div>
       {error && <p className="rounded-lg bg-[var(--accent-soft)] px-3 py-2 text-sm text-[var(--accent)]">{error}</p>}
-      <Grid puzzle={puzzle} letters={state.letters} sel={state.sel}
-        activeCells={activeCells} correctCells={correctCells} hintCells={hintCells}
-        flashCell={flashCell}
-        onCellTap={(row, col) => dispatch({ type: 'SELECT', row, col })} />
+      <div className="relative">
+        {/* Görünmez odak hedefi: mobilde native klavyeyi açar. Grid'in üst
+            hizasına gömülü (ekran dışına konursa iOS odaklanınca sayfayı
+            oraya kaydırır); 16px font iOS'in odakta zoom yapmasını önler. */}
+        <input ref={inputRef} type="text" defaultValue={SENTINEL}
+          className="absolute left-1/2 top-0 h-px w-px -translate-x-1/2 opacity-0"
+          style={{ fontSize: 16, caretColor: 'transparent' }}
+          autoCapitalize="characters" autoCorrect="off" autoComplete="off"
+          spellCheck={false} enterKeyHint="next" aria-hidden tabIndex={-1}
+          onInput={onNativeInput}
+          onSelect={(e) => {
+            const el = e.currentTarget;
+            // imleç her zaman sentinel'in ARKASINDA durmalı ki backspace
+            // deleteContentBackward üretebilsin (imleç 0'dayken üretmez)
+            if (el.selectionStart !== el.value.length) resetNativeInput(el);
+          }} />
+        <Grid puzzle={puzzle} letters={state.letters} sel={state.sel}
+          activeCells={activeCells} correctCells={correctCells} hintCells={hintCells}
+          flashCell={flashCell}
+          onCellTap={(row, col) => {
+            dispatch({ type: 'SELECT', row, col });
+            inputRef.current?.focus();
+          }} />
+      </div>
       {entry && (
         <ClueBar entry={entry} onClearWord={clearWord}
           onPrev={() => dispatch({ type: 'NEXT_ENTRY', delta: -1 })}
           onNext={() => dispatch({ type: 'NEXT_ENTRY', delta: 1 })}
           onToggleDir={() => dispatch({ type: 'SELECT', row: state.sel.row, col: state.sel.col })} />
       )}
-      <Keyboard onLetter={(l) => dispatch({ type: 'TYPE', letter: l, protectedCells: lockedCells })}
-        onDelete={() => dispatch({ type: 'DELETE', protectedCells: lockedCells })} />
       <FinishDialog open={phase === 'done'} durationMs={result?.durationMs ?? 0}
         rank={result?.rank ?? null} isRanked={result?.isRanked ?? false}
         hintCount={hintCount} puzzleNumber={puzzleNumber} difficulty={puzzle.difficulty}
