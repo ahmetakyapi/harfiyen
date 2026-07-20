@@ -120,11 +120,26 @@ export function createReducer(ctx: GridCtx) {
       case 'SELECT': {
         const { row, col } = action;
         if (row < 0 || col < 0 || row >= ctx.size || col >= ctx.size || ctx.black[row][col]) return state;
-        if (!entryAt(ctx, row, col, state.sel.dir) && !entryAt(ctx, row, col, other(state.sel.dir))) return state;
-        if (row === state.sel.row && col === state.sel.col && entryAt(ctx, row, col, other(state.sel.dir))) {
-          return { ...state, sel: { row, col, dir: other(state.sel.dir) } };
+        const cur = state.sel.dir;
+        const hasCur = entryAt(ctx, row, col, cur) !== undefined;
+        const hasOther = entryAt(ctx, row, col, other(cur)) !== undefined;
+        if (!hasCur && !hasOther) return state; // yetim hücre
+        const starts = (d: Direction): boolean =>
+          ctx.entries.some((e) => e.dir === d && e.row === row && e.col === col);
+        const sameCell = row === state.sel.row && col === state.sel.col;
+        let dir: Direction;
+        if (sameCell) {
+          // aynı hücreye tekrar dokun → yön değiştir (mümkünse)
+          dir = hasOther ? other(cur) : cur;
+        } else if (starts(other(cur)) && !starts(cur)) {
+          // Numaralı bir kelime BAŞLANGICINA dokunuldu (ör. "3") ama mevcut yön o
+          // hücrede yalnızca ortadan geçiyor (ör. üstündeki uzun "1" kelimesi).
+          // Kullanıcı "3'e bastım, 3 seçilsin" bekler → başlattığı kelimeyi seç.
+          dir = other(cur);
+        } else {
+          // mevcut yönü koru (kelime içinde gezinme); yoksa diğer yön
+          dir = hasCur ? cur : other(cur);
         }
-        const dir = entryAt(ctx, row, col, state.sel.dir) ? state.sel.dir : other(state.sel.dir);
         return { ...state, sel: { row, col, dir } };
       }
       case 'TYPE': {

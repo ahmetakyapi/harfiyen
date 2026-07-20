@@ -54,6 +54,17 @@ describe('SELECT', () => {
     const s1 = reduce(initialState(ctx), { type: 'SELECT', row: 1, col: 2 });
     expect(s1.sel).toEqual({ row: 1, col: 2, dir: 'down' });
   });
+  it('başka yönde kelime BAŞLATAN hücreye dokununca o kelimeye geçer', () => {
+    // (0,2): across clue1'in ortası ama down clue2'nin başlangıcı.
+    // across yönündeyken (0,2)'ye dokununca down clue2 seçilmeli.
+    const s1 = reduce(initialState(ctx), { type: 'SELECT', row: 0, col: 2 });
+    expect(s1.sel).toEqual({ row: 0, col: 2, dir: 'down' });
+  });
+  it('kelime ortasındaki (başlangıç olmayan) hücrede yön korunur', () => {
+    // (0,1): across clue1'in ortası, dikey kelime yok → across kalır
+    const s1 = reduce(initialState(ctx), { type: 'SELECT', row: 0, col: 1 });
+    expect(s1.sel).toEqual({ row: 0, col: 1, dir: 'across' });
+  });
   it('siyah hücre yok sayılır', () => {
     const s1 = reduce(initialState(ctx), { type: 'SELECT', row: 4, col: 4 });
     expect(s1).toEqual(initialState(ctx));

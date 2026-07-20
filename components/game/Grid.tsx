@@ -43,7 +43,7 @@ export function Grid({ puzzle, letters, sel, activeCells, correctCells, hintCell
       {puzzle.black.map((rowArr, r) =>
         rowArr.map((isBlack, c) => {
           const key = `${r}:${c}`;
-          if (isBlack) return <div key={key} className="aspect-square rounded-[3px] bg-[var(--ink)]" />;
+          if (isBlack) return <div key={key} className="cell-void aspect-square rounded-[3px]" />;
           const isSel = sel.row === r && sel.col === c;
           const isCorrect = correctCells.has(key);
           // NOT: isCorrect burada base rengi belirlemez — hücre normal rengini korur,
@@ -57,8 +57,10 @@ export function Grid({ puzzle, letters, sel, activeCells, correctCells, hintCell
           // "hangi hücredeyim" tek bakışta net olsun.
           const ring = isSel ? 'z-20 scale-[1.06] ring-[3px] ring-inset ring-[var(--accent)] shadow-md' : '';
           return (
-            <div key={key} role="gridcell"
-              className={`relative aspect-square rounded-[3px] ${bg} ${ring} transition-all duration-100`}>
+            <div key={key} role="gridcell" data-sel={isSel || undefined}
+              // scroll-mt: scrollIntoView, yapışkan header+ipucu şeridinin
+              // altına gizlemesin diye üstte boşluk bırakır.
+              className={`relative aspect-square scroll-mt-36 rounded-[3px] ${bg} ${ring} transition-all duration-100`}>
               {isCorrect && (
                 <motion.span
                   key={`wave-${key}`}

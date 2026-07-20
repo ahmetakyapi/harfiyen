@@ -46,7 +46,7 @@
   --correct: #34d399;
   --correct-soft: #113c30;
   --cell: #16223c;
-  --cell-active: #4a3620;
+  --cell-active: #6f5220; /* seçili hücre: canlı amber (eski #4a3620 çamur gibiydi) */
   --cell-word: #24406e;
   --diff-easy: #3fc1e6;
   --diff-easy-soft: #113349;
@@ -84,6 +84,18 @@ body {
   background-image:
     radial-gradient(1000px circle at 15% -10%, rgba(63, 193, 230, 0.12), transparent 58%),
     radial-gradient(900px circle at 108% 20%, rgba(227, 185, 104, 0.09), transparent 55%);
+}
+
+/* Bloklu (kullanılamaz) hücreler: dolu renk yerine soluk, çapraz taralı bir
+   "duvar" — dokunulamayacağı bir bakışta belli olur. Koyu temada eski hâli
+   krem doluydu ve tıklanabilir bir kare gibi görünüyordu; bu onu düzeltir. */
+.cell-void {
+  background-color: color-mix(in srgb, var(--line) 55%, var(--paper));
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent 0 3px,
+    color-mix(in srgb, var(--ink) 16%, transparent) 3px 4.5px
+  );
 }
 
 /* Yapışkan, buzlu cam başlık — kaydırınca içerik altından akar. Tailwind'in

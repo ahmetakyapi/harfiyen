@@ -243,25 +243,14 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive, alreadyCompleted }:
 
   // Seçili hücre native klavyenin altında kalırsa görünür alana kaydır —
   // büyük grid + açık klavye kombinasyonunda alt satırlara erişimi sağlar.
+  // scrollIntoView('nearest') modern tarayıcılarda visualViewport'u (klavyeyle
+  // küçülen alanı) dikkate alır ve yalnızca gerektiğinde minimum kaydırır;
+  // manuel matematikten daha güvenilir ve daha az sarsıntılı.
   useEffect(() => {
     if (phase !== 'playing') return;
-    const grid = gridRef.current;
-    const vv = window.visualViewport;
-    if (!grid || !vv) return;
-    const rect = grid.getBoundingClientRect();
-    const pad = 3, gap = 2;
-    const cw = (rect.width - 2 * pad - (puzzle.size - 1) * gap) / puzzle.size;
-    const cellTop = rect.top + pad + state.sel.row * (cw + gap);
-    const cellBottom = cellTop + cw;
-    const margin = 16;
-    const visTop = vv.offsetTop;
-    const visBottom = vv.offsetTop + vv.height;
-    if (cellBottom > visBottom - margin) {
-      window.scrollBy({ top: cellBottom - (visBottom - margin), behavior: 'smooth' });
-    } else if (cellTop < visTop + margin) {
-      window.scrollBy({ top: cellTop - (visTop + margin), behavior: 'smooth' });
-    }
-  }, [state.sel, phase, puzzle.size]);
+    const cell = gridRef.current?.querySelector('[data-sel]');
+    cell?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }, [state.sel, phase]);
 
   const hint = useCallback(async () => {
     if (!session || phase !== 'playing' || hintBusy) return;
@@ -269,13 +258,16 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive, alreadyCompleted }:
     // sıradaki boş hücresine geç. Eskiden bu durumda buton sessizce hiçbir şey
     // yapmıyordu ("basınca hemen olmuyor" şikâyeti tam da buydu); artık ya
     // anlamlı bir hücreyi açar ya da neden yapamadığını söyler.
+    // Seçili hücre zaten kilitliyse (doğru ya da önceden ipuçlu), ipucu boşa
+    // gitmesin: aktif kelimede kilitli OLMAYAN ilk hücreye geç — bu, boş bir
+    // hücre de olabilir yanlış doldurulmuş bir hücre de. Böylece ipucu her
+    // zaman işe yarar; yalnızca kelimenin tamamı çözülmüşse uyarı verir.
     let target = state.sel;
-    const filled = state.letters[target.row][target.col] !== null;
-    if (filled && lockedCells.has(`${target.row}:${target.col}`)) {
+    if (lockedCells.has(`${target.row}:${target.col}`)) {
       const active = activeEntry(ctx, state.sel);
-      const nextEmpty = cellsOf(active).find((c) => state.letters[c.row][c.col] === null);
-      if (!nextEmpty) { setError('Bu kelime zaten tamamlandı.'); return; }
-      target = { ...state.sel, row: nextEmpty.row, col: nextEmpty.col };
+      const open = cellsOf(active).find((c) => !lockedCells.has(`${c.row}:${c.col}`));
+      if (!open) { setError('Bu kelime zaten çözüldü.'); return; }
+      target = { ...state.sel, row: open.row, col: open.col };
     }
     setHintBusy(true);
     setError(null);
