@@ -43,3 +43,17 @@ export function formatTrtDate(date: string): string {
     timeZone: 'UTC', day: 'numeric', month: 'long', year: 'numeric',
   }).format(new Date(`${date}T00:00:00Z`));
 }
+
+// "14 Temmuz" (yıl yok) — arşiv kartlarında kompakt başlık için.
+export function formatTrtDayMonth(date: string): string {
+  return new Intl.DateTimeFormat('tr-TR', {
+    timeZone: 'UTC', day: 'numeric', month: 'long',
+  }).format(new Date(`${date}T00:00:00Z`));
+}
+
+// "Pazartesi" — arşiv kartlarında gün adı için.
+export function formatTrtWeekday(date: string): string {
+  return new Intl.DateTimeFormat('tr-TR', {
+    timeZone: 'UTC', weekday: 'long',
+  }).format(new Date(`${date}T00:00:00Z`));
+}

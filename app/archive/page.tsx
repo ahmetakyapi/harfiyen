@@ -4,11 +4,12 @@ import { Check } from 'lucide-react';
 import { auth } from '@/lib/auth';
 import { AutoRefresh } from '@/components/layout/AutoRefresh';
 import { LetterTile } from '@/components/ui/LetterTile';
-import { formatTrtDate, gameDay, puzzleNumber } from '@/lib/date';
+import { formatTrtDayMonth, formatTrtWeekday, gameDay, puzzleNumber } from '@/lib/date';
 import { DIFFICULTY_LABELS } from '@/lib/difficulty';
 import { getDb } from '@/lib/db';
 import { playSessions, puzzles } from '@/lib/schema';
-import { DIFFICULTIES } from '@/lib/types';
+import { DIFFICULTIES, type Difficulty } from '@/lib/types';
+import { formatDuration } from '@/lib/share';
 
 export const metadata = { title: 'Arşiv' };
 export const dynamic = 'force-dynamic';
@@ -19,16 +20,19 @@ export default async function ArchivePage() {
   const past = await db.select({ date: puzzles.date, difficulty: puzzles.difficulty })
     .from(puzzles).where(lt(puzzles.date, today));
   const session = await auth();
-  const done = new Set<string>();
+  // `${date}:${difficulty}` → tamamlanan oturumun süresi (kart üstünde göster).
+  const doneMs = new Map<string, number | null>();
   if (session) {
-    const mine = await db.select({ date: puzzles.date, difficulty: puzzles.difficulty })
+    const mine = await db.select({
+      date: puzzles.date, difficulty: puzzles.difficulty, durationMs: playSessions.durationMs,
+    })
       .from(playSessions)
       .innerJoin(puzzles, eq(puzzles.id, playSessions.puzzleId))
       .where(and(
         eq(playSessions.userId, Number(session.user.id)),
         eq(playSessions.status, 'completed'),
       ));
-    for (const m of mine) done.add(`${m.date}:${m.difficulty}`);
+    for (const m of mine) doneMs.set(`${m.date}:${m.difficulty}`, m.durationMs);
   }
   const dates = [...new Set(past.map((p) => p.date))].sort().reverse();
 
@@ -44,32 +48,57 @@ export default async function ArchivePage() {
       {dates.length === 0 && (
         <p className="py-12 text-center text-[var(--ink-soft)]">Arşiv, lansmandan sonra dolmaya başlayacak.</p>
       )}
-      <ul className="mt-8 flex flex-col gap-1.5">
-        {dates.map((date) => (
-          <li key={date} className="flex items-center justify-between rounded-2xl px-3 py-2.5 transition-colors hover:bg-[var(--paper-raised)]">
-            <span className="text-sm">
-              <span className="mr-2 font-mono text-[var(--ink-soft)]">#{puzzleNumber(date)}</span>
-              {formatTrtDate(date)}
-            </span>
-            <span className="flex gap-2">
-              {DIFFICULTIES.map((d) => {
-                const isDone = done.has(`${date}:${d}`);
-                return (
-                  <Link key={d} href={`/play/${date}/${d}`}
-                    className="transition-transform hover:scale-105"
-                    aria-label={`${formatTrtDate(date)} ${DIFFICULTY_LABELS[d]}`}>
-                    {isDone
-                      ? <span className="flex h-9 w-9 items-center justify-center rounded-[0.7rem] bg-[var(--correct-soft)] text-[var(--correct)]">
-                          <Check className="h-4 w-4" strokeWidth={2.5} />
-                        </span>
-                      : <LetterTile difficulty={d} size="sm" />}
-                  </Link>
-                );
-              })}
-            </span>
-          </li>
-        ))}
-      </ul>
+      <div className="mt-8 flex flex-col gap-4">
+        {dates.map((date) => {
+          const solvedCount = DIFFICULTIES.filter((d) => doneMs.has(`${date}:${d}`)).length;
+          return (
+            <section key={date}
+              className="overflow-hidden rounded-3xl border border-[var(--line)] bg-[var(--paper-raised)] shadow-[0_10px_30px_-24px_var(--ink)]">
+              <header className="flex items-center justify-between gap-3 border-b border-[var(--line)] px-4 py-3">
+                <div className="flex items-baseline gap-2">
+                  <span className="font-display text-xl font-semibold text-[var(--ink)]">
+                    {formatTrtDayMonth(date)}
+                  </span>
+                  <span className="text-sm text-[var(--ink-soft)]">{formatTrtWeekday(date)}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-xs text-[var(--ink-soft)]">#{puzzleNumber(date)}</span>
+                  <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                    solvedCount === 3
+                      ? 'bg-[var(--correct-soft)] text-[var(--correct)]'
+                      : 'bg-[var(--paper)] text-[var(--ink-soft)]'
+                  }`}>
+                    {solvedCount}/3
+                  </span>
+                </div>
+              </header>
+              <div className="divide-y divide-[var(--line)]">
+                {DIFFICULTIES.map((d) => {
+                  const key = `${date}:${d}`;
+                  const isDone = doneMs.has(key);
+                  const ms = doneMs.get(key) ?? null;
+                  return (
+                    <Link key={d} href={`/play/${date}/${d}`}
+                      className="group flex items-center gap-3 px-4 py-3 transition-colors hover:bg-[var(--paper)]"
+                      aria-label={`${formatTrtDayMonth(date)} ${DIFFICULTY_LABELS[d]}${isDone ? ' — çözüldü' : ''}`}>
+                      <LetterTile difficulty={d} size="sm" />
+                      <span className="flex-1 font-medium">{DIFFICULTY_LABELS[d]}</span>
+                      {isDone
+                        ? <span className="flex items-center gap-1.5 rounded-full bg-[var(--correct-soft)] px-2.5 py-1 text-xs font-semibold text-[var(--correct)]">
+                            <Check className="h-3.5 w-3.5" strokeWidth={2.5} />
+                            {ms !== null && <span className="font-mono tabular-nums">{formatDuration(ms)}</span>}
+                          </span>
+                        : <span className="text-sm text-[var(--ink-soft)] transition-colors group-hover:text-[var(--accent)]">
+                            Oyna →
+                          </span>}
+                    </Link>
+                  );
+                })}
+              </div>
+            </section>
+          );
+        })}
+      </div>
     </main>
   );
 }
