@@ -196,12 +196,17 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive, alreadyCompleted }:
   const inputRef = useRef<HTMLInputElement | null>(null);
   const gridRef = useRef<HTMLDivElement | null>(null);
   const gridAreaRef = useRef<HTMLDivElement | null>(null);
-  const { height: vh, compact } = useViewport();
-  // Mobil app-shell: grid'i mevcut alana sığacak en büyük kareye ölçekle.
-  // Klavye açılınca vh küçülür → alan küçülür → grid küçülür, hep görünür kalır.
+  const { height: vh, offsetTop, compact, keyboardOpen } = useViewport();
+  // App-shell YALNIZCA mobilde + klavye açıkken devreye girer: oyun alanı
+  // görünür viewport'a sabitlenir (position:fixed), sayfa kilitlenir. Klavye
+  // kapalıyken doğal akış kullanılır (grid ipucunun altında, üstten hizalı) —
+  // böylece açılışta grid ortada "yüzmez", ilk dokunuşta iOS zoom/kaydırma
+  // yapmaz. `vh !== null` SSR/ilk render'da doğal akışı garantiler.
+  const appShell = compact && keyboardOpen && vh !== null;
+  // Grid'i mevcut alana sığacak en büyük kareye ölçekle (yalnızca app-shell'de).
   const [gridPx, setGridPx] = useState<number | null>(null);
   useEffect(() => {
-    if (!compact || phase !== 'playing') { setGridPx(null); return; }
+    if (!appShell || phase !== 'playing') { setGridPx(null); return; }
     const el = gridAreaRef.current;
     if (!el) return;
     const measure = (): void => {
@@ -213,7 +218,7 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive, alreadyCompleted }:
     const ro = new ResizeObserver(measure);
     ro.observe(el);
     return () => ro.disconnect();
-  }, [compact, phase, vh]);
+  }, [appShell, phase, vh]);
   const SENTINEL = ' ';
   const resetNativeInput = (): void => {
     const el = inputRef.current;
@@ -261,23 +266,23 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive, alreadyCompleted }:
     if (phase === 'done' || phase === 'submitting') inputRef.current?.blur();
   }, [phase]);
 
-  // App-shell (compact) modunda sayfa kaymadığından body'nin dvh yüksekliği
-  // klavye açıkken görünür alanın altında kaydırılabilir bir boşluk bırakır —
-  // bunu kilitle ki oyun ekranı gerçekten "sabit" hissettirsin.
+  // App-shell aktifken (mobil + klavye açık) sayfayı kilitle: fixed konumlu
+  // oyun alanı görünür viewport'u kapladığından body'nin kayması iOS'in odak
+  // kaydırmasına/zoom'una yol açardı.
   useEffect(() => {
-    if (!compact || phase !== 'playing') return;
+    if (!appShell || phase !== 'playing') return;
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     return () => { document.body.style.overflow = prev; };
-  }, [compact, phase]);
+  }, [appShell, phase]);
 
-  // Masaüstünde (compact değil) pencere kısaysa seçili hücreyi görünür alana
-  // kaydır. Mobilde app-shell zaten her şeyi sığdırdığından gerekmez.
+  // App-shell DIŞINDA (masaüstü ya da klavye kapalı) pencere kısaysa seçili
+  // hücreyi görünür alana kaydır. App-shell zaten her şeyi sığdırır.
   useEffect(() => {
-    if (phase !== 'playing' || compact) return;
+    if (phase !== 'playing' || appShell) return;
     const cell = gridRef.current?.querySelector('[data-sel]');
     cell?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-  }, [state.sel, phase, compact]);
+  }, [state.sel, phase, appShell]);
 
   const hint = useCallback(async () => {
     if (!session || phase !== 'playing' || hintBusy) return;
@@ -423,13 +428,15 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive, alreadyCompleted }:
   }
 
   return (
-    // Mobil app-shell: compact'ta yükseklik = görünür viewport (klavye hariç),
-    // sayfa HİÇ kaymaz; grid alt satırdaki flex-1 alana sığacak şekilde küçülür.
-    // Böylece toolbar + ipucu + grid her zaman klavyenin üstünde tam görünür.
-    // Masaüstünde (compact değil) doğal akış: grid 28rem, üstten hizalı.
+    // App-shell (mobil + klavye açık): oyun alanı görünür viewport'a sabitlenir,
+    // global header'ın üstüne biner (z-50 + kendi arka planı), sayfa kaymaz →
+    // grid + ipucu her zaman klavyenin üstünde. Aksi halde doğal akış: grid
+    // ipucunun altında, üstten hizalı; açılışta ortada yüzmez.
     <div
-      style={compact && vh ? { height: `${vh - 56}px` } : undefined}
-      className="mx-auto flex w-full max-w-lg flex-col px-2.5 pb-2 pt-2 sm:px-4 sm:pb-5 sm:pt-4">
+      style={appShell
+        ? { position: 'fixed', top: offsetTop, left: 0, right: 0, height: `${vh}px`, zIndex: 50 }
+        : undefined}
+      className={`mx-auto flex w-full max-w-lg flex-col px-2.5 pb-2 pt-2 sm:px-4 sm:pb-5 sm:pt-4 ${appShell ? 'bg-[var(--paper)]' : ''}`}>
       <div className="flex items-center justify-between">
         <span className="flex items-center gap-2.5">
           {/* Mini taş zorluğu tek başına anlatır — ayrıca rozetle yer kaplamayız */}
@@ -469,25 +476,28 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive, alreadyCompleted }:
             onToggleDir={() => dispatch({ type: 'SELECT', row: state.sel.row, col: state.sel.col })} />
         </div>
       )}
-      <div ref={gridAreaRef} className="flex min-h-0 flex-1 items-center justify-center pt-3">
+      <div ref={gridAreaRef}
+        className={`flex justify-center pt-3 ${appShell ? 'min-h-0 flex-1 items-center' : 'items-start'}`}>
         <div ref={gridRef}
-          style={compact && gridPx ? { width: gridPx, height: gridPx } : undefined}
-          className={compact ? 'relative shrink-0' : 'relative w-full max-w-[28rem]'}>
+          style={appShell && gridPx ? { width: gridPx, height: gridPx } : undefined}
+          className={appShell ? 'relative shrink-0' : 'relative w-full max-w-[28rem]'}>
           <Grid puzzle={puzzle} letters={state.letters} sel={state.sel}
             activeCells={activeCells} correctCells={correctCells} hintCells={hintCells}
             flashCell={flashCell} />
           {/* Grid'i tam kaplayan görünmez, tıklanabilir input: doğrudan dokunma
-              = ilk dokunuşta native klavye. 16px font iOS odak-zoom'unu önler;
-              imleç ve metin görünmez. */}
+              = ilk dokunuşta native klavye. 16px font iOS odak-zoom'unu önler.
+              user-select/touch-callout none + onContextMenu: iOS'in "Yapıştır /
+              Seç / Tümünü Seç" düzenleme menüsünü bastırır. */}
           <input ref={inputRef} type="text" inputMode="text" defaultValue={SENTINEL}
             aria-label="Bulmaca — harf gir"
-            className="absolute inset-0 z-10 h-full w-full cursor-pointer rounded-2xl bg-transparent text-transparent outline-none"
-            style={{ fontSize: 16, caretColor: 'transparent' }}
+            className="absolute inset-0 z-10 h-full w-full cursor-pointer select-none rounded-2xl bg-transparent text-transparent outline-none"
+            style={{ fontSize: 16, caretColor: 'transparent', WebkitUserSelect: 'none', WebkitTouchCallout: 'none' }}
             autoCapitalize="off" autoCorrect="off" autoComplete="off"
             spellCheck={false} enterKeyHint="next"
             onInput={onNativeInput}
             onPointerDown={onGridPointer}
-            onFocus={resetNativeInput} />
+            onFocus={resetNativeInput}
+            onContextMenu={(e) => e.preventDefault()} />
         </div>
       </div>
       <FinishDialog open={phase === 'done'} durationMs={result?.durationMs ?? 0}

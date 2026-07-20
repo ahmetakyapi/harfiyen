@@ -2,20 +2,30 @@
 
 import { useEffect, useState } from 'react';
 
+export type Viewport = {
+  height: number | null;  // görünür yükseklik (visualViewport)
+  offsetTop: number;      // görünür alanın layout viewport'a göre üst ofseti
+  compact: boolean;       // dar ekran (mobil)
+  keyboardOpen: boolean;  // native klavye açık mı (window.innerHeight'tan tahmin)
+};
+
 // Native klavye açılınca window boyutu DEĞİŞMEZ ama visualViewport küçülür.
-// Oyun ekranını bu görünür yüksekliğe göre kurarsak (sayfa hiç kaymadan) grid
-// + ipucu her zaman klavyenin üstünde, tam görünür kalır. `compact` yalnızca
-// dar ekranlarda (mobil) bu app-shell düzenini uygulamak için.
-export function useViewport(): { height: number | null; compact: boolean } {
-  const [vp, setVp] = useState<{ height: number | null; compact: boolean }>({
-    height: null, compact: false,
+// Klavye açıkken oyun alanını visualViewport'a sabitleyip (position:fixed)
+// sayfayı kilitlersek iOS'in "odaklı input'u görünür yap" kaydırması / zoom'u
+// devre dışı kalır ve grid + ipucu her zaman klavyenin üstünde kalır.
+export function useViewport(): Viewport {
+  const [vp, setVp] = useState<Viewport>({
+    height: null, offsetTop: 0, compact: false, keyboardOpen: false,
   });
   useEffect(() => {
     const vv = window.visualViewport;
     const update = (): void => {
+      const h = vv ? Math.round(vv.height) : window.innerHeight;
       setVp({
-        height: vv ? Math.round(vv.height) : window.innerHeight,
+        height: h,
+        offsetTop: vv ? Math.round(vv.offsetTop) : 0,
         compact: window.innerWidth < 640,
+        keyboardOpen: window.innerHeight - h > 120,
       });
     };
     update();
