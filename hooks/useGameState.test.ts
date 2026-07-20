@@ -36,11 +36,12 @@ describe('TYPE', () => {
     const s1 = reduce(initialState(ctx), { type: 'TYPE', letter: 'w' });
     expect(s1).toEqual(initialState(ctx));
   });
-  it('kelime bitince boş hücresi olan sonraki kelimeye geçer', () => {
+  it('kelime dolunca BAŞKA kelimeye atlamaz, aynı kelimede döngüsel kalır', () => {
     let s = initialState(ctx);
     for (const l of ['K', 'A', 'L', 'E', 'M']) s = reduce(s, { type: 'TYPE', letter: l });
-    // across bitti → 1-down'un ilk boş hücresi (1,0)
-    expect(s.sel).toEqual({ row: 1, col: 0, dir: 'down' });
+    // across doldu ama doğruluk burada bilinmez → sonraki soruya ATLAMAZ,
+    // aynı kelimenin başına (0,0) döner (kullanıcı yanlışı düzeltebilsin)
+    expect(s.sel).toEqual({ row: 0, col: 0, dir: 'across' });
   });
 });
 
@@ -128,6 +129,28 @@ describe('CLEAR_ALL', () => {
     for (const l of ['K', 'A', 'L', 'E', 'M']) s = reduce(s, { type: 'TYPE', letter: l });
     const cleared = reduce(s, { type: 'CLEAR_ALL', protectedCells: new Set(['0:0', '0:4']) });
     expect(cleared.letters[0]).toEqual(['K', null, null, null, 'M']);
+  });
+});
+
+describe('NEXT_INCOMPLETE', () => {
+  it('sıradaki boş hücresi olan kelimeye geçer', () => {
+    let s = initialState(ctx);
+    for (const l of ['K', 'A', 'L', 'E', 'M']) s = reduce(s, { type: 'TYPE', letter: l }); // 1-across dolu
+    s = reduce(s, { type: 'NEXT_INCOMPLETE' });
+    // 1-across dolu → sıradaki eksik kelime 1-down'un ilk boş hücresi (1,0)
+    expect(s.sel).toEqual({ row: 1, col: 0, dir: 'down' });
+  });
+  it('tüm grid doluysa yerinde kalır', () => {
+    let s = initialState(ctx);
+    // her beyaz hücreyi doldur
+    for (let i = 0; i < 5; i++) s = reduce(s, { type: 'TYPE', letter: 'A' });
+    s = reduce(s, { type: 'SELECT', row: 0, col: 0 });
+    for (let i = 0; i < 4; i++) s = reduce(s, { type: 'TYPE', letter: 'A' });
+    s = reduce(s, { type: 'SELECT', row: 0, col: 2 });
+    for (let i = 0; i < 3; i++) s = reduce(s, { type: 'TYPE', letter: 'A' });
+    const before = s.sel;
+    s = reduce(s, { type: 'NEXT_INCOMPLETE' });
+    expect(s.sel).toEqual(before);
   });
 });
 

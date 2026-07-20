@@ -17,6 +17,7 @@ export type GameAction =
   | { type: 'MOVE'; dRow: number; dCol: number }
   | { type: 'SET_LETTERS'; letters: Letters }
   | { type: 'REVEAL'; row: number; col: number; letter: string }
+  | { type: 'NEXT_INCOMPLETE' }
   | { type: 'CLEAR_WORD'; protectedCells: Set<string> }
   | { type: 'CLEAR_ALL'; protectedCells: Set<string> };
 
@@ -79,6 +80,12 @@ function selAtEntry(entry: Entry, letters: Letters): Selection {
   return { row: empty.row, col: empty.col, dir: entry.dir };
 }
 
+// Yazınca ilerleme: aktif kelimenin İÇİNDE kal. Sıradaki boş hücreye geç;
+// hepsi doluysa bir sonraki hücreye döngüsel olarak geç (BAŞKA kelimeye
+// ATLAMA). Sonraki soruya geçiş yalnızca kelime DOĞRU tamamlanınca olur ve
+// bunu GameBoard yönetir (NEXT_INCOMPLETE) — çünkü doğruluk (hash) yalnızca
+// orada, asenkron bilinir. Böylece yanlış/eksik bir kelimede takılıp kalır,
+// kullanıcı harflerini düzeltebilir; yanlışken bir sonraki soruya kaymaz.
 function advance(ctx: GridCtx, letters: Letters, sel: Selection): Selection {
   const entry = activeEntry(ctx, sel);
   const cells = cellsOf(entry);
@@ -87,8 +94,16 @@ function advance(ctx: GridCtx, letters: Letters, sel: Selection): Selection {
   if (after) return { row: after.row, col: after.col, dir: entry.dir };
   const before = cells.find((c) => letters[c.row][c.col] === null);
   if (before) return { row: before.row, col: before.col, dir: entry.dir };
-  // kelime tamam → boş hücresi olan sonraki kelime
+  // kelime dolu → aynı kelimede kal, döngüsel olarak bir sonraki hücreye geç
+  const next = cells[(idx + 1) % cells.length];
+  return { row: next.row, col: next.col, dir: entry.dir };
+}
+
+// Sıradaki EKSİK (boş hücresi olan) kelimenin ilk boş hücresine git. Aktif
+// kelime doğru tamamlanınca GameBoard bunu tetikler → otomatik sonraki soru.
+function nextIncomplete(ctx: GridCtx, letters: Letters, sel: Selection): Selection {
   const list = orderedEntries(ctx);
+  const entry = activeEntry(ctx, sel);
   const from = list.findIndex((e) => e.no === entry.no && e.dir === entry.dir);
   for (let i = 1; i <= list.length; i++) {
     const cand = list[(from + i) % list.length];
@@ -155,6 +170,8 @@ export function createReducer(ctx: GridCtx) {
         const next = list[(from + action.delta + list.length) % list.length];
         return { ...state, sel: selAtEntry(next, state.letters) };
       }
+      case 'NEXT_INCOMPLETE':
+        return { ...state, sel: nextIncomplete(ctx, state.letters, state.sel) };
       case 'MOVE': {
         let { row, col } = state.sel;
         for (;;) {

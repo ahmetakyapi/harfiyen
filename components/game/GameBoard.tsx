@@ -166,6 +166,24 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive, alreadyCompleted }:
   const lockedRef = useRef(lockedCells);
   lockedRef.current = lockedCells;
 
+  // Otomatik "sonraki soru" YALNIZCA aktif kelime DOĞRU tamamlanınca olur.
+  // advance() artık kelimeyi tamamlayınca başka soruya atlamıyor (yanlışsa
+  // kullanıcı düzeltebilsin diye kelimede kalır); doğruluk hash ile burada,
+  // asenkron bilindiğinden geçişi bu efekt yapar. prevCorrectRef her çalışmada
+  // güncellenir: kelime YENİ doğru olduğunda geçilir, kullanıcı sonradan
+  // doğru bir kelimeye elle dönerse istenmeyen "sıçrama" olmaz.
+  const prevCorrectRef = useRef(correctKeys);
+  useEffect(() => {
+    const prev = prevCorrectRef.current;
+    prevCorrectRef.current = correctKeys;
+    if (phase !== 'playing') return;
+    const active = activeEntry(ctx, state.sel);
+    const key = hashKey(active.no, active.dir);
+    if (correctKeys.has(key) && !prev.has(key)) {
+      dispatch({ type: 'NEXT_INCOMPLETE' });
+    }
+  }, [correctKeys, phase, ctx, state.sel, dispatch]);
+
   // MOBİL KLAVYE MİMARİSİ — kullanıcının KENDİ klavyesi (ekran klavyesi yok):
   // Grid'in tamamını kaplayan, görünmez ama TIKLANABİLİR bir input var. Mobil
   // tarayıcılarda klavye YALNIZCA bir input'a doğrudan dokununca açılır
@@ -208,6 +226,10 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive, alreadyCompleted }:
     const col = clamp(Math.floor((e.clientX - rect.left - pad) / step));
     const row = clamp(Math.floor((e.clientY - rect.top - pad) / step));
     dispatch({ type: 'SELECT', row, col });
+    // Dokunma doğrudan input'ta olsa da odağı AÇIKÇA garantiye al: iOS'te
+    // odak kullanıcı jesti içinde çağrılınca klavye (yeniden) açılır — bu,
+    // klavye kapatıldıktan sonra tekrar dokununca kesin açılmasını sağlar.
+    inputRef.current?.focus();
     // imleci sentinel'in arkasına al ki ilk backspace deleteContentBackward
     // üretebilsin (odak yeni oturuyor olabilir → bir sonraki kareye ertele).
     requestAnimationFrame(resetNativeInput);

@@ -33,8 +33,12 @@ export function Grid({ puzzle, letters, sel, activeCells, correctCells, hintCell
     });
   }
   return (
+    // pointer-events-none ŞART: seçili hücre z-20 + scale ile input'un (z-10)
+    // ÜSTÜNE çıkıyordu; dokunuşları yutup native klavyenin açılmasını
+    // engelliyordu ("bazen açılmıyor" sorunu buydu). none olunca tüm
+    // dokunuşlar alttaki input'a geçer, klavye her dokunuşta açılır.
     <div role="grid" aria-label="Bulmaca" aria-hidden
-      className="grid w-full gap-[2px] rounded-2xl border border-[var(--line)] bg-[var(--line)] p-[3px] shadow-[0_24px_60px_-42px_var(--ink)]"
+      className="pointer-events-none grid w-full gap-[2px] rounded-2xl border border-[var(--line)] bg-[var(--line)] p-[3px] shadow-[0_24px_60px_-42px_var(--ink)]"
       style={{ gridTemplateColumns: `repeat(${puzzle.size}, minmax(0, 1fr))` }}>
       {puzzle.black.map((rowArr, r) =>
         rowArr.map((isBlack, c) => {
