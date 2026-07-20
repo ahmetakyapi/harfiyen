@@ -55,7 +55,10 @@ export function Grid({ puzzle, letters, sel, activeCells, correctCells, hintCell
           // Seçim yalnızca renkle değil, kalın bir halka + hafif büyütmeyle de
           // işaretlenir — renk körlüğünde veya düşük kontrastlı ekranlarda bile
           // "hangi hücredeyim" tek bakışta net olsun.
-          const ring = isSel ? 'z-20 scale-[1.06] ring-[3px] ring-inset ring-[var(--accent)] shadow-md' : '';
+          // Seçili hücre: kalın accent halka + belirgin büyütme + gölge, açık
+          // ara boşlukla iyice "yükselir". Aktif kelime ise belirgin --cell-word
+          // rengiyle gruplanır (renk tek başına yeterince net).
+          const ring = isSel ? 'z-20 scale-[1.1] ring-[3px] ring-inset ring-[var(--accent)] shadow-lg' : '';
           return (
             <div key={key} role="gridcell" data-sel={isSel || undefined}
               // scroll-mt: scrollIntoView, yapışkan header+ipucu şeridinin

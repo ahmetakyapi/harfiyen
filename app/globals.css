@@ -17,8 +17,8 @@
   --correct: #0f7a5c;
   --correct-soft: #d9eedd;
   --cell: #fffdf7;
-  --cell-active: #f7c59f;
-  --cell-word: #dbe8f7;
+  --cell-active: #f5b787; /* seçili hücre: sıcak şeftali, mavi kelimeden net ayrışır */
+  --cell-word: #c3dbf4;   /* aktif kelime: belirgin mavi (eski #dbe8f7 çok soluktu) */
   /* Zorluk merdiveni: turkuaz (kolay) → azur (orta) → lacivert (zor).
      --accent'ten bilinçli olarak ayrıldı; koyu temada accent altına döner
      ama merdiven mavi ailesinde kalır. */
@@ -46,8 +46,8 @@
   --correct: #34d399;
   --correct-soft: #113c30;
   --cell: #16223c;
-  --cell-active: #6f5220; /* seçili hücre: canlı amber (eski #4a3620 çamur gibiydi) */
-  --cell-word: #24406e;
+  --cell-active: #8a6420; /* seçili hücre: canlı amber (eski #4a3620 çamur gibiydi) */
+  --cell-word: #2c4d86;   /* aktif kelime: belirgin mavi */
   --diff-easy: #3fc1e6;
   --diff-easy-soft: #113349;
   --diff-medium: #4a90d9;
