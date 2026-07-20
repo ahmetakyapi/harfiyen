@@ -36,11 +36,13 @@ export function FinishDialog({ open, durationMs, rank, isRanked, hintCount, puzz
   return (
     <AnimatePresence>
       {open && (
-        <motion.div className="fixed inset-0 z-50 flex items-end justify-center bg-black/45 p-4 backdrop-blur-sm sm:items-center"
+        <motion.div className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm"
+          style={{ backgroundColor: 'rgba(0,0,0,0.45)' }}
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
           <motion.div
-            initial={{ y: 40, opacity: 0, scale: 0.97 }} animate={{ y: 0, opacity: 1, scale: 1 }}
-            transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+            initial={{ opacity: 0, scale: 0.9, y: 12 }} animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
             className="relative w-full max-w-sm overflow-hidden rounded-3xl bg-[var(--paper-raised)] text-center shadow-2xl">
             {/* Zorlukla eşleşen ince üst şerit — kartın kime ait olduğunu (hangi
                 zorluk) tek bakışta, ikinci bir metin okumadan verir. */}

@@ -13,8 +13,9 @@ export function ClueBar({ entry, onPrev, onNext, onToggleDir, onClearWord }: {
   entry: Entry; onPrev: () => void; onNext: () => void; onToggleDir: () => void; onClearWord: () => void;
 }) {
   return (
-    // sticky: native klavye açıkken kaydırılsa da ipucu şeridi görünür kalır
-    <div className="sticky bottom-3 z-30 flex min-h-14 items-stretch gap-1 rounded-2xl bg-[var(--ink)] pl-1 pr-1 text-[var(--paper)] shadow-[0_14px_34px_-22px_var(--ink)]">
+    // Yapışkanlık dış sarmalayıcıda (GameBoard) — burada yalnızca şeridin
+    // kendisi. Native klavye açıkken bile header'ın hemen altında görünür.
+    <div className="flex min-h-14 items-stretch gap-1 rounded-2xl bg-[var(--ink)] pl-1 pr-1 text-[var(--paper)] shadow-[0_10px_28px_-20px_var(--ink)]">
       <button type="button" onClick={onPrev} onPointerDown={keepFocus} aria-label="Önceki ipucu"
         className="flex min-w-11 items-center justify-center rounded-lg px-2 opacity-70 hover:opacity-100">
         <ChevronLeft className="h-5 w-5" />

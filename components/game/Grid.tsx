@@ -5,13 +5,15 @@ import { cellsOf } from '@/hooks/useGameState';
 import type { ClientPuzzle, Letters } from '@/lib/types';
 import type { Selection } from '@/hooks/useGameState';
 
-export function Grid({ puzzle, letters, sel, activeCells, correctCells, hintCells, flashCell, onCellTap }: {
+// Grid yalnızca GÖRSEL: dokunma/tıklama GameBoard'daki tam-kaplayan input
+// tarafından ele alınır (mobilde native klavyeyi ilk dokunuşta açmak için).
+// Bu yüzden hücreler pointer-events-none div'lerdir, buton değil.
+export function Grid({ puzzle, letters, sel, activeCells, correctCells, hintCells, flashCell }: {
   puzzle: ClientPuzzle; letters: Letters; sel: Selection;
   activeCells: Set<string>;   // `${row}:${col}` — aktif kelimenin hücreleri
   correctCells: Set<string>;  // doğrulanmış kelimelerin hücreleri
   hintCells: Set<string>;     // ipucuyla açılan hücreler — köşe işareti + kilitli
   flashCell?: string | null;  // ipucuyla az önce açılan hücre — kısa parıltı
-  onCellTap: (row: number, col: number) => void;
 }) {
   const numberAt = new Map<string, number>();
   for (const e of puzzle.entries) {
@@ -31,8 +33,8 @@ export function Grid({ puzzle, letters, sel, activeCells, correctCells, hintCell
     });
   }
   return (
-    <div role="grid" aria-label="Bulmaca"
-      className="mx-auto grid w-full max-w-[28rem] gap-[2px] rounded-2xl border border-[var(--line)] bg-[var(--line)] p-[3px] shadow-[0_24px_60px_-42px_var(--ink)]"
+    <div role="grid" aria-label="Bulmaca" aria-hidden
+      className="grid w-full gap-[2px] rounded-2xl border border-[var(--line)] bg-[var(--line)] p-[3px] shadow-[0_24px_60px_-42px_var(--ink)]"
       style={{ gridTemplateColumns: `repeat(${puzzle.size}, minmax(0, 1fr))` }}>
       {puzzle.black.map((rowArr, r) =>
         rowArr.map((isBlack, c) => {
@@ -51,10 +53,8 @@ export function Grid({ puzzle, letters, sel, activeCells, correctCells, hintCell
           // "hangi hücredeyim" tek bakışta net olsun.
           const ring = isSel ? 'z-20 scale-[1.06] ring-[3px] ring-inset ring-[var(--accent)] shadow-md' : '';
           return (
-            <button key={key} type="button" role="gridcell"
-              onPointerDown={(e) => { e.preventDefault(); onCellTap(r, c); }}
-              className={`relative aspect-square rounded-[3px] ${bg} ${ring} outline-none transition-all duration-100`}
-              aria-label={`Satır ${r + 1}, sütun ${c + 1}`}>
+            <div key={key} role="gridcell"
+              className={`relative aspect-square rounded-[3px] ${bg} ${ring} transition-all duration-100`}>
               {isCorrect && (
                 <motion.span
                   key={`wave-${key}`}
@@ -96,7 +96,7 @@ export function Grid({ puzzle, letters, sel, activeCells, correctCells, hintCell
                   {letters[r][c]}
                 </motion.span>
               )}
-            </button>
+            </div>
           );
         }),
       )}
