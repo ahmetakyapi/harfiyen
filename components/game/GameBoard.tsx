@@ -436,7 +436,7 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive, alreadyCompleted }:
       style={appShell
         ? { position: 'fixed', top: offsetTop, left: 0, right: 0, height: `${vh}px`, zIndex: 50 }
         : undefined}
-      className={`mx-auto flex w-full max-w-lg flex-col px-2.5 pb-2 pt-2 sm:px-4 sm:pb-5 sm:pt-4 ${appShell ? 'bg-[var(--paper)]' : ''}`}>
+      className={`mx-auto flex w-full flex-col px-2.5 pb-2 pt-2 sm:px-4 sm:pb-5 sm:pt-4 ${appShell ? 'max-w-none bg-[var(--paper)]' : 'max-w-lg'}`}>
       <div className="flex items-center justify-between">
         <span className="flex items-center gap-2.5">
           {/* Mini taş zorluğu tek başına anlatır — ayrıca rozetle yer kaplamayız */}
