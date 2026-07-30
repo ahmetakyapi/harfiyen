@@ -18,7 +18,7 @@ export default async function ProfilePage({ params }: { params: { username: stri
   const isOwn = session?.user?.name === stats.username;
 
   return (
-    <main className="mx-auto max-w-lg px-4 py-10">
+    <main className="page-enter mx-auto max-w-lg px-4 py-10">
       <AutoRefresh />
       <h1 className="bg-gradient-to-r from-[var(--title-from)] to-[var(--title-to)] bg-clip-text text-center font-display text-3xl text-transparent">
         {stats.username}

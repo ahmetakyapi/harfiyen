@@ -32,7 +32,11 @@ export function BottomNav() {
     return (
       <li>
         <Link href={href} aria-current={active ? 'page' : undefined}
-          className={`flex min-h-[3.5rem] flex-col items-center justify-center gap-1 transition-colors ${
+          // active:scale — dokunma ile yeni sayfanın gelmesi arasında sunucu
+          // turu kadar bir boşluk var; basıldığı AN geri bildirim olmazsa bu
+          // boşluk "tıklama gitmedi" gibi okunuyordu. Ortadaki Oyna düğmesinde
+          // zaten vardı, yan sekmelerde yoktu.
+          className={`flex min-h-[3.5rem] flex-col items-center justify-center gap-1 transition-[color,transform] duration-150 ease-[cubic-bezier(0.22,1,0.36,1)] active:scale-95 ${
             active ? 'text-[var(--accent)]' : 'text-[var(--ink-soft)]'
           }`}>
           <Icon aria-hidden className="h-5 w-5" />
