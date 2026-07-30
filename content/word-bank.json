@@ -1791,8 +1791,8 @@
   {
     "word": "PEÇETE",
     "clues": [
-      "Ağzı silmek için kullanılan ince kağıt",
-      "Sofrada elleri temizlemekte kullanılan kağıt"
+      "Ağzı silmek için kullanılan ince kâğıt",
+      "Sofrada elleri temizlemekte kullanılan kâğıt"
     ],
     "difficulty": 1
   },
@@ -2699,7 +2699,7 @@
     "word": "NERGİS",
     "clues": [
       "Sarı ve beyaz renkli, hoş kokulu bahar çiçeği",
-      "Kendine aşık gencin efsanesiyle anılan çiçek"
+      "Kendine âşık gencin efsanesiyle anılan çiçek"
     ],
     "difficulty": 2
   },
@@ -3067,7 +3067,7 @@
     "difficulty": 2
   },
   {
-    "word": "İSTAKOZ",
+    "word": "ISTAKOZ",
     "clues": [
       "Büyük kıskaçlı, pahalı deniz kabuklusu",
       "Şölen sofralarının pahalı kabuklu misafiri"
@@ -3928,8 +3928,8 @@
   {
     "word": "BİLET",
     "clues": [
-      "Ulaşım aracına binmek için alınan kağıt",
-      "Sinemaya veya otobüse binmek için satın alınan kağıt"
+      "Ulaşım aracına binmek için alınan kâğıt",
+      "Sinemaya veya otobüse binmek için satın alınan kâğıt"
     ],
     "difficulty": 1
   },
@@ -4038,26 +4038,10 @@
     "difficulty": 3
   },
   {
-    "word": "YARIMKÜRE",
-    "clues": [
-      "Dünyanın ekvatorla ikiye bölünmüş parçalarından biri",
-      "Kuzey veya güney olarak adlandırılan dünya parçası"
-    ],
-    "difficulty": 3
-  },
-  {
     "word": "STEP",
     "clues": [
       "Ağaçsız, otlarla kaplı geniş düzlük",
       "Orta Asya'ya özgü otlak düzlüğü"
-    ],
-    "difficulty": 3
-  },
-  {
-    "word": "ANAKARA",
-    "clues": [
-      "Adaların dışında kalan büyük kara parçası",
-      "Kıtanın ana toprak bütünü, ada olmayan kısmı"
     ],
     "difficulty": 3
   },
@@ -6075,8 +6059,8 @@
   {
     "word": "YELKEN",
     "clues": [
-      "Rüzgar gücüyle ilerleyen tekne sporu",
-      "Rüzgarla şişen bezle yol alan tekne sporu"
+      "Rüzgâr gücüyle ilerleyen tekne sporu",
+      "Rüzgârla şişen bezle yol alan tekne sporu"
     ],
     "difficulty": 2
   },
@@ -6327,7 +6311,7 @@
   {
     "word": "KART",
     "clues": [
-      "Hakemin ihlal sonrası oyuncuya gösterdiği renkli kağıt",
+      "Hakemin ihlal sonrası oyuncuya gösterdiği renkli kâğıt",
       "Sarısı uyarı, kırmızısı ihraç anlamına gelen işaret"
     ],
     "difficulty": 1
@@ -6373,7 +6357,7 @@
     "difficulty": 2
   },
   {
-    "word": "TRAMPLİN",
+    "word": "TRAMPLEN",
     "clues": [
       "Suya atlarken kullanılan esnek tahta",
       "Havuza dalarken üzerinden zıplanılan platform"
@@ -6618,7 +6602,7 @@
     "word": "YAZICI",
     "clues": [
       "Bilgisayardaki belgeyi kağıda döken cihaz",
-      "Dijital yazıyı kağıt üzerine basan aygıt"
+      "Dijital yazıyı kâğıt üzerine basan aygıt"
     ],
     "difficulty": 1
   },
@@ -6694,14 +6678,6 @@
       "Akıllı telefonda simgesine dokunarak açılan program"
     ],
     "difficulty": 1
-  },
-  {
-    "word": "VERİTABANI",
-    "clues": [
-      "Bilgilerin düzenli biçimde saklandığı sistem",
-      "Sorgulanabilir kayıtların tutulduğu dijital arşiv"
-    ],
-    "difficulty": 2
   },
   {
     "word": "ŞİFRELEME",
@@ -8484,7 +8460,7 @@
     "clues": [
       "Bir bedeni yaşatan görünmez güç",
       "Kaybedilince hayatın da bittiği öz",
-      "Sevilen kişiye seslenirken kullanılan söz"
+      "Sevgiyle bağlanılan çok yakın dost"
     ],
     "difficulty": 1
   },
@@ -9237,7 +9213,7 @@
     "word": "KUYTU",
     "clues": [
       "Gözden ırak, sakin ve gölgeli köşe",
-      "Rüzgardan korunaklı, ıssız bir yer"
+      "Rüzgârdan korunaklı, ıssız bir yer"
     ],
     "difficulty": 3
   },
@@ -9310,14 +9286,6 @@
     "clues": [
       "Yemeklere koku katan çalı yaprağı",
       "Zafer taçlarının örüldüğü kutsal bitki"
-    ],
-    "difficulty": 3
-  },
-  {
-    "word": "ADAÇAYI",
-    "clues": [
-      "Öksürüğe iyi gelen kokulu bitki çayı",
-      "Kurutulmuş yapraklarıyla demlenen şifalı bitki"
     ],
     "difficulty": 3
   },
@@ -9982,7 +9950,7 @@
   {
     "word": "SENET",
     "clues": [
-      "Borcu belgeleyen imzalı kağıt",
+      "Borcu belgeleyen imzalı kâğıt",
       "Vadeli ödemeyi garanti eden yazılı belge"
     ],
     "difficulty": 3
