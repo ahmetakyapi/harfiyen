@@ -8,16 +8,20 @@ const DIR_LABEL = { across: 'Soldan sağa', down: 'Yukarıdan aşağıya' } as c
 const ARROW_BTN =
   'flex min-w-11 items-center justify-center rounded-lg px-2 opacity-70 transition-opacity hover:opacity-100';
 
+// Tüm düğmelerde onPointerDown preventDefault: gizli input'un odağı düşmesin,
+// yoksa mobilde native klavye her düğmeye dokunuşta kapanır.
+const keepFocus = (e: React.PointerEvent): void => e.preventDefault();
+
 export function ClueBar({ entry, solved, onPrev, onNext, onToggleDir, onClearWord }: {
   entry: Entry; solved: boolean;
   onPrev: () => void; onNext: () => void; onToggleDir: () => void; onClearWord: () => void;
 }) {
   return (
     <div className="flex min-h-[3.25rem] shrink-0 items-stretch gap-1 rounded-2xl bg-[var(--ink)] px-1 text-[var(--paper)] shadow-[0_10px_28px_-20px_var(--ink)]">
-      <button type="button" onClick={onPrev} aria-label="Önceki ipucu" className={ARROW_BTN}>
+      <button type="button" onClick={onPrev} onPointerDown={keepFocus} aria-label="Önceki ipucu" className={ARROW_BTN}>
         <ChevronLeft aria-hidden className="h-5 w-5" />
       </button>
-      <button type="button" onClick={onToggleDir}
+      <button type="button" onClick={onToggleDir} onPointerDown={keepFocus}
         aria-label={`${entry.clue} — yönü değiştir`}
         className="flex flex-1 items-center gap-2.5 py-1.5 text-left">
         {/* text-white DEĞİL: --paper her iki temada da doğru yönde ters döner. */}
@@ -44,12 +48,12 @@ export function ClueBar({ entry, solved, onPrev, onNext, onToggleDir, onClearWor
           </span>
         </span>
       </button>
-      <button type="button" onClick={onClearWord}
+      <button type="button" onClick={onClearWord} onPointerDown={keepFocus}
         aria-label="Bu kelimeyi temizle (doğrular korunur)" title="Kelimeyi temizle"
         className={`${ARROW_BTN} min-w-10`}>
         <Eraser aria-hidden className="h-4 w-4" />
       </button>
-      <button type="button" onClick={onNext} aria-label="Sonraki ipucu" className={ARROW_BTN}>
+      <button type="button" onClick={onNext} onPointerDown={keepFocus} aria-label="Sonraki ipucu" className={ARROW_BTN}>
         <ChevronRight aria-hidden className="h-5 w-5" />
       </button>
     </div>

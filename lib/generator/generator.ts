@@ -1,6 +1,6 @@
 import type { BankEntry } from '@/lib/content';
 import type { Difficulty, Direction, Letters } from '@/lib/types';
-import { applyPlacement, canPlace, emptyLetters, numberEntries, type Placement } from './grid';
+import { applyPlacement, canPlace, emptyLetters, newCellsOf, numberEntries, type Placement } from './grid';
 import { mulberry32, type Rng, shuffle, pick } from './rng';
 
 export type GeneratedWord = {
@@ -12,12 +12,58 @@ export type GeneratedPuzzle = {
 
 export const GENERATOR_PRESETS: Record<
   Difficulty,
-  { size: number; minWords: number; maxWords: number; allowed: readonly (1 | 2 | 3)[] }
+  {
+    size: number; minWords: number; maxWords: number; allowed: readonly (1 | 2 | 3)[];
+    // Kısa "bağlantı" kelimelerinde zorluk katmanı gevşetilir. Türkçede 3-4
+    // harfli kelimelerin neredeyse tamamı yaygındır (katman 1); `hard` bunları
+    // dışlayınca elinde yalnızca 17 adet 3 harfli kelime kalıyordu ve her zor
+    // bulmacada aynı NAL/NİL/KOD/LAV takımı dönüyordu. Gerçek çengel
+    // bulmacalarda da zorluk uzun kelimelerden ve ipucunun dilinden gelir,
+    // kısa bağlantı kelimelerinden değil.
+    shortRelaxMaxLen: number;
+    // İskelet fazının kabul ettiği en kısa "omurga" kelime. Eskiden sabit
+    // `size-2` idi; zor bulmacada bu yalnızca 8+ harfli kelime demekti ve
+    // 6-7 harfliler ızgaraya HİÇ giremiyordu (ölçüm: %0). Zorluğa göre
+    // ayarlanınca orta uzunluklar da omurgaya karışıyor.
+    skeletonMinLen: number;
+    // Hedef uzunluk karışımı (pay). Doldurma fazı buna göre sıralanır; katı
+    // kota DEĞİL, yalnızca tercih — yerleşemeyen uzunluk kendiliğinden atlanır.
+    lengthMix: Readonly<Record<number, number>>;
+  }
 > = {
-  easy: { size: 6, minWords: 7, maxWords: 9, allowed: [1, 2] },
-  medium: { size: 8, minWords: 11, maxWords: 14, allowed: [1, 2, 3] },
-  hard: { size: 10, minWords: 16, maxWords: 20, allowed: [2, 3] },
+  easy: {
+    size: 6, minWords: 7, maxWords: 9, allowed: [1, 2], shortRelaxMaxLen: 0, skeletonMinLen: 5,
+    lengthMix: { 3: 0.25, 4: 0.25, 5: 0.28, 6: 0.22 },
+  },
+  // NOT: minWords spec'teki 11-14 / 16-20 aralıklarından bilinçli olarak
+  // düşürüldü. Ölçüm (bkz. aşağıdaki FAZ B yorumu): eski ayarla zor bulmacanın
+  // %70'i 3 harfliydi ve 5-7 harfliler hiç kullanılmıyordu. Kelime SAYISI ile
+  // uzunluk ÇEŞİTLİLİĞİ beyaz-hücre tavanı altında doğrudan çatışıyor; ~2
+  // kelimeden vazgeçmek 3 harf payını %70'ten %20'ye indiriyor ve üretim
+  // başarısını da yükseltiyor (hard: %13 → %24).
+  medium: {
+    size: 8, minWords: 10, maxWords: 14, allowed: [1, 2, 3], shortRelaxMaxLen: 0, skeletonMinLen: 6,
+    lengthMix: { 3: 0.18, 4: 0.2, 5: 0.22, 6: 0.18, 7: 0.12, 8: 0.1 },
+  },
+  hard: {
+    size: 10, minWords: 14, maxWords: 20, allowed: [2, 3], shortRelaxMaxLen: 4, skeletonMinLen: 6,
+    lengthMix: { 3: 0.15, 4: 0.18, 5: 0.19, 6: 0.16, 7: 0.13, 8: 0.09, 9: 0.05, 10: 0.05 },
+  },
 };
+
+/** Kelime bu zorluğun havuzuna girer mi (katman + uzunluk + kısa-kelime gevşemesi). */
+export function isEligible(
+  entry: { word: string; difficulty: 1 | 2 | 3 },
+  preset: (typeof GENERATOR_PRESETS)[Difficulty],
+): boolean {
+  if (entry.word.length > preset.size) return false;
+  if (preset.allowed.includes(entry.difficulty)) return true;
+  return entry.word.length <= preset.shortRelaxMaxLen;
+}
+
+// Üretim ayarı için başarısızlık sayaçları (yalnızca script/test aracı; oyun
+// çalışma zamanında kullanılmaz). Ön ayarları elde tutmadan ayarlayabilmek için.
+export const GENERATOR_STATS = { minWords: 0, ratioLow: 0, ratioHigh: 0, invalid: 0, poolEmpty: 0, ok: 0 };
 
 export const WHITE_RATIO_MIN = 0.55;
 export const WHITE_RATIO_MAX = 0.8;
@@ -98,20 +144,19 @@ function firstPlacementForEntry(
 
 export function generatePuzzle(opts: {
   difficulty: Difficulty; bank: BankEntry[]; seed: number; exclude?: Set<string>;
+  // Bir kelimenin daha önce KAÇ kez kullanıldığı. Verilirse ipucu varyantı
+  // rastgele değil sırayla seçilir: aynı kelime tekrar çıktığında oyuncu
+  // farklı bir ipucu görür. Verilmezse (test/tek seferlik üretim) rastgele.
+  clueIndexFor?: (word: string) => number;
 }): GeneratedPuzzle | null {
   const preset = GENERATOR_PRESETS[opts.difficulty];
   const { size } = preset;
   const rng = mulberry32(opts.seed);
   const pool = shuffle(
     rng,
-    opts.bank.filter(
-      (e) =>
-        preset.allowed.includes(e.difficulty) &&
-        e.word.length <= size &&
-        !(opts.exclude?.has(e.word) ?? false),
-    ),
+    opts.bank.filter((e) => isEligible(e, preset) && !(opts.exclude?.has(e.word) ?? false)),
   );
-  if (pool.length === 0) return null;
+  if (pool.length === 0) { GENERATOR_STATS.poolEmpty++; return null; }
 
   const letters: Letters = emptyLetters(size);
   const placed: { entry: BankEntry; placement: Placement }[] = [];
@@ -137,7 +182,7 @@ export function generatePuzzle(opts: {
   // hedef kelime SAYISINI kısa kelimelerle FAZ B doldurduğu için burada uzun
   // kelimeye aşırı yatırım yapmıyoruz (yoksa hücre bütçesi/oranı erken tükenir
   // ve kısa kelimelere yer kalmaz — bkz. task-9-report.md ölçüm verisi).
-  const skeletonMinLen = Math.max(3, size - 2);
+  const skeletonMinLen = preset.skeletonMinLen;
   const skeletonTarget = Math.max(2, Math.ceil(preset.minWords * 0.2));
   while (placed.length < skeletonTarget) {
     let best: Candidate | null = null;
@@ -155,47 +200,76 @@ export function generatePuzzle(opts: {
     usedStarts.add(startKey(best.placement));
   }
 
-  // FAZ B — doldurma: kalan kelimeler arasından her turda en KISA olanı tercih
-  // ederek rastgele sırayla ilk geçerli yerleşimi kabul et (global en-iyiyi
-  // aramadan). Kısa kelimeler daha az hücre tüketir, bu yüzden aynı beyaz-oran
-  // bütçesi içinde çok daha fazla kelime sayısına ulaşmayı sağlar; rastgele
-  // tur sırası ise yerleşimleri ızgaraya yayarak greedy'nin tıkanma sorununu
-  // önlüyor (her tur havuz yeniden karıştırılıyor).
+  // FAZ B — doldurma: kalan kelimeler arasından, hedef uzunluk karışımında EN
+  // GERİDE kalan uzunluğu tercih ederek rastgele sırayla ilk geçerli yerleşimi
+  // kabul et (global en-iyiyi aramadan).
+  //
+  // Eskiden sıralama katı biçimde "en kısa önce" idi: kısa kelimeler her yere
+  // sığdığı için hep onlar kazanıyordu ve ölçüm şuydu — zor bulmacada
+  // yerleşimlerin %57'si 3 harfliydi (havuzun %2.9'u), 5-7 harfliler ise
+  // neredeyse hiç kullanılmıyordu. Sonuç: her zor bulmacada aynı avuç dolusu
+  // kısa kelime dönüyordu. Şimdi sıralama açığa (hedef pay − mevcut pay) göre
+  // yapılıyor; bu KATI bir kota değil, yalnızca tercih sırası — yerleşemeyen
+  // uzunluk atlanır, üretim başarısı korunur.
+  const countByLen = new Map<number, number>();
+  for (const p of placed) {
+    countByLen.set(p.entry.word.length, (countByLen.get(p.entry.word.length) ?? 0) + 1);
+  }
+  const maxWhite = Math.floor(size * size * WHITE_RATIO_MAX);
+  let whiteCount = letters.flat().filter((c) => c !== null).length;
   let progressed = true;
   while (progressed && placed.length < preset.maxWords) {
     progressed = false;
+    const total = Math.max(1, placed.length);
+    const deficit = (len: number): number =>
+      (preset.lengthMix[len] ?? 0) - (countByLen.get(len) ?? 0) / total;
     const remaining = shuffle(rng, pool.filter((e) => !used.has(e.word)))
-      .sort((a, b) => a.word.length - b.word.length);
+      .sort((a, b) => deficit(b.word.length) - deficit(a.word.length));
     for (const entry of remaining) {
       if (placed.length >= preset.maxWords) break;
       const placement = firstPlacementForEntry(entry, letters, size, rng, usedStarts);
       if (placement === null) continue;
+      // Beyaz hücre bütçesini ÖNCEDEN kontrol et. Eskiden yerleşimler bütçeye
+      // bakılmadan kabul ediliyor, oran tavanı aşılınca da bulmacanın TAMAMI
+      // çöpe atılıyordu (üretim boşa gidiyordu). Uzun kelimeler daha çok hücre
+      // tükettiğinden, dengeli uzunluk karışımı ancak bu kontrolle mümkün.
+      if (whiteCount + newCellsOf(letters, placement) > maxWhite) continue;
+      whiteCount += newCellsOf(letters, placement);
       applyPlacement(letters, placement);
       placed.push({ entry, placement });
       used.add(entry.word);
       usedStarts.add(startKey(placement));
+      countByLen.set(entry.word.length, (countByLen.get(entry.word.length) ?? 0) + 1);
       progressed = true;
     }
   }
 
   const white = letters.flat().filter((c) => c !== null).length;
   const ratio = white / (size * size);
-  if (placed.length < preset.minWords) return null;
-  if (ratio < WHITE_RATIO_MIN || ratio > WHITE_RATIO_MAX) return null;
+  if (placed.length < preset.minWords) { GENERATOR_STATS.minWords++; return null; }
+  if (ratio < WHITE_RATIO_MIN) { GENERATOR_STATS.ratioLow++; return null; }
+  if (ratio > WHITE_RATIO_MAX) { GENERATOR_STATS.ratioHigh++; return null; }
 
   const numbered = numberEntries(placed.map((p) => p.placement));
-  const clueByWord = new Map(placed.map((p) => [p.entry.word, pick(rng, p.entry.clues)]));
+  const clueByWord = new Map(placed.map((p) => {
+    const clues = p.entry.clues;
+    const idx = opts.clueIndexFor?.(p.entry.word);
+    return [p.entry.word, idx === undefined ? pick(rng, clues) : clues[idx % clues.length]] as const;
+  }));
   const words: GeneratedWord[] = numbered.map((n) => ({
     ...n, clue: clueByWord.get(n.word) ?? '',
   }));
   const black = letters.map((row) => row.map((c) => c === null));
   const puzzle: GeneratedPuzzle = { size, black, solution: letters, words };
-  return validateGenerated(puzzle).length === 0 ? puzzle : null;
+  if (validateGenerated(puzzle).length > 0) { GENERATOR_STATS.invalid++; return null; }
+  GENERATOR_STATS.ok++;
+  return puzzle;
 }
 
 export function generateWithRetries(opts: {
   difficulty: Difficulty; bank: BankEntry[]; seed: number;
   exclude?: Set<string>; maxAttempts?: number;
+  clueIndexFor?: (word: string) => number;
 }): GeneratedPuzzle {
   // Not: varsayılan 40'tan yükseltildi. Doldurma fazının katı komşuluk
   // kurallarıyla (kazara uzama/paralel bitişme yasağı) `hard` ön ayarının

@@ -38,6 +38,17 @@ export function canPlace(letters: Letters, size: number, p: Placement): number {
   return crossings;
 }
 
+/** Bu yerleşimin ızgaraya ekleyeceği YENİ (henüz dolu olmayan) hücre sayısı. */
+export function newCellsOf(letters: Letters, p: Placement): number {
+  const dr = p.dir === 'down' ? 1 : 0;
+  const dc = p.dir === 'across' ? 1 : 0;
+  let n = 0;
+  for (let i = 0; i < p.word.length; i++) {
+    if (letters[p.row + dr * i][p.col + dc * i] === null) n++;
+  }
+  return n;
+}
+
 export function applyPlacement(letters: Letters, p: Placement): void {
   const dr = p.dir === 'down' ? 1 : 0;
   const dc = p.dir === 'across' ? 1 : 0;
