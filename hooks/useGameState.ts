@@ -14,6 +14,7 @@ export type GameAction =
   | { type: 'TYPE'; letter: string; protectedCells?: Set<string> }
   | { type: 'DELETE'; protectedCells?: Set<string> }
   | { type: 'NEXT_ENTRY'; delta: 1 | -1 }
+  | { type: 'SELECT_ENTRY'; no: number; dir: Direction }
   | { type: 'MOVE'; dRow: number; dCol: number }
   | { type: 'SET_LETTERS'; letters: Letters }
   | { type: 'REVEAL'; row: number; col: number; letter: string }
@@ -184,6 +185,12 @@ export function createReducer(ctx: GridCtx) {
         const from = list.findIndex((e) => e.no === entry.no && e.dir === entry.dir);
         const next = list[(from + action.delta + list.length) % list.length];
         return { ...state, sel: selAtEntry(next, state.letters) };
+      }
+      case 'SELECT_ENTRY': {
+        // İpucu listesinden doğrudan bir kelimeye atlama.
+        const entry = ctx.entries.find((e) => e.no === action.no && e.dir === action.dir);
+        if (!entry) return state;
+        return { ...state, sel: selAtEntry(entry, state.letters) };
       }
       case 'NEXT_INCOMPLETE':
         return { ...state, sel: nextIncomplete(ctx, state.letters, state.sel) };

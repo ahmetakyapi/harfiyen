@@ -1,48 +1,56 @@
 'use client';
 
-import { ChevronLeft, ChevronRight, Eraser } from 'lucide-react';
+import { Check, ChevronLeft, ChevronRight, Eraser } from 'lucide-react';
 import type { Entry } from '@/lib/types';
 
 const DIR_LABEL = { across: 'Soldan sağa', down: 'Yukarıdan aşağıya' } as const;
 
-// Tüm butonlarda onPointerDown preventDefault: gizli input'un odağı düşmesin,
-// mobilde native klavye açık kalsın (odak kaybı klavyeyi kapatır).
-const keepFocus = (e: React.PointerEvent): void => e.preventDefault();
+const ARROW_BTN =
+  'flex min-w-11 items-center justify-center rounded-lg px-2 opacity-70 transition-opacity hover:opacity-100';
 
-export function ClueBar({ entry, onPrev, onNext, onToggleDir, onClearWord }: {
-  entry: Entry; onPrev: () => void; onNext: () => void; onToggleDir: () => void; onClearWord: () => void;
+export function ClueBar({ entry, solved, onPrev, onNext, onToggleDir, onClearWord }: {
+  entry: Entry; solved: boolean;
+  onPrev: () => void; onNext: () => void; onToggleDir: () => void; onClearWord: () => void;
 }) {
   return (
-    // Yapışkanlık dış sarmalayıcıda (GameBoard) — burada yalnızca şeridin
-    // kendisi. Native klavye açıkken bile header'ın hemen altında görünür.
-    <div className="flex min-h-14 items-stretch gap-1 rounded-2xl bg-[var(--ink)] pl-1 pr-1 text-[var(--paper)] shadow-[0_10px_28px_-20px_var(--ink)]">
-      <button type="button" onClick={onPrev} onPointerDown={keepFocus} aria-label="Önceki ipucu"
-        className="flex min-w-11 items-center justify-center rounded-lg px-2 opacity-70 hover:opacity-100">
-        <ChevronLeft className="h-5 w-5" />
+    <div className="flex min-h-[3.25rem] shrink-0 items-stretch gap-1 rounded-2xl bg-[var(--ink)] px-1 text-[var(--paper)] shadow-[0_10px_28px_-20px_var(--ink)]">
+      <button type="button" onClick={onPrev} aria-label="Önceki ipucu" className={ARROW_BTN}>
+        <ChevronLeft aria-hidden className="h-5 w-5" />
       </button>
-      <button type="button" onClick={onToggleDir} onPointerDown={keepFocus}
-        className="flex flex-1 items-center gap-3 py-2 text-left">
+      <button type="button" onClick={onToggleDir}
+        aria-label={`${entry.clue} — yönü değiştir`}
+        className="flex flex-1 items-center gap-2.5 py-1.5 text-left">
         {/* text-white DEĞİL: --paper her iki temada da doğru yönde ters döner. */}
         <span
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--accent)] font-display text-sm font-semibold text-[var(--paper)]"
+          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full font-display text-sm font-semibold text-[var(--paper)] ${
+            solved ? 'bg-[var(--correct)]' : 'bg-[var(--accent)]'
+          }`}
           aria-hidden>
-          {entry.no}
+          {solved ? <Check className="h-4 w-4" strokeWidth={3} /> : entry.no}
         </span>
         <span className="min-w-0 flex-1">
           <span className="block text-[0.65rem] font-semibold uppercase tracking-wider text-[var(--paper)]/60">
-            {DIR_LABEL[entry.dir]}
+            {DIR_LABEL[entry.dir]} · {entry.len} harf
           </span>
-          <span className="block text-base font-medium leading-snug">{entry.clue}</span>
+          {/* İpuçları uzun olabiliyor; iki satıra izin verilir, fazlası kırpılır
+              (tam metin her zaman ipucu listesinde görünür). `block` KOYMA:
+              line-clamp `display:-webkit-box` gerektirir, `block` onu ezip
+              kırpmayı devre dışı bırakıyor ve şerit 4-5 satıra uzayıp grid'in
+              yerini yiyordu — dar ekranda hücreler 20 px'e düşüyordu. */}
+          {/* Grid büyük ekranda büyüdüğü için ipucu da büyür — aksi halde
+              şerit grid'in yanında cılız kalıyor. */}
+          <span className="line-clamp-2 text-[0.9375rem] font-medium leading-snug sm:text-base xl:text-[1.0625rem]">
+            {entry.clue}
+          </span>
         </span>
       </button>
-      <button type="button" onClick={onClearWord} onPointerDown={keepFocus}
+      <button type="button" onClick={onClearWord}
         aria-label="Bu kelimeyi temizle (doğrular korunur)" title="Kelimeyi temizle"
-        className="flex min-w-11 items-center justify-center rounded-lg px-1.5 opacity-70 hover:opacity-100">
-        <Eraser className="h-4 w-4" />
+        className={`${ARROW_BTN} min-w-10`}>
+        <Eraser aria-hidden className="h-4 w-4" />
       </button>
-      <button type="button" onClick={onNext} onPointerDown={keepFocus} aria-label="Sonraki ipucu"
-        className="flex min-w-11 items-center justify-center rounded-lg px-2 opacity-70 hover:opacity-100">
-        <ChevronRight className="h-5 w-5" />
+      <button type="button" onClick={onNext} aria-label="Sonraki ipucu" className={ARROW_BTN}>
+        <ChevronRight aria-hidden className="h-5 w-5" />
       </button>
     </div>
   );

@@ -62,6 +62,25 @@ html {
   -webkit-text-size-adjust: 100%;
 }
 
+/* Oyun ekranı açıkken sayfa kaydırması ve iOS lastik-bant (rubber band) etkisi
+   tamamen kapatılır — oyun yüzeyi zaten tam ekranı kaplar, kaydıracak bir şey
+   yoktur ve kazara kaydırma grid'i klavyeden kaçırırdı. */
+html.play-lock,
+html.play-lock body {
+  overflow: hidden;
+  overscroll-behavior: none;
+  height: 100%;
+}
+
+/* Oyun yüzeyi: metin seçimi, iOS "kopyala/yapıştır" balonu ve çift dokunuşla
+   yakınlaştırma oyun sırasında istenmez. */
+.play-surface {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  touch-action: manipulation;
+}
+
 body {
   touch-action: manipulation; /* mobil çift dokunuş zoom'unu engelle */
   position: relative;
@@ -112,21 +131,136 @@ body {
 /* Çok hafif kağıt dokusu (spec §2'de tanımlı, hiç uygulanmamıştı) — SVG
    feTurbulence gürültüsü, sabit konumlu ve çok düşük opaklıkta; okunabilirliği
    asla etkilemeyecek kadar ince, ama düz renk yüzeyleri "basılı kağıt" gibi
-   hissettirir. prefers-reduced-motion'dan bağımsız (statik, animasyonsuz). */
+   hissettirir. prefers-reduced-motion'dan bağımsız (statik, animasyonsuz).
+
+   z-index 30 (eskiden 9999) + mix-blend-mode YOK: tam ekran bir blend katmanı
+   tüm sayfayı tek bir compositing grubuna sokuyordu — mobilde kaydırma ve
+   animasyon jank'inin klasik sebebi. Ayrıca 9999'da modal'ların ÜSTÜNDE kalıp
+   onları soluklaştırıyordu. 30, normal içeriğin üstünde ama z-40/z-50
+   katmanlarının (oyun yüzeyi, modal'lar) altında kalır. */
 body::before {
   content: '';
   position: fixed;
   inset: 0;
-  z-index: 9999;
+  z-index: 30;
   pointer-events: none;
-  opacity: 0.035;
-  mix-blend-mode: multiply;
+  opacity: 0.03;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 .dark body::before {
-  mix-blend-mode: overlay;
-  opacity: 0.05;
+  opacity: 0.045;
+}
+
+/* Klavye erişilebilirliği: hiçbir yerde odak göstergesi yoktu. Yalnızca
+   :focus-visible → fare/dokunmada halka çıkmaz, Tab'la gezende çıkar. */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 0.35rem;
+}
+
+/* ——— Oyun ekranı yerleşimi ———
+   Tek ekran, kaydırma yok: ipucu + grid + klavye her zaman aynı anda görünür.
+   Alanlar CSS grid ile adlandırılır, böylece DOM sırası tek kalırken üç farklı
+   ekran biçimine uyum sağlar. Grid alanı `minmax(0, 1fr)` olduğundan asla
+   taşmaz; içindeki kare, ölçülen kutuya göre JS ile boyutlanır. */
+.play-layout {
+  display: grid;
+  grid-template-areas: 'clue' 'grid' 'cross' 'keys';
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  min-height: 0;
+}
+.play-clue { grid-area: clue; }
+.play-grid { grid-area: grid; min-height: 0; min-width: 0; }
+.play-cross { grid-area: cross; }
+.play-keys { grid-area: keys; }
+.play-list { display: none; }
+
+/* Kısa ekranda kesişen ipucu şeridi feda edilir — o piksel grid'in. */
+@media (max-height: 700px) {
+  .play-cross { display: none; }
+}
+
+/* Klavye tuş yüksekliği ekranla ölçeklenir (native klavyeler de böyle yapar):
+   kısa ekranda 40 px ile grid'e yer açar, uzun telefonda 56 px'e çıkıp hem
+   rahat yazılır hem grid'in altında kalan boşluğu anlamlı doldurur.
+   Tailwind arbitrary variant'ları yerine düz CSS: media query sırası ve
+   önceliği burada kesin, sınıf üretim sırasına bağlı değil. */
+.kbd-key { height: 2.75rem; }
+@media (max-height: 640px) { .kbd-key { height: 2.5rem; } }
+@media (min-height: 780px) { .kbd-key { height: 3.5rem; } }
+
+/* Bitiş kartı kısa ekranda (yatay telefon) sığmıyor, "Paylaş"/"Sıralamayı Gör"
+   düğmeleri katlanın altında kalıyordu. Kutlama tipografisini küçültüp süsleme
+   ikonunu kaldırıyoruz — bilgi ve düğmeler aynen kalır. */
+@media (max-height: 620px) {
+  .finish-card { padding-top: 0.5rem; padding-bottom: 0.85rem; }
+  .finish-icon { display: none; }
+  .finish-title { font-size: 1.5rem; line-height: 1.15; margin-top: 0.25rem; }
+  .finish-time { font-size: 2rem; margin-top: 0.6rem; }
+  .finish-actions { margin-top: 0.75rem; }
+}
+
+/* Yatay telefon / kısa pencere: dikeyde grid'e yer kalmaz. Grid sola, ipucu ve
+   klavye sağa geçer — bulmaca yükseklikten boyutlanır, klavye tam kalır. */
+@media (max-height: 560px) and (min-width: 480px) {
+  .play-layout {
+    grid-template-areas: 'grid clue' 'grid keys';
+    grid-template-columns: minmax(0, 44%) minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    column-gap: 0.75rem;
+  }
+  /* stretch ŞART: kare akış dışı olduğundan .play-grid'in kendi içeriği
+     yüksekliğe katkı vermez; kutuyu satırların tamamına yaymalıyız. */
+  .play-grid { grid-row: 1 / -1; align-self: stretch; }
+  .play-clue,
+  .play-keys { align-self: center; }
+}
+
+/* Masaüstü: grid'in yanında sabit ipucu listesi (spec §"Girdi ve klavye"). */
+@media (min-width: 1024px) {
+  .play-layout {
+    grid-template-areas: 'clue list' 'grid list' 'cross list' 'keys list';
+    grid-template-columns: minmax(0, 1fr) 20rem;
+    grid-template-rows: auto minmax(0, 1fr) auto auto;
+    column-gap: 2rem;
+    align-items: stretch;
+  }
+  .play-grid { grid-row: auto; }
+  /* Liste dört satırı birden kapsıyor; içeriği (16-20 ipucu) `auto` satırları
+     büyütüp yerleşimi ekranın dışına taşırıyordu. Grid'deki kareyle aynı
+     çözüm: içerik akış dışına alınır, kutu satırlardan boyutlanır, akış tek
+     yönlü kalır. Kaydırma da bu kutunun içinde olur. */
+  .play-list { display: block; position: relative; grid-area: list; min-height: 0; }
+  .play-list-inner {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+  /* Kesişen ipucu şeridi masaüstünde GEREKSİZ: yandaki liste zaten bütün
+     ipuçlarını gösteriyor. Kaldırınca ~52 px doğrudan grid'e gider. */
+  .play-cross { display: none; }
+  /* Masaüstünde fiziksel klavye asıl girdi yolu; ekran klavyesi yalnızca
+     Türkçe düzeni olmayanlar için yedek. Tuşları kısaltıp yeri grid'e ver. */
+  .kbd-key { height: 2.5rem; }
+  /* SABİT genişlik, bilinçli olarak ölçülen grid'e BAĞLANMADI: şeridi
+     --grid-px'e bağlamak geri besleme yaratıyor (dar şerit → iki satır → daha
+     az yükseklik → daha küçük grid → daha dar şerit). Eşik genişliklerde
+     titremeye yol açabilir. 40rem her masaüstü boyutunda grid'e yakın durur
+     ve ölçümden tamamen bağımsızdır. */
+  .play-clue {
+    width: 100%;
+    max-width: 40rem;
+    margin-inline: auto;
+  }
+  .play-keys {
+    width: 100%;
+    max-width: 34rem;
+    margin-inline: auto;
+  }
 }
 
 ::selection {
