@@ -30,7 +30,7 @@ function Column({ entries, dir, active, solvedKeys, onPick }: {
             <li key={hashKey(e.no, e.dir)}>
               <button type="button" onClick={() => onPick(e)}
                 aria-current={isActive || undefined}
-                className={`flex w-full gap-2 rounded-lg px-2 py-1.5 text-left text-sm transition-colors ${
+                className={`flex w-full gap-2 rounded-lg px-2 py-1.5 text-left text-sm transition-colors xl:text-[0.9375rem] ${
                   isActive
                     ? 'bg-[var(--cell-word)] font-medium text-[var(--ink)]'
                     : 'hover:bg-[var(--paper-raised)]'

@@ -228,14 +228,37 @@ body::before {
     align-items: stretch;
   }
   .play-grid { grid-row: auto; }
-  .play-list { display: flex; grid-area: list; min-height: 0; }
-  /* İpucu şeridi ve klavye grid'in genişliğine hizalanır (35rem = grid'in
-     üst sınırı) — aksi halde şerit grid'den geniş kalıp kolonu dağıtıyordu. */
-  .play-clue,
-  .play-cross,
+  /* Liste dört satırı birden kapsıyor; içeriği (16-20 ipucu) `auto` satırları
+     büyütüp yerleşimi ekranın dışına taşırıyordu. Grid'deki kareyle aynı
+     çözüm: içerik akış dışına alınır, kutu satırlardan boyutlanır, akış tek
+     yönlü kalır. Kaydırma da bu kutunun içinde olur. */
+  .play-list { display: block; position: relative; grid-area: list; min-height: 0; }
+  .play-list-inner {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+  /* Kesişen ipucu şeridi masaüstünde GEREKSİZ: yandaki liste zaten bütün
+     ipuçlarını gösteriyor. Kaldırınca ~52 px doğrudan grid'e gider. */
+  .play-cross { display: none; }
+  /* Masaüstünde fiziksel klavye asıl girdi yolu; ekran klavyesi yalnızca
+     Türkçe düzeni olmayanlar için yedek. Tuşları kısaltıp yeri grid'e ver. */
+  .kbd-key { height: 2.5rem; }
+  /* SABİT genişlik, bilinçli olarak ölçülen grid'e BAĞLANMADI: şeridi
+     --grid-px'e bağlamak geri besleme yaratıyor (dar şerit → iki satır → daha
+     az yükseklik → daha küçük grid → daha dar şerit). Eşik genişliklerde
+     titremeye yol açabilir. 40rem her masaüstü boyutunda grid'e yakın durur
+     ve ölçümden tamamen bağımsızdır. */
+  .play-clue {
+    width: 100%;
+    max-width: 40rem;
+    margin-inline: auto;
+  }
   .play-keys {
     width: 100%;
-    max-width: 35rem;
+    max-width: 34rem;
     margin-inline: auto;
   }
 }

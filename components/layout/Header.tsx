@@ -15,8 +15,13 @@ export async function Header() {
     <header className="site-header border-b border-[var(--line)]">
       <div className="mx-auto flex h-14 max-w-3xl items-center justify-between px-3 sm:px-4">
         <Link href="/" className="flex items-center gap-2 sm:gap-2.5">
-          <Logo className="h-8 w-8" />
-          <span className="font-display text-xl font-semibold tracking-tight">Harfiyen</span>
+          <Logo className="h-8 w-8 shrink-0" />
+          {/* 320 px'lik telefonlarda logo + kelime işareti + 4 nav öğesi
+              başlığı yatayda taşırıyordu (sayfa yana kayıyordu). O genişlikte
+              yalnızca logo kalır — marka işareti zaten tanınır. */}
+          <span className="hidden font-display text-xl font-semibold tracking-tight min-[360px]:inline">
+            Harfiyen
+          </span>
         </Link>
         <nav className="flex items-center gap-1.5 text-sm sm:gap-4">
           {/* Dar ekranda metin linkleri sıkışıyordu — mobilde ikon butonlar,
@@ -44,7 +49,7 @@ export async function Header() {
                 <span className="hidden max-w-[7rem] truncate font-medium sm:block">{session.user.name}</span>
               </Link>
             )
-            : <Link href="/login" className="flex min-h-10 items-center rounded-full border border-[var(--line)] px-4 font-medium">Giriş</Link>}
+            : <Link href="/login" className="flex min-h-10 shrink-0 items-center rounded-full border border-[var(--line)] px-3 font-medium sm:px-4">Giriş</Link>}
           <ThemeToggle />
         </nav>
       </div>

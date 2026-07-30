@@ -33,9 +33,10 @@ type SubmitResult =
     };
 type Phase = 'idle' | 'starting' | 'playing' | 'submitting' | 'done' | 'revisit';
 
-// Grid masaüstünde sonsuz büyümesin: bundan sonrası okunabilirliğe bir şey
-// katmıyor, sadece göz gezdirme mesafesini artırıyor.
-const MAX_GRID_PX = 560;
+// Grid sonsuz büyümesin diye bir üst sınır. Gerçek boyutu neredeyse her zaman
+// ölçülen kutu belirler; bu sınır yalnızca çok büyük monitörlerde devreye
+// girer (bundan sonrası göz gezdirme mesafesini artırmaktan başka işe yaramaz).
+const MAX_GRID_PX = 760;
 
 async function post<T>(url: string, body: unknown): Promise<T> {
   const res = await fetch(url, {
@@ -535,13 +536,15 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive, alreadyCompleted }:
           <Keyboard onKey={typeLetter} onDelete={deleteLetter} disabled={phase !== 'playing'} />
         </div>
 
-        <aside className="play-list flex-col">
-          <ClueList entries={puzzle.entries} active={entry} solvedKeys={correctKeys}
-            onPick={(e) => pickEntry(e.no, e.dir)} />
-          <button type="button" onClick={clearAll}
-            className="mt-2 flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-[var(--line)] text-sm text-[var(--ink-soft)] transition-colors hover:bg-[var(--paper-raised)]">
-            <Trash2 aria-hidden className="h-4 w-4" /> Tümünü Temizle
-          </button>
+        <aside className="play-list">
+          <div className="play-list-inner">
+            <ClueList entries={puzzle.entries} active={entry} solvedKeys={correctKeys}
+              onPick={(e) => pickEntry(e.no, e.dir)} />
+            <button type="button" onClick={clearAll}
+              className="mt-2 flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-[var(--line)] text-sm text-[var(--ink-soft)] transition-colors hover:bg-[var(--paper-raised)]">
+              <Trash2 aria-hidden className="h-4 w-4" /> Tümünü Temizle
+            </button>
+          </div>
         </aside>
       </div>
 

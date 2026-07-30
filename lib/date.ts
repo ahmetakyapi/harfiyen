@@ -51,10 +51,17 @@ export function formatTrtDayMonth(date: string): string {
   }).format(new Date(`${date}T00:00:00Z`));
 }
 
-// "Temmuz 2026" — arşivde ay başlıkları için.
+// "Temmuz 2026" — arşiv kartlarında ay satırı için.
 export function formatTrtMonth(date: string): string {
   return new Intl.DateTimeFormat('tr-TR', {
     timeZone: 'UTC', month: 'long', year: 'numeric',
+  }).format(new Date(`${date}T00:00:00Z`));
+}
+
+// "28" — arşiv kartındaki büyük display rakamı.
+export function formatTrtDayNumber(date: string): string {
+  return new Intl.DateTimeFormat('tr-TR', {
+    timeZone: 'UTC', day: 'numeric',
   }).format(new Date(`${date}T00:00:00Z`));
 }
 

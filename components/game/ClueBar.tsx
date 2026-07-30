@@ -37,7 +37,9 @@ export function ClueBar({ entry, solved, onPrev, onNext, onToggleDir, onClearWor
               line-clamp `display:-webkit-box` gerektirir, `block` onu ezip
               kırpmayı devre dışı bırakıyor ve şerit 4-5 satıra uzayıp grid'in
               yerini yiyordu — dar ekranda hücreler 20 px'e düşüyordu. */}
-          <span className="line-clamp-2 text-[0.9375rem] font-medium leading-snug sm:text-base">
+          {/* Grid büyük ekranda büyüdüğü için ipucu da büyür — aksi halde
+              şerit grid'in yanında cılız kalıyor. */}
+          <span className="line-clamp-2 text-[0.9375rem] font-medium leading-snug sm:text-base xl:text-[1.0625rem]">
             {entry.clue}
           </span>
         </span>
