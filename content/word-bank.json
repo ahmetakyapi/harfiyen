@@ -233,7 +233,7 @@
     "word": "KEDİ",
     "clues": [
       "Miyavlayan evcil hayvan",
-      "Yediği canı olduğu söylenen hayvan"
+      "Dokuz canlı olduğuna inanılan evcil hayvan"
     ],
     "difficulty": 1
   },
@@ -249,7 +249,7 @@
     "word": "LALE",
     "clues": [
       "Kadeh biçimli renkli bahar çiçeği",
-      "Hollanda'nın da sevdiği renkli çiçek"
+      "Osmanlı'da bir döneme adını veren soğanlı çiçek"
     ],
     "difficulty": 2
   },
@@ -1209,7 +1209,7 @@
     "word": "KAPLUMBAĞA",
     "clues": [
       "Sırtında evini taşıyan yavaş sürüngen",
-      "Tavşanla yarışıp kazandığı söylenen hayvan"
+      "Sert kemiksi kabuğuna çekilebilen sürüngen"
     ],
     "difficulty": 2
   },
@@ -2787,7 +2787,7 @@
   {
     "word": "ASLAN",
     "clues": [
-      "Ormanlar kralı olarak bilinen büyük kedigil",
+      "Kükremesiyle bilinen iri yırtıcı kedigil",
       "Erkeğinin yelesiyle tanınan Afrika hayvanı"
     ],
     "difficulty": 1
@@ -2820,7 +2820,7 @@
     "word": "TAVŞAN",
     "clues": [
       "Uzun kulaklı, hızlı zıplayan küçük hayvan",
-      "Havuç yemeye düşkün olduğu söylenen hayvan"
+      "Eti ve kürkü için de yetiştirilen memeli"
     ],
     "difficulty": 1
   },
@@ -6489,7 +6489,7 @@
     "word": "ÇİP",
     "clues": [
       "Devrelerin üzerine yerleştirildiği küçük parça",
-      "Bilgisayarın beyni sayılan küçük elektronik parça",
+      "Milimetrik yüzeyde binlerce devre taşıyan parça",
       "Banka kartına gömülü elektronik parça"
     ],
     "difficulty": 2
@@ -7308,8 +7308,8 @@
   {
     "word": "HAVUÇ",
     "clues": [
-      "Turuncu renkli, gözlere iyi geldiği söylenen kök sebze",
-      "Tavşanların sevdiği söylenen turuncu sebze"
+      "Koni biçimli, etli kökü yenen turuncu sebze",
+      "Rendelenip salataya katılan turuncu kök"
     ],
     "difficulty": 1
   },
@@ -8748,8 +8748,8 @@
   {
     "word": "SAVCI",
     "clues": [
-      "Suçluyu mahkemede iddia makamı olarak temsil eden kişi",
-      "İddianame hazırlayan adliye görevlisi"
+      "Devlet adına kamu davası açan adliye görevlisi",
+      "Duruşmada iddia makamını temsil eden hukukçu"
     ],
     "difficulty": 2
   },
