@@ -302,6 +302,39 @@ body::before {
   animation: cell-shake 0.45s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+/* Sayfa girişi. Rota değişince <main> yeniden bağlanır, animasyon o anda bir
+   kez oynar — iskeletten gerçek içeriğe geçiş de buradan yumuşar: içerik
+   "zıplayarak" değil, yerine oturarak gelir. Yalnızca opacity + transform;
+   ikisi de compositor'da çalışır, layout/paint tetiklemez. */
+@keyframes page-enter {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+.page-enter {
+  animation: page-enter 0.24s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* İskelet parıltısı. Donuk gri bloklar "takılmış" görünür; akıp giden parıltı
+   beklemenin sürdüğünü anlatır. background-position animasyonu tek bir boyanan
+   katmanda kalır, düzeni hiç etkilemez. */
+@keyframes skeleton-sheen {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+
+.skeleton {
+  background-color: var(--paper-raised);
+  background-image: linear-gradient(
+    90deg,
+    transparent 20%,
+    var(--row-hover) 50%,
+    transparent 80%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-sheen 1.4s linear infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;

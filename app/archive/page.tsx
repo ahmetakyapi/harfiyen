@@ -21,23 +21,33 @@ export default async function ArchivePage({ searchParams }: {
 
   // Sayfalama SQL'de: eskiden tüm geçmiş günler tek seferde çekiliyordu; arşiv
   // her gün bir satır büyüdüğünden hem sorgu hem DOM sınırsız şişerdi.
-  const [{ total }] = await db
-    .select({ total: sql<number>`count(distinct ${puzzles.date})` })
-    .from(puzzles).where(lt(puzzles.date, today));
+  //
+  // Üçü de birbirinden bağımsız, o yüzden PARALEL. Gün listesi normalde
+  // `safePage`i (yani toplam sayfa sayısını) beklemek zorundaydı; onun yerine
+  // istenen sayfa iyimser biçimde çekiliyor. Sıra dışı tek durum — URL'de
+  // var olmayan bir sayfa numarası — aşağıda tek ek sorguyla toparlanıyor.
+  const pageOffset = (p: number): number => (p - 1) * PAGE_SIZE;
+  const datesQuery = (p: number): Promise<{ date: string }[]> => db
+    .selectDistinct({ date: puzzles.date })
+    .from(puzzles).where(lt(puzzles.date, today))
+    .orderBy(desc(puzzles.date))
+    .limit(PAGE_SIZE).offset(pageOffset(p));
+
+  const [[{ total }], firstTry, session] = await Promise.all([
+    db.select({ total: sql<number>`count(distinct ${puzzles.date})` })
+      .from(puzzles).where(lt(puzzles.date, today)),
+    datesQuery(page),
+    auth(),
+  ]);
   const totalDays = Number(total);
   const pageCount = Math.max(1, Math.ceil(totalDays / PAGE_SIZE));
   const safePage = Math.min(page, pageCount);
-
-  const dateRows = await db.selectDistinct({ date: puzzles.date })
-    .from(puzzles).where(lt(puzzles.date, today))
-    .orderBy(desc(puzzles.date))
-    .limit(PAGE_SIZE).offset((safePage - 1) * PAGE_SIZE);
+  const dateRows = safePage === page ? firstTry : await datesQuery(safePage);
   const dates = dateRows.map((r) => r.date);
 
   // `${date}:${difficulty}` → tamamlanan oturumun süresi. Yalnızca bu
   // sayfadaki günler sorgulanır.
   const doneMs = new Map<string, number | null>();
-  const session = await auth();
   if (session && dates.length > 0) {
     const mine = await db.select({
       date: puzzles.date, difficulty: puzzles.difficulty, durationMs: playSessions.durationMs,
@@ -53,7 +63,7 @@ export default async function ArchivePage({ searchParams }: {
   }
 
   return (
-    <main className="mx-auto max-w-5xl px-4 py-10">
+    <main className="page-enter mx-auto max-w-5xl px-4 py-10">
       <AutoRefresh />
       <ArchiveGallery dates={dates} doneMs={doneMs}
         page={safePage} pageCount={pageCount} totalDays={totalDays} />

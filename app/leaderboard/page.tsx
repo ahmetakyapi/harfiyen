@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import { and, eq } from 'drizzle-orm';
 import { Play } from 'lucide-react';
 import { auth } from '@/lib/auth';
 import { AutoRefresh } from '@/components/layout/AutoRefresh';
@@ -7,7 +6,6 @@ import { addDays, formatTrtDate, gameDay } from '@/lib/date';
 import { DIFFICULTY_TAB_CLASS, DIFFICULTY_LABELS } from '@/lib/difficulty';
 import { getDb } from '@/lib/db';
 import { getLeaderboard } from '@/lib/game/leaderboard';
-import { playSessions } from '@/lib/schema';
 import { DIFFICULTIES, type Difficulty } from '@/lib/types';
 import { LeaderboardTable } from '@/components/leaderboard/LeaderboardTable';
 import { formatDuration } from '@/lib/share';
@@ -31,19 +29,12 @@ export default async function LeaderboardPage({ searchParams }: {
   // bunun için ana sayfaya geri dönmek zorunda kalıyordu. Üye olmayanda da
   // görünür — /play girişi zorunlu kıldığından bağlantı login'e taşır.
   // Oynanmışlık YALNIZCA tamamlanmışlığa bakar; yarım kalmış oturumda da
-  // "devam et" anlamında çağrı görünmeye devam eder.
-  let completed = false;
-  if (board && userId !== null) {
-    const mine = await getDb().select({ id: playSessions.id }).from(playSessions).where(and(
-      eq(playSessions.puzzleId, board.puzzleId),
-      eq(playSessions.userId, userId),
-      eq(playSessions.status, 'completed'),
-    ));
-    completed = mine.length > 0;
-  }
+  // "devam et" anlamında çağrı görünmeye devam eder. Bu bilgi sıralama
+  // sorgusuyla PARALEL çekiliyor (bkz. getLeaderboard) — ayrı bir tur değil.
+  const completed = board?.meCompleted ?? false;
 
   return (
-    <main className="mx-auto max-w-lg px-4 py-8">
+    <main className="page-enter mx-auto max-w-lg px-4 py-8">
       <AutoRefresh />
       <h1 className="mb-2 bg-gradient-to-r from-[var(--title-from)] to-[var(--title-to)] bg-clip-text text-center font-display text-3xl text-transparent">
         Sıralama

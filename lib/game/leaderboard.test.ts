@@ -42,6 +42,31 @@ describe('getLeaderboard', () => {
     expect(board.top[0]).toMatchObject({ rank: 1, durationMs: 60_000 });
     expect(board.me).toEqual({ rank: 3, durationMs: 120_000 });
     expect(board.total).toBe(3);
+    expect(board.meCompleted).toBe(true);
+  });
+  it('ilk 100 dışındaki oyuncuya kendi sırasını doğru verir', async () => {
+    const { db, puzzleId, solution } = await setup();
+    // 101 oyuncu: sonuncusu listede görünmez ama sırası doğru olmalı. Eskiden
+    // sıra Node'a çekilen satırlar içinde aranıyordu; pencere fonksiyonuna
+    // geçişin asıl kazancı bu — sıra artık listeden bağımsız.
+    let lastId = 0;
+    for (let i = 0; i < 101; i += 1) {
+      lastId = await play(db, puzzleId, solution, `oyuncu${i}`, 60 + i);
+    }
+    const board = await getLeaderboard(db, { date: today, difficulty: 'easy', userId: lastId });
+    if (!board) throw new Error('board null');
+    expect(board.total).toBe(101);
+    expect(board.top).toHaveLength(100);
+    expect(board.me).toEqual({ rank: 101, durationMs: 160_000 });
+  });
+  it('sıralamaya girmemiş kullanıcı için me null, meCompleted false', async () => {
+    const { db, puzzleId, solution } = await setup();
+    await play(db, puzzleId, solution, 'hizli', 60);
+    const board = await getLeaderboard(db, { date: today, difficulty: 'easy', userId: 9999 });
+    if (!board) throw new Error('board null');
+    expect(board.me).toBeNull();
+    expect(board.meCompleted).toBe(false);
+    expect(board.total).toBe(1);
   });
   it('bulmaca yoksa null döner', async () => {
     const db = await createTestDb();
