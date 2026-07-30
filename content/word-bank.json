@@ -86,7 +86,7 @@
   {
     "word": "YOL",
     "clues": [
-      "Bir yerden bir yere ulaştıran güzergah",
+      "Bir yerden bir yere ulaştıran güzergâh",
       "Asfaltla kaplanan geçit",
       "Trafiğin aktığı şerit"
     ],
@@ -385,7 +385,7 @@
     "word": "PABUÇ",
     "clues": [
       "Eski usul kaba ayakkabı",
-      "Osmanlı sokaklarının ayak giysisi"
+      "Osmanlı sokaklarında giyilen ayakkabı"
     ],
     "difficulty": 3
   },
@@ -721,7 +721,7 @@
     "word": "KUAFÖR",
     "clues": [
       "Saça biçim veren zanaat sahibi",
-      "Düğün öncesi saç ve makyaj için gidilen yer"
+      "Düğün öncesi gelinin saçını emanet ettiği kişi"
     ],
     "difficulty": 3
   },
@@ -993,7 +993,7 @@
     "word": "FESTİVAL",
     "clues": [
       "Belirli günlerde düzenlenen kutlama etkinliği",
-      "Sokakların rengarenk şenlendiği etkinlik"
+      "Sokakların rengârenk şenlendiği etkinlik"
     ],
     "difficulty": 2
   },
@@ -1040,7 +1040,7 @@
   {
     "word": "ANNEANNE",
     "clues": [
-      "Nine ile eş anlamlı aile büyüğü",
+      "Annenin annesi olan aile büyüğü",
       "Ninni söyleyip masal anlatan büyük"
     ],
     "difficulty": 1
@@ -1225,7 +1225,7 @@
     "word": "AYDINLANMA",
     "clues": [
       "Karanlıktan çıkıp bilgiye kavuşma hâli",
-      "Akla ve bilime dayanan tarihi çağın adı"
+      "Akla ve bilime dayanan tarihî çağın adı"
     ],
     "difficulty": 3
   },
@@ -1463,7 +1463,7 @@
   {
     "word": "FİŞ",
     "clues": [
-      "Kabloyun ucunda prize takılan parça",
+      "Kablonun ucunda prize takılan parça",
       "Elektrikli aletin duvara bağlandığı uç",
       "Şarj kablosunun duvara giren ucu"
     ],
@@ -1513,7 +1513,7 @@
   {
     "word": "BANYO",
     "clues": [
-      "Yıkanılan evin ıslak mekânı",
+      "Evin yıkanılan ıslak mekânı",
       "Duşun ve küvetin bulunduğu oda"
     ],
     "difficulty": 1
@@ -1529,7 +1529,7 @@
   {
     "word": "LAVABO",
     "clues": [
-      "Elin yüzün yıkandığı musluklu taş",
+      "Elin ve yüzün yıkandığı musluklu tekne",
       "Banyodaki musluğun bağlı olduğu taşıyıcı"
     ],
     "difficulty": 1
@@ -1735,7 +1735,7 @@
     "word": "RENDE",
     "clues": [
       "Peynir veya sebzeyi ince ince kesen alet",
-      "Havucu telef telef doğrayan mutfak aracı"
+      "Havucu tel tel doğrayan mutfak aracı"
     ],
     "difficulty": 2
   },
@@ -2031,7 +2031,7 @@
   {
     "word": "KALORİFER",
     "clues": [
-      "Binayı ısıtan merkezi sistem",
+      "Binayı ısıtan merkezî sistem",
       "Radyatörlerle odaları ısıtan tesisat"
     ],
     "difficulty": 2
@@ -2120,7 +2120,7 @@
     "word": "DONDURUCU",
     "clues": [
       "Yiyecekleri donmuş halde saklayan cihaz",
-      "Buzdolabının dondurma yapan bölümü ya da ayrı cihazı"
+      "Buzdolabının derin dondurma bölümü"
     ],
     "difficulty": 2
   },
@@ -2948,7 +2948,7 @@
   {
     "word": "HOROZ",
     "clues": [
-      "Sabah ezberinde öten erkek kümes hayvanı",
+      "Sabahın erken saatinde öten erkek kümes hayvanı",
       "İbiğiyle tanınan sabahın habercisi kuş"
     ],
     "difficulty": 1
@@ -2965,7 +2965,7 @@
     "word": "KAZ",
     "clues": [
       "Gaga ve perde ayaklarıyla bilinen büyük kümes kuşu",
-      "Kanadını çırparak gıdaklayan iri göçmen kuş",
+      "Sürü hâlinde V çizerek uçan iri kuş",
       "Tüyü yastık dolduran iri kümes hayvanı"
     ],
     "difficulty": 1
@@ -3006,7 +3006,7 @@
     "word": "ŞAHİN",
     "clues": [
       "Hızlı uçuşuyla bilinen küçük yırtıcı kuş",
-      "Avcılıkta eğitilen küçük yırtıcı kuş"
+      "Keskin görüşüyle anılan yırtıcı kuş"
     ],
     "difficulty": 2
   },
@@ -3150,7 +3150,7 @@
   {
     "word": "YARASA",
     "clues": [
-      "Geceleri uçan tek memeli",
+      "Uçabilen tek memeli hayvan",
       "Ses dalgalarıyla yön bulan gece hayvanı"
     ],
     "difficulty": 2
@@ -3167,7 +3167,7 @@
     "word": "PORSUK",
     "clues": [
       "Toprak altında yuva kazan geceleri aktif hayvan",
-      "Siyah beyaz yüz desenli kemirgen benzeri hayvan"
+      "Yüzündeki siyah beyaz çizgilerle tanınan sansargil"
     ],
     "difficulty": 3
   },
@@ -3303,14 +3303,14 @@
     "word": "BÜLBÜL",
     "clues": [
       "Güzel ötüşüyle şiirlere konu olan kuş",
-      "Gülün aşığı olarak anılan ötücü kuş"
+      "Gülün âşığı olarak anılan ötücü kuş"
     ],
     "difficulty": 2
   },
   {
     "word": "GUGUK",
     "clues": [
-      "Adını ötüşünden alan saat kuşu",
+      "Adını ötüşünden alan ötücü kuş",
       "Duvar saatinin tepesinden çıkan kuş"
     ],
     "difficulty": 2
@@ -3477,7 +3477,7 @@
     "word": "YILDIRIM",
     "clues": [
       "Gökten yere düşen elektrik boşalması",
-      "Ağaçları bazen tutuşturan gök cismi"
+      "Ağaçları bazen tutuşturan gök olayı"
     ],
     "difficulty": 2
   },
@@ -3735,7 +3735,7 @@
   {
     "word": "GÜNEY",
     "clues": [
-      "Ekvatora yakın olan yön",
+      "Pusulanın aşağı gösterdiği yön",
       "Kuzeyin karşıt yönü"
     ],
     "difficulty": 1
@@ -3767,7 +3767,7 @@
   {
     "word": "EKVATOR",
     "clues": [
-      "Dünyayı ikiye bölen hayali çizgi",
+      "Dünyayı ikiye bölen hayalî çizgi",
       "Kuzey ve güney yarım küreyi ayıran çizgi"
     ],
     "difficulty": 2
@@ -3775,8 +3775,8 @@
   {
     "word": "MERİDYEN",
     "clues": [
-      "Kutuptan kutba çizilen hayali boylam çizgisi",
-      "Saat dilimlerini belirleyen hayali çizgi"
+      "Kutuptan kutba çizilen hayalî boylam çizgisi",
+      "Saat dilimlerini belirleyen hayalî çizgi"
     ],
     "difficulty": 3
   },
@@ -3791,7 +3791,7 @@
   {
     "word": "BOYLAM",
     "clues": [
-      "Doğu-batı konumunu gösteren hayali çizgi",
+      "Doğu-batı konumunu gösteren hayalî çizgi",
       "Coğrafi konumun doğu-batı bileşeni"
     ],
     "difficulty": 3
@@ -3832,7 +3832,7 @@
     "word": "TURİST",
     "clues": [
       "Gezmek amacıyla başka yere giden kişi",
-      "Kamerasıyla gezip tarihi yerleri fotoğraflayan ziyaretçi"
+      "Kamerasıyla gezip tarihî yerleri fotoğraflayan ziyaretçi"
     ],
     "difficulty": 1
   },
@@ -3840,7 +3840,7 @@
     "word": "PASAPORT",
     "clues": [
       "Yurt dışına çıkarken gösterilen kimlik belgesi",
-      "Sınır kapısında gösterilen resmi seyahat belgesi"
+      "Sınır kapısında gösterilen resmî seyahat belgesi"
     ],
     "difficulty": 1
   },
@@ -4204,7 +4204,7 @@
     "word": "KARADENİZ",
     "clues": [
       "Türkiye'nin kuzeyini çevreleyen deniz",
-      "Doğu Anadolu'nun kuzeyindeki deniz"
+      "Samsun ve Trabzon kıyılarının denizi"
     ],
     "difficulty": 1,
     "tags": [
@@ -4258,7 +4258,7 @@
     "clues": [
       "Vücudun en üst organı",
       "Şapkanın giyildiği vücut kısmı",
-      "Boynun üzerinde duran bölüm"
+      "Bir topluluğun önderi, lideri"
     ],
     "difficulty": 1
   },
@@ -4283,7 +4283,7 @@
     "clues": [
       "Elin bağlı olduğu vücut uzvu",
       "Gövdeden çıkan, elde biten uzuv",
-      "Saatin takıldığı uzuv"
+      "Bir derneğin ya da örgütün şubesi"
     ],
     "difficulty": 1
   },
@@ -5157,7 +5157,7 @@
     "word": "NOTA",
     "clues": [
       "Müzikte sesin yazıya dökülmüş biçimi",
-      "Beş çizgili kağıda yazılan müzik işareti"
+      "Beş çizgili kâğıda yazılan müzik işareti"
     ],
     "difficulty": 2
   },
@@ -5199,7 +5199,7 @@
     "word": "ORKESTRA",
     "clues": [
       "Çeşitli çalgıları bir arada çalan topluluk",
-      "Şefin yönettiği çalgı toplayan topluluk"
+      "Şefin yönettiği çalgıcılar topluluğu"
     ],
     "difficulty": 1
   },
@@ -5619,7 +5619,7 @@
   {
     "word": "MÜZE",
     "clues": [
-      "Tarihi ve sanat eserlerinin korunduğu kurum",
+      "Tarihî ve sanat eserlerinin korunduğu kurum",
       "Ziyaretçilerin eski eserleri gezdiği bina"
     ],
     "difficulty": 1
@@ -5668,7 +5668,7 @@
     "word": "ŞİİR",
     "clues": [
       "Duyguların dizeler hâlinde anlatıldığı eser",
-      "Kafiyeli mısralardan oluşan edebi tür"
+      "Kafiyeli mısralardan oluşan edebî tür"
     ],
     "difficulty": 1
   },
@@ -5708,7 +5708,7 @@
     "word": "DENEME",
     "clues": [
       "Yazarın kişisel görüşlerini anlattığı yazı türü",
-      "Kurgusuz, düşünceye dayalı edebi tür"
+      "Kurgusuz, düşünceye dayalı edebî tür"
     ],
     "difficulty": 2
   },
@@ -6052,7 +6052,7 @@
     "word": "KÜREK",
     "clues": [
       "Teknede kollarla suyu iterek ilerleme sporu",
-      "Sandalı ileri götürmek için kullanılan araçla yapılan spor"
+      "Karı veya toprağı atmakta kullanılan saplı alet"
     ],
     "difficulty": 2
   },
@@ -6157,7 +6157,7 @@
     "word": "PENALTI",
     "clues": [
       "On bir metreden kullanılan ceza vuruşu",
-      "Alan içi faulünde verilen tek kaleci karşısı vuruş"
+      "Ceza alanı içindeki faulde verilen vuruş"
     ],
     "difficulty": 1
   },
@@ -6377,7 +6377,7 @@
     "word": "SIRIK",
     "clues": [
       "Yüksek atlamada kullanılan uzun çubuk",
-      "Bu araçla atlama sporunun temel gereci"
+      "Çadır kurarken de kullanılan uzun ince çubuk"
     ],
     "difficulty": 2
   },
@@ -6601,7 +6601,7 @@
   {
     "word": "YAZICI",
     "clues": [
-      "Bilgisayardaki belgeyi kağıda döken cihaz",
+      "Bilgisayardaki belgeyi kâğıda döken cihaz",
       "Dijital yazıyı kâğıt üzerine basan aygıt"
     ],
     "difficulty": 1
@@ -7156,7 +7156,7 @@
   {
     "word": "SÜTLAÇ",
     "clues": [
-      "Fırında kızartılarak yapılan sütlü pirinç tatlısı",
+      "Sütle pirinçten yapılan kaşık tatlısı",
       "Üzeri kızarmış sütlü pirinç tatlısı"
     ],
     "difficulty": 1
@@ -7372,7 +7372,7 @@
   {
     "word": "MISIR",
     "clues": [
-      "Patlatılınca cips gibi şişen tahıl",
+      "Koçanında sıra sıra tanesi dizili tahıl",
       "Sinemada patlatılarak yenen sarı tahıl"
     ],
     "difficulty": 1
@@ -7654,7 +7654,7 @@
   {
     "word": "ŞALGAM",
     "clues": [
-      "Ekşi ve baharatlı kırmızı bir içecek",
+      "Turpgillerden, yumru köklü bir bitki",
       "Adana mutfağının turp suyu bazlı içeceği"
     ],
     "difficulty": 3
@@ -7712,7 +7712,7 @@
     "word": "MENÜ",
     "clues": [
       "Restoranda sunulan yemek listesi",
-      "Garsonun getirdiği yemek seçim kağıdı"
+      "Garsonun getirdiği yemek seçim kâğıdı"
     ],
     "difficulty": 1
   },
@@ -8024,7 +8024,7 @@
   {
     "word": "ACIMA",
     "clues": [
-      "Birinin durumuna üzülüp yardım isteği duyma",
+      "Birinin durumuna üzülüp yardım etme isteği",
       "Zor durumda birine karşı hissedilen üzüntü"
     ],
     "difficulty": 2
@@ -8048,7 +8048,7 @@
   {
     "word": "ANTİPATİ",
     "clues": [
-      "Birine karşı duyulan olumsuz yakınlık",
+      "Birine karşı duyulan itici his",
       "İlk görüşte hoşlanmama hissi"
     ],
     "difficulty": 2
@@ -8700,7 +8700,7 @@
   {
     "word": "KOMUTAN",
     "clues": [
-      "Askeri birliği yöneten kişi",
+      "Askerî birliği yöneten kişi",
       "Emir veren üst rütbeli asker"
     ],
     "difficulty": 2
@@ -8725,7 +8725,7 @@
     "word": "SUBAY",
     "clues": [
       "Orduda komuta yetkisi olan görevli",
-      "Rütbeli askeri personel"
+      "Rütbeli askerî personel"
     ],
     "difficulty": 2
   },
@@ -8756,7 +8756,7 @@
   {
     "word": "NOTER",
     "clues": [
-      "Resmi belgeleri onaylayan görevli",
+      "Resmî belgeleri onaylayan görevli",
       "Vekaletnamelerin düzenlendiği memur"
     ],
     "difficulty": 2
@@ -9021,7 +9021,7 @@
     "word": "SATICI",
     "clues": [
       "Ürünleri müşteriye sunan kişi",
-      "Tezgahtan mal satan kişi"
+      "Tezgâhtan mal satan kişi"
     ],
     "difficulty": 1
   },
@@ -9029,7 +9029,7 @@
     "word": "MEMUR",
     "clues": [
       "Devlet kurumunda çalışan görevli",
-      "Resmi dairede masa başında çalışan kişi"
+      "Resmî dairede masa başında çalışan kişi"
     ],
     "difficulty": 1
   },
@@ -9093,7 +9093,7 @@
     "word": "HAHAM",
     "clues": [
       "Musevi din adamı",
-      "Sinagogda dini törenleri yöneten kişi"
+      "Sinagogda dinî törenleri yöneten kişi"
     ],
     "difficulty": 2
   },
@@ -9101,7 +9101,7 @@
     "word": "RAHİP",
     "clues": [
       "Manastırda yaşayan din adamı",
-      "Dini yaşamı adamış din görevlisi"
+      "Kendini dine adamış din görevlisi"
     ],
     "difficulty": 2
   },
@@ -9245,7 +9245,7 @@
     "word": "KEKLİK",
     "clues": [
       "Kırlarda yaşayan gösterişli tüylü av kuşu",
-      "Türkülere konu olan telli tüylü kuş"
+      "Türkülerde sekişiyle anılan kır kuşu"
     ],
     "difficulty": 3
   },
@@ -9253,7 +9253,7 @@
     "word": "DOĞAN",
     "clues": [
       "Avcılıkta eğitilen hızlı yırtıcı kuş",
-      "Padişah armasında sıkça görülen yırtıcı kuş"
+      "Dalışta en hızlı canlı sayılan yırtıcı kuş"
     ],
     "difficulty": 3
   },
@@ -9277,7 +9277,7 @@
     "word": "ARDIÇ",
     "clues": [
       "Mavimsi meyveleriyle bilinen iğne yapraklı ağaç",
-      "Cinin tütsüsünde kullanılan kokulu ağaç"
+      "Cin içkisine kokusunu veren yemişli ağaç"
     ],
     "difficulty": 3
   },
@@ -9751,14 +9751,14 @@
     "word": "SARNIÇ",
     "clues": [
       "Yağmur suyunun biriktirildiği yer altı deposu",
-      "İstanbul'un altındaki tarihi su deposu"
+      "İstanbul'un altındaki tarihî su deposu"
     ],
     "difficulty": 3
   },
   {
     "word": "KEMER",
     "clues": [
-      "Belden bağlanan deri aksesuar veya kavisli yapı",
+      "Bele dolanıp tokayla tutturulan bağ",
       "Su kanallarını taşıyan taş kavisli yapı"
     ],
     "difficulty": 3
@@ -9870,7 +9870,7 @@
   {
     "word": "RÜTBE",
     "clues": [
-      "Askeri veya resmi hiyerarşideki derece",
+      "Askerî veya resmî hiyerarşideki derece",
       "Omuzda taşınan yıldız ya da şeritle belirtilen derece"
     ],
     "difficulty": 3
@@ -9879,7 +9879,7 @@
     "word": "NİŞAN",
     "clues": [
       "Evlilik öncesi yapılan söz kesme töreni",
-      "Göğse takılan başarı işareti de olabilen tören"
+      "Göğse takılan onur madalyası"
     ],
     "difficulty": 3
   },
