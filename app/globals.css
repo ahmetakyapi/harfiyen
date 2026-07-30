@@ -276,7 +276,10 @@ body::before {
    position:fixed ve çubuk hiç render edilmiyor. */
 @media (max-width: 639px) {
   body {
-    padding-bottom: calc(3.5rem + env(safe-area-inset-bottom));
+    /* Çubuğun kendisi 3.5rem; ortadaki "Oyna" düğmesi bunun ~2.3rem üstüne
+       taşar. Boşluk taşan kısmı da kapsar, yoksa sayfanın son satırı düğmenin
+       altında kalabiliyor. */
+    padding-bottom: calc(6rem + env(safe-area-inset-bottom));
   }
 }
 
