@@ -62,7 +62,7 @@ export function ArchiveGallery({ dates, doneMs, page, pageCount, totalDays }: {
         <nav aria-label="Arşiv sayfaları" className="mt-10 flex items-center justify-center gap-3">
           {page > 1
             ? <Link href={pageHref(page - 1)} rel="prev"
-                className="flex min-h-11 items-center justify-center gap-1 rounded-full border border-[var(--line)] bg-[var(--paper-raised)] px-4 text-sm font-medium transition-colors hover:bg-[var(--accent-soft)] sm:w-[8.5rem] sm:px-0">
+                className="flex min-h-11 items-center justify-center gap-1 rounded-full border border-[var(--line)] bg-[var(--paper-raised)] px-4 text-sm font-medium transition-colors hover:bg-[var(--row-hover)] sm:w-[8.5rem] sm:px-0">
                 <ChevronLeft aria-hidden className="h-4 w-4" /> Daha Yeni
               </Link>
             : <span aria-hidden className="hidden sm:block sm:h-11 sm:w-[8.5rem]" />}
@@ -73,7 +73,7 @@ export function ArchiveGallery({ dates, doneMs, page, pageCount, totalDays }: {
 
           {page < pageCount
             ? <Link href={pageHref(page + 1)} rel="next"
-                className="flex min-h-11 items-center justify-center gap-1 rounded-full border border-[var(--line)] bg-[var(--paper-raised)] px-4 text-sm font-medium transition-colors hover:bg-[var(--accent-soft)] sm:w-[8.5rem] sm:px-0">
+                className="flex min-h-11 items-center justify-center gap-1 rounded-full border border-[var(--line)] bg-[var(--paper-raised)] px-4 text-sm font-medium transition-colors hover:bg-[var(--row-hover)] sm:w-[8.5rem] sm:px-0">
                 Daha Eski <ChevronRight aria-hidden className="h-4 w-4" />
               </Link>
             : <span aria-hidden className="hidden sm:block sm:h-11 sm:w-[8.5rem]" />}

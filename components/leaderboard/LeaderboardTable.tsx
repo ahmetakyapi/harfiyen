@@ -23,7 +23,9 @@ export function LeaderboardTable({ rows, myUsername }: { rows: LeaderboardRow[];
         const isMe = r.username === myUsername;
         return (
           <li key={r.rank}
-            className={`flex items-center gap-3 border-b border-[var(--line)] px-3 py-2.5 last:border-b-0 ${isMe ? 'bg-[var(--accent-soft)]' : 'bg-[var(--paper-raised)]'}`}>
+            className={`flex items-center gap-3 border-b border-[var(--line)] px-3 py-2.5 transition-colors last:border-b-0 ${
+              isMe ? 'bg-[var(--row-me)]' : 'bg-[var(--paper-raised)] hover:bg-[var(--row-hover)]'
+            }`}>
             {podium
               ? <span className={`block h-9 w-9 shrink-0 rounded-[0.7rem] p-[2px] ${podium.ring} ${podium.glow}`}>
                   <span className={`flex h-full w-full items-center justify-center rounded-[0.56rem] bg-[#fdf8ec] font-display text-base font-bold ${podium.num}`}>

@@ -1,12 +1,7 @@
 import Link from 'next/link';
-import { Archive, Trophy } from 'lucide-react';
 import { auth } from '@/lib/auth';
 import { Logo } from '@/components/layout/Logo';
 import { ThemeToggle } from '@/components/layout/ThemeToggle';
-
-const ICON_LINK =
-  'flex h-10 w-10 items-center justify-center rounded-full border border-[var(--line)] ' +
-  'text-[var(--ink-soft)] transition-colors hover:bg-[var(--paper-raised)] hover:text-[var(--ink)]';
 
 export async function Header() {
   const session = await auth();
@@ -24,14 +19,9 @@ export async function Header() {
           </span>
         </Link>
         <nav className="flex items-center gap-1.5 text-sm sm:gap-4">
-          {/* Dar ekranda metin linkleri sıkışıyordu — mobilde ikon butonlar,
-              sm ve üstünde metin linkleri (ikisi asla birlikte görünmez). */}
-          <Link href="/leaderboard" aria-label="Sıralama" className={`${ICON_LINK} sm:hidden`}>
-            <Trophy className="h-[18px] w-[18px]" />
-          </Link>
-          <Link href="/archive" aria-label="Arşiv" className={`${ICON_LINK} sm:hidden`}>
-            <Archive className="h-[18px] w-[18px]" />
-          </Link>
+          {/* Mobilde Sıralama/Arşiv artık alt çubukta (bkz. BottomNav):
+              etiketli, başparmak menzilinde ve başlığı 320 px'te sıkıştırmıyor.
+              Burada yalnızca sm ve üstündeki metin linkleri kalır. */}
           <Link href="/leaderboard" className="hidden hover:text-[var(--accent)] sm:block">Sıralama</Link>
           <Link href="/archive" className="hidden hover:text-[var(--accent)] sm:block">Arşiv</Link>
           {session

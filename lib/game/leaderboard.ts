@@ -7,7 +7,12 @@ export type LeaderboardRow = { rank: number; username: string; durationMs: numbe
 
 export async function getLeaderboard(db: Db, opts: {
   date: string; difficulty: Difficulty; userId?: number | null;
-}): Promise<{ top: LeaderboardRow[]; me: { rank: number; durationMs: number } | null; total: number } | null> {
+}): Promise<{
+  // puzzleId çağıran tarafa döner: sıralama sayfası, oyuncunun bu bulmacayı
+  // bitirip bitirmediğine bakıp "Oyna" çağrısı gösteriyor.
+  puzzleId: number; top: LeaderboardRow[];
+  me: { rank: number; durationMs: number } | null; total: number;
+} | null> {
   const [puzzle] = await db.select({ id: puzzles.id }).from(puzzles)
     .where(and(eq(puzzles.date, opts.date), eq(puzzles.difficulty, opts.difficulty)));
   if (!puzzle) return null;
@@ -35,5 +40,5 @@ export async function getLeaderboard(db: Db, opts: {
     if (idx >= 0) me = { rank: idx + 1, durationMs: rows[idx].durationMs ?? 0 };
   }
   const [{ n }] = await db.select({ n: sql<number>`count(*)` }).from(playSessions).where(completedRanked);
-  return { top, me, total: Number(n) };
+  return { puzzleId: puzzle.id, top, me, total: Number(n) };
 }

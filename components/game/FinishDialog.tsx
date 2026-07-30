@@ -116,7 +116,7 @@ export function FinishDialog({
                 <div className="mt-1 flex gap-2">
                   {others.map((d) => (
                     <Link key={d} href={`/play/${date}/${d}`}
-                      className="flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-xl border border-[var(--line)] bg-[var(--paper)] text-sm font-medium transition-colors hover:bg-[var(--accent-soft)]">
+                      className="flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-xl border border-[var(--line)] bg-[var(--paper)] text-sm font-medium transition-colors hover:bg-[var(--row-hover)]">
                       {DIFFICULTY_LABELS[d]} →
                     </Link>
                   ))}

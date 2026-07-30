@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Fraunces, IBM_Plex_Mono, Inter } from 'next/font/google';
+import { BottomNav } from '@/components/layout/BottomNav';
 import { Header } from '@/components/layout/Header';
 import { HeaderSlot } from '@/components/layout/HeaderSlot';
 import { ThemeProvider } from '@/components/layout/ThemeProvider';
@@ -40,6 +41,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ThemeProvider>
           <HeaderSlot><Header /></HeaderSlot>
           {children}
+          <BottomNav />
         </ThemeProvider>
       </body>
     </html>
