@@ -40,10 +40,6 @@ export function HowToModal() {
         </p>
         <ul className="mt-3 space-y-2 text-sm text-[var(--ink-soft)]">
           <li>İpuçlarından kelimeleri bul, kesişimleri kullan. Doğru biten kelime yeşil yanar.</li>
-          <li>
-            Harfleri ekranın altındaki <strong className="font-semibold text-[var(--ink)]">Türkçe klavyeden</strong> gir —
-            29 harfin tamamı tek dokunuşta, telefonun klavyesi hiç açılmaz.
-          </li>
           <li>Hücreye dokununca kelime seçilir; aynı hücreye ikinci dokunuş yönü değiştirir.</li>
           <li>Takılırsan ipucu al (+15 sn) — açılan harf köşesinde turuncu işaretle kilitlenir.</li>
         </ul>

@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ChevronLeft, Lightbulb, List, Trash2, X } from 'lucide-react';
-import { activeEntry, allCellsFilled, cellsOf, entryAt, entryString, useGameState } from '@/hooks/useGameState';
-import { usePlayHeight } from '@/hooks/usePlayHeight';
+import { activeEntry, allCellsFilled, cellsOf, entryString, useGameState } from '@/hooks/useGameState';
+import { usePlayViewport } from '@/hooks/usePlayHeight';
 import { LetterTile } from '@/components/ui/LetterTile';
 import { DIFFICULTY_BADGE_CLASS, DIFFICULTY_LABELS } from '@/lib/difficulty';
 import { hapticSolve } from '@/lib/haptics';
@@ -15,9 +15,8 @@ import { type ClientPuzzle, type Letters, hashKey } from '@/lib/types';
 import { ClueBar } from './ClueBar';
 import { ClueList } from './ClueList';
 import { FinishDialog } from './FinishDialog';
-import { Grid, cellSizeOf } from './Grid';
+import { GRID_GAP, GRID_PAD, Grid, cellSizeOf } from './Grid';
 import { HowToModal } from './HowToModal';
-import { Keyboard } from './Keyboard';
 import { Timer } from './Timer';
 
 type SessionInfo = {
@@ -218,10 +217,11 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive, alreadyCompleted }:
   }, [correctKeys, phase, ctx, state.sel, dispatch]);
 
   // ——— GİRDİ ———
-  // Native klavye HİÇ açılmaz (spec §"Girdi ve klavye"): mobilde girdi kendi
-  // 29 harfli Türkçe ekran klavyemizden, masaüstünde fiziksel klavyeden gelir.
-  // Böylece (a) telefonu Türkçe olmayan oyuncu da Ç/Ğ/İ/Ö/Ş/Ü yazabilir,
-  // (b) viewport hiç zıplamaz, (c) otomatik düzeltme/IME araya girmez.
+  // Girdi kullanıcının KENDİ (native) klavyesinden gelir. Bunun bedeli,
+  // telefonu Türkçe olmayan oyuncunun Ç/Ğ/İ/Ö/Ş/Ü için uzun basmak zorunda
+  // kalması; karşılığında oyuncu alıştığı klavyeyi kullanır. Yerleşim tarafı
+  // buna göre kurulmuştur: yüzey görünür viewport'a sabitlenir ve ipucu şeridi
+  // klavyenin üstünde kalır (bkz. usePlayViewport).
   const typeLetter = useCallback((letter: string) => {
     dispatch({ type: 'TYPE', letter, protectedCells: lockedRef.current });
   }, [dispatch]);
@@ -235,7 +235,7 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive, alreadyCompleted }:
   const gridRef = useRef<HTMLDivElement | null>(null);
   const gridAreaRef = useRef<HTMLDivElement | null>(null);
   const [gridPx, setGridPx] = useState<number | null>(null);
-  const playHeight = usePlayHeight();
+  const { height: playHeight, offsetTop, keyboardOpen } = usePlayViewport();
   useEffect(() => {
     const el = gridAreaRef.current;
     if (!inGame || !el) return;
@@ -248,7 +248,7 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive, alreadyCompleted }:
     const ro = new ResizeObserver(measure);
     ro.observe(el);
     return () => ro.disconnect();
-  }, [inGame, playHeight]);
+  }, [inGame, playHeight, keyboardOpen]);
   const cellPx = gridPx !== null && gridPx > 0 ? cellSizeOf(gridPx, puzzle.size) : null;
 
   // Sayfa kaydırmasını ve iOS lastik-bant etkisini oyun süresince kapat.
@@ -258,15 +258,61 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive, alreadyCompleted }:
     return () => document.documentElement.classList.remove('play-lock');
   }, [inGame]);
 
-  // Seçim klavye/ipucu listesiyle değiştiğinde odağı yeni hücreye taşı — ama
-  // yalnızca odak halihazırda grid'in içindeyse (roving tabindex deseni).
-  // preventScroll: odaklanma tarayıcıyı kaydırmaya zorlamasın.
+  // ——— NATIVE KLAVYE ———
+  // Girdi kullanıcının kendi klavyesinden gelir. Mobil tarayıcılarda klavye
+  // YALNIZCA doğrudan bir input'a dokununca güvenilir açıldığından, grid'i tam
+  // kaplayan görünmez bir input var; dokunulan hücre koordinattan hesaplanır.
+  // Yazılan girdi sentinel farkıyla okunur: değer boşaldıysa backspace,
+  // sentinel dışı her karakter bir harf. Bu yöntem iOS/Android/IME farklarından
+  // bağımsızdır (keydown mobilde harf vermez).
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const SENTINEL = ' ';
+  const resetNativeInput = useCallback((): void => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.value = SENTINEL;
+    try { el.setSelectionRange(SENTINEL.length, SENTINEL.length); } catch { /* odak yoksa yok say */ }
+  }, []);
+
+  const onNativeInput = (e: React.FormEvent<HTMLInputElement>): void => {
+    const v = e.currentTarget.value;
+    if (v.length === 0) {
+      deleteLetter();
+    } else {
+      for (const ch of v) {
+        if (ch === SENTINEL) continue;
+        const letter = trUpper(ch);
+        if (isTrLetter(letter)) typeLetter(letter);
+      }
+    }
+    resetNativeInput();
+  };
+
+  // Dokunulan pikselden hücreyi bul. Ölçüler Grid'den içe aktarılan sabitlerle
+  // ve ölçülen hücre kenarıyla hesaplanır — sayılar iki dosyada ayrışamaz.
+  const onGridPointer = (e: React.PointerEvent<HTMLInputElement>): void => {
+    const grid = gridRef.current;
+    if (!grid || cellPx === null) return;
+    const rect = grid.getBoundingClientRect();
+    const step = cellPx + GRID_GAP;
+    const clamp = (n: number): number => Math.min(puzzle.size - 1, Math.max(0, n));
+    const col = clamp(Math.floor((e.clientX - rect.left - GRID_PAD) / step));
+    const row = clamp(Math.floor((e.clientY - rect.top - GRID_PAD) / step));
+    dispatch({ type: 'SELECT', row, col });
+    // Odağı açıkça garantiye al: iOS'te kullanıcı jesti içinde focus() klavyeyi
+    // (yeniden) açar — klavye kapatıldıktan sonra tekrar dokununca da açılır.
+    inputRef.current?.focus();
+    requestAnimationFrame(resetNativeInput);
+  };
+
+  // Oyun başlayınca odak input'a; bitince bırak (klavye kapansın).
+  // gridPx bağımlılığı ŞART: grid ölçülene kadar sarmalayıcı
+  // `visibility: hidden` ve görünmez bir öğe ODAK ALAMAZ — ilk denemede odak
+  // sessizce başarısız oluyor, masaüstünde ilk harf kayboluyordu.
   useEffect(() => {
-    if (phase !== 'playing') return;
-    const active = document.activeElement;
-    if (!(active instanceof HTMLElement) || !gridRef.current?.contains(active)) return;
-    gridRef.current.querySelector<HTMLElement>('[data-sel]')?.focus({ preventScroll: true });
-  }, [state.sel, phase]);
+    if (phase === 'playing' && gridPx !== null) { inputRef.current?.focus(); resetNativeInput(); }
+    if (phase === 'done' || phase === 'submitting') inputRef.current?.blur();
+  }, [phase, gridPx, resetNativeInput]);
 
   const hint = useCallback(async () => {
     if (!session || phase !== 'playing' || hintBusy) return;
@@ -325,7 +371,6 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive, alreadyCompleted }:
     const onKey = (e: KeyboardEvent): void => {
       if (e.metaKey || e.ctrlKey || e.altKey) return;
       if (e.key === 'Escape') { setListOpen(false); return; }
-      if (e.key === 'Backspace' || e.key === 'Delete') { e.preventDefault(); deleteLetter(); return; }
       if (e.key === 'Tab' || e.key === 'Enter') {
         e.preventDefault();
         dispatch({ type: 'NEXT_ENTRY', delta: e.shiftKey ? -1 : 1 });
@@ -336,14 +381,13 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive, alreadyCompleted }:
       else if (e.key === 'ArrowDown') { e.preventDefault(); dispatch({ type: 'MOVE', dRow: 1, dCol: 0 }); }
       else if (e.key === 'ArrowLeft') { e.preventDefault(); dispatch({ type: 'MOVE', dRow: 0, dCol: -1 }); }
       else if (e.key === 'ArrowRight') { e.preventDefault(); dispatch({ type: 'MOVE', dRow: 0, dCol: 1 }); }
-      else if (e.key.length === 1) {
-        const letter = trUpper(e.key);
-        if (isTrLetter(letter)) { e.preventDefault(); typeLetter(letter); }
-      }
+      // Harf ve Backspace BİLEREK burada yok: ikisi de input'un onInput
+      // yolundan geçiyor (masaüstünde de odak input'ta). Burada da işlenirse
+      // her tuş iki kez uygulanır.
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [phase, dispatch, state.sel, typeLetter, deleteLetter]);
+  }, [phase, dispatch, state.sel]);
 
   const pickEntry = useCallback((no: number, dir: 'across' | 'down') => {
     dispatch({ type: 'SELECT_ENTRY', no, dir });
@@ -422,20 +466,24 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive, alreadyCompleted }:
 
   const solvedCount = correctKeys.size;
   const totalCount = puzzle.entries.length;
-  // Seçili hücrede DİĞER yöndeki kelime (varsa) — kesişen ipucu şeridi için.
-  const crossEntry = entry
-    ? entryAt(ctx, state.sel.row, state.sel.col, entry.dir === 'across' ? 'down' : 'across')
-    : undefined;
 
   return (
-    // Tek ekran, kaydırma yok. Yükseklik ölçülen görünür yükseklikten gelir
-    // (100dvh CSS yedeği). Alanların yerleşimi .play-layout'ta (globals.css):
-    // dikeyde ipucu→grid→klavye, yatay/kısa ekranda grid sola, masaüstünde
-    // sağda ipucu listesi.
+    // Tek ekran, kaydırma yok. Yüzey GÖRÜNÜR viewport'a sabitlenir: native
+    // klavye açılınca visualViewport küçülür, yüzey de küçülür ve grid yeniden
+    // ölçülüp klavyenin üstüne sığar. `top: offsetTop` + sayfa kilidi, iOS'in
+    // "odaklı alanı görünür yap" kaydırmasını etkisiz kılar — böylece ipucu
+    // şeridi klavye açıkken de ekranın üstünde, okunur biçimde kalır.
     <div className="play-surface flex flex-col overflow-hidden"
       style={{
+        position: 'fixed',
+        top: offsetTop,
+        left: 0,
+        right: 0,
         height: playHeight !== null ? `${playHeight}px` : '100dvh',
-        paddingTop: 'env(safe-area-inset-top)',
+        zIndex: 40,
+        backgroundColor: 'var(--paper)',
+        // Klavye açıkken çentik payı gereksiz (görünür alan zaten aşağıda başlar)
+        paddingTop: keyboardOpen ? 0 : 'env(safe-area-inset-top)',
       }}>
       {/* Çözüm ilerlemesi: yatayda yer kaplamayan ince bir şerit. Sayı olarak
           da başlıkta var ama bu, göz ucuyla "ne kadar kaldı" hissini verir. */}
@@ -468,11 +516,11 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive, alreadyCompleted }:
           </span>
         )}
         {/* Masaüstünde liste hep görünür olduğundan düğme yalnızca dar ekranda */}
-        <button type="button" onClick={() => setListOpen(true)} aria-label="Tüm ipuçları"
+        <button type="button" onClick={() => setListOpen(true)} onPointerDown={(e) => e.preventDefault()} aria-label="Tüm ipuçları"
           className="flex h-11 w-9 shrink-0 items-center justify-center rounded-full border border-[var(--line)] text-[var(--ink-soft)] transition-colors hover:bg-[var(--paper-raised)] lg:hidden">
           <List aria-hidden className="h-[18px] w-[18px]" />
         </button>
-        <button type="button" onClick={hint} disabled={hintBusy} aria-label="İpucu al (+15 saniye ceza)"
+        <button type="button" onClick={hint} disabled={hintBusy} onPointerDown={(e) => e.preventDefault()} aria-label="İpucu al (+15 saniye ceza)"
           className="flex min-h-11 shrink-0 items-center gap-1 rounded-full bg-[var(--accent-soft)] px-2.5 text-sm font-medium text-[var(--ink)] transition-transform active:scale-95 disabled:opacity-60">
           <Lightbulb aria-hidden className={`h-4 w-4 shrink-0 text-[var(--accent)] ${hintBusy ? 'animate-pulse' : ''}`} />
           <span className="hidden min-[380px]:inline">{hintBusy ? '…' : '+15sn'}</span>
@@ -508,32 +556,31 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive, alreadyCompleted }:
             style={gridPx !== null ? { width: gridPx, height: gridPx } : { visibility: 'hidden' }}>
             <Grid puzzle={puzzle} letters={state.letters} sel={state.sel}
               activeCells={activeCells} correctCells={correctCells} hintCells={hintCells}
-              flashCell={flashCell} cellPx={cellPx}
-              onSelect={(row, col) => dispatch({ type: 'SELECT', row, col })} />
+              flashCell={flashCell} cellPx={cellPx} />
+            {/* Grid'i tam kaplayan görünmez ama TIKLANABİLİR input: dokunuş
+                doğrudan input'a gittiği için native klavye ilk dokunuşta açılır
+                (başka öğeye dokunup programatik focus() mobilde güvenilmez).
+                fontSize 16 ŞART: iOS 16 px'in altındaki input'a odaklanınca
+                sayfayı YAKINLAŞTIRIR. user-select/touch-callout none +
+                onContextMenu, iOS'in "Yapıştır / Seç" balonunu bastırır. */}
+            <input ref={inputRef} type="text" inputMode="text" lang="tr"
+              defaultValue={SENTINEL} aria-label="Bulmaca — harf gir"
+              className="absolute inset-0 z-10 h-full w-full cursor-pointer select-none rounded-2xl bg-transparent text-transparent outline-none"
+              style={{
+                fontSize: 16, caretColor: 'transparent',
+                WebkitUserSelect: 'none', WebkitTouchCallout: 'none',
+                // Odak halkası bastırılır: görünmez input odaklandığında
+                // grid'in çevresinde koca bir mavi çerçeve beliriyordu. Odağın
+                // görsel karşılığı zaten SEÇİLİ HÜCRE (halka + renk + büyütme).
+                outline: 'none',
+              }}
+              autoCapitalize="off" autoCorrect="off" autoComplete="off"
+              spellCheck={false} enterKeyHint="next"
+              onInput={onNativeInput}
+              onPointerDown={onGridPointer}
+              onFocus={resetNativeInput}
+              onContextMenu={(e) => e.preventDefault()} />
           </div>
-        </div>
-
-        {/* Kesişen kelimenin ipucu: çözücünün en çok ihtiyaç duyduğu ikinci
-            bilgi — "bu hücre hangi diğer kelimeye ait?". Dokununca o kelimeye
-            geçer. Uzun telefonlarda grid'in altında boş kalan alanı işe yarar
-            biçimde doldurur; kısa ekranlarda CSS ile tamamen kalkar. */}
-        {crossEntry && (
-          <button type="button" onClick={() => dispatch({ type: 'SELECT', row: state.sel.row, col: state.sel.col })}
-            className="play-cross mb-1 flex min-h-11 w-full items-center gap-2 rounded-xl border border-[var(--line)] bg-[var(--paper-raised)] px-2 py-1.5 text-left transition-colors hover:bg-[var(--accent-soft)]">
-            <span aria-hidden
-              className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[0.7rem] font-semibold text-[var(--paper)] ${
-                correctKeys.has(hashKey(crossEntry.no, crossEntry.dir)) ? 'bg-[var(--correct)]' : 'bg-[var(--ink-soft)]'
-              }`}>
-              {crossEntry.no}
-            </span>
-            <span className="line-clamp-1 min-w-0 flex-1 text-[0.8125rem] text-[var(--ink-soft)]">
-              {crossEntry.clue}
-            </span>
-          </button>
-        )}
-
-        <div className="play-keys mx-auto w-full max-w-[34rem]">
-          <Keyboard onKey={typeLetter} onDelete={deleteLetter} disabled={phase !== 'playing'} />
         </div>
 
         <aside className="play-list">

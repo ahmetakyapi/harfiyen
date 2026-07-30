@@ -13,16 +13,20 @@ export function cellSizeOf(gridPx: number, size: number): number {
   return (gridPx - 2 * GRID_PAD - (size - 1) * GRID_GAP) / size;
 }
 
-// Hücreler GERÇEK butonlardır: dokunma doğrudan hücreye gider (piksel
-// matematiğiyle hücre tahmin etmeye gerek yok) ve ekran okuyucu grid'i
-// gezebilir. Native klavye açılmadığından (girdi kendi ekran klavyemizden
-// gelir) butona dokunmak viewport'u zıplatmaz.
+// DOKUNMA BURADA ELE ALINMAZ. Girdi kullanıcının native klavyesinden geldiği
+// için grid'in tamamını kaplayan görünmez bir <input> var (bkz. GameBoard):
+// mobil tarayıcılarda klavye YALNIZCA doğrudan bir input'a dokununca güvenilir
+// biçimde açılır. Bu yüzden hücreler `pointer-events: none` — dokunuş üstteki
+// input'a geçer, dokunulan hücre koordinattan hesaplanır.
+//
+// Hücreler yine de ekran okuyucuya görünür (aria-label'lı gridcell'ler);
+// yalnızca işaretçi olaylarını yutmazlar.
 //
 // Harf/numara boyutu `em` ile verilir; grid'in font-size'ı hücre kenarına
 // eşitlendiğinden 6×6 ve 10×10 aynı oranda okunur — eski `4vw` yaklaşımı
 // viewport'a bağlıydı ve 10×10'da harfler hücreye sığmıyordu.
 export function Grid({
-  puzzle, letters, sel, activeCells, correctCells, hintCells, flashCell, cellPx, onSelect,
+  puzzle, letters, sel, activeCells, correctCells, hintCells, flashCell, cellPx,
 }: {
   puzzle: ClientPuzzle; letters: Letters; sel: Selection;
   activeCells: Set<string>;   // `${row}:${col}` — aktif kelimenin hücreleri
@@ -30,7 +34,6 @@ export function Grid({
   hintCells: Set<string>;     // ipucuyla açılan hücreler — köşe işareti + kilitli
   flashCell?: string | null;  // ipucuyla az önce açılan hücre — kısa parıltı
   cellPx: number | null;      // ölçülen hücre kenarı; null → oransal yedek
-  onSelect: (row: number, col: number) => void;
 }) {
   const numberAt = new Map<string, number>();
   for (const e of puzzle.entries) {
@@ -52,7 +55,7 @@ export function Grid({
 
   return (
     <div role="grid" aria-label={`${puzzle.size}×${puzzle.size} bulmaca`}
-      className="grid h-full w-full touch-manipulation select-none rounded-2xl border border-[var(--line)] bg-[var(--line)] shadow-[0_24px_60px_-42px_var(--ink)]"
+      className="pointer-events-none grid h-full w-full select-none rounded-2xl border border-[var(--line)] bg-[var(--line)] shadow-[0_24px_60px_-42px_var(--ink)]"
       style={{
         gridTemplateColumns: `repeat(${puzzle.size}, minmax(0, 1fr))`,
         gap: GRID_GAP, padding: GRID_PAD,
@@ -84,16 +87,7 @@ export function Grid({
               ? 'z-20 scale-[1.08] ring-[3px] ring-inset ring-[var(--accent)] shadow-lg'
               : '';
             return (
-              <button key={key} type="button" role="gridcell" data-sel={isSel || undefined}
-                onPointerDown={(e) => {
-                  // pointerdown: dokunuşa anında tepki + varsayılan metin
-                  // seçimi/vurgulama engellenir. click beklenirse ~100 ms
-                  // gecikme hissedilir.
-                  e.preventDefault();
-                  onSelect(r, c);
-                }}
-                onClick={(e) => e.preventDefault()}
-                tabIndex={isSel ? 0 : -1}
+              <div key={key} role="gridcell" data-sel={isSel || undefined}
                 aria-label={
                   `${r + 1}. satır ${c + 1}. sütun` +
                   (numberAt.has(key) ? `, ${numberAt.get(key)} numaralı kelimenin başı` : '') +
@@ -148,7 +142,7 @@ export function Grid({
                     {letter}
                   </motion.span>
                 )}
-              </button>
+              </div>
             );
           })}
         </div>

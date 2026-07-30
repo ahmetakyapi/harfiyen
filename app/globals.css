@@ -165,31 +165,19 @@ body::before {
    Alanlar CSS grid ile adlandırılır, böylece DOM sırası tek kalırken üç farklı
    ekran biçimine uyum sağlar. Grid alanı `minmax(0, 1fr)` olduğundan asla
    taşmaz; içindeki kare, ölçülen kutuya göre JS ile boyutlanır. */
+/* Girdi kullanıcının NATIVE klavyesinden gelir; klavye tarayıcının kendi
+   katmanıdır, yerleşimde yer kaplamaz. Bize düşen, görünür alan klavye
+   yüzünden daralınca ipucunun üstte kalması ve grid'in kalan yere sığması. */
 .play-layout {
   display: grid;
-  grid-template-areas: 'clue' 'grid' 'cross' 'keys';
-  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  grid-template-areas: 'clue' 'grid';
+  grid-template-rows: auto minmax(0, 1fr);
   min-height: 0;
 }
 .play-clue { grid-area: clue; }
 .play-grid { grid-area: grid; min-height: 0; min-width: 0; }
-.play-cross { grid-area: cross; }
-.play-keys { grid-area: keys; }
 .play-list { display: none; }
 
-/* Kısa ekranda kesişen ipucu şeridi feda edilir — o piksel grid'in. */
-@media (max-height: 700px) {
-  .play-cross { display: none; }
-}
-
-/* Klavye tuş yüksekliği ekranla ölçeklenir (native klavyeler de böyle yapar):
-   kısa ekranda 40 px ile grid'e yer açar, uzun telefonda 56 px'e çıkıp hem
-   rahat yazılır hem grid'in altında kalan boşluğu anlamlı doldurur.
-   Tailwind arbitrary variant'ları yerine düz CSS: media query sırası ve
-   önceliği burada kesin, sınıf üretim sırasına bağlı değil. */
-.kbd-key { height: 2.75rem; }
-@media (max-height: 640px) { .kbd-key { height: 2.5rem; } }
-@media (min-height: 780px) { .kbd-key { height: 3.5rem; } }
 
 /* Bitiş kartı kısa ekranda (yatay telefon) sığmıyor, "Paylaş"/"Sıralamayı Gör"
    düğmeleri katlanın altında kalıyordu. Kutlama tipografisini küçültüp süsleme
@@ -206,24 +194,23 @@ body::before {
    klavye sağa geçer — bulmaca yükseklikten boyutlanır, klavye tam kalır. */
 @media (max-height: 560px) and (min-width: 480px) {
   .play-layout {
-    grid-template-areas: 'grid clue' 'grid keys';
-    grid-template-columns: minmax(0, 44%) minmax(0, 1fr);
-    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-areas: 'grid clue';
+    grid-template-columns: minmax(0, 52%) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
     column-gap: 0.75rem;
   }
   /* stretch ŞART: kare akış dışı olduğundan .play-grid'in kendi içeriği
-     yüksekliğe katkı vermez; kutuyu satırların tamamına yaymalıyız. */
-  .play-grid { grid-row: 1 / -1; align-self: stretch; }
-  .play-clue,
-  .play-keys { align-self: center; }
+     yüksekliğe katkı vermez; kutuyu satırın tamamına yaymalıyız. */
+  .play-grid { align-self: stretch; }
+  .play-clue { align-self: center; }
 }
 
 /* Masaüstü: grid'in yanında sabit ipucu listesi (spec §"Girdi ve klavye"). */
 @media (min-width: 1024px) {
   .play-layout {
-    grid-template-areas: 'clue list' 'grid list' 'cross list' 'keys list';
+    grid-template-areas: 'clue list' 'grid list';
     grid-template-columns: minmax(0, 1fr) 20rem;
-    grid-template-rows: auto minmax(0, 1fr) auto auto;
+    grid-template-rows: auto minmax(0, 1fr);
     column-gap: 2rem;
     align-items: stretch;
   }
@@ -240,12 +227,6 @@ body::before {
     flex-direction: column;
     min-height: 0;
   }
-  /* Kesişen ipucu şeridi masaüstünde GEREKSİZ: yandaki liste zaten bütün
-     ipuçlarını gösteriyor. Kaldırınca ~52 px doğrudan grid'e gider. */
-  .play-cross { display: none; }
-  /* Masaüstünde fiziksel klavye asıl girdi yolu; ekran klavyesi yalnızca
-     Türkçe düzeni olmayanlar için yedek. Tuşları kısaltıp yeri grid'e ver. */
-  .kbd-key { height: 2.5rem; }
   /* SABİT genişlik, bilinçli olarak ölçülen grid'e BAĞLANMADI: şeridi
      --grid-px'e bağlamak geri besleme yaratıyor (dar şerit → iki satır → daha
      az yükseklik → daha küçük grid → daha dar şerit). Eşik genişliklerde
@@ -254,11 +235,6 @@ body::before {
   .play-clue {
     width: 100%;
     max-width: 40rem;
-    margin-inline: auto;
-  }
-  .play-keys {
-    width: 100%;
-    max-width: 34rem;
     margin-inline: auto;
   }
 }
