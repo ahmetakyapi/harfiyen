@@ -3,7 +3,7 @@ import { loadBank } from '@/lib/content';
 import { DIFFICULTIES } from '@/lib/types';
 import {
   GENERATOR_PRESETS, WHITE_RATIO_MAX, WHITE_RATIO_MIN,
-  generateWithRetries, validateGenerated,
+  generateWithRetries, isEligible, validateGenerated,
 } from './generator';
 
 const bank = loadBank();
@@ -22,10 +22,9 @@ describe('generateWithRetries (property, seed 1-5, her zorluk)', () => {
         const ratio = white / (p.size * p.size);
         expect(ratio).toBeGreaterThanOrEqual(WHITE_RATIO_MIN);
         expect(ratio).toBeLessThanOrEqual(WHITE_RATIO_MAX);
-        // tüm kelimeler bankadan ve zorluk filtresine uygun
-        const allowed = new Set(
-          bank.filter((e) => preset.allowed.includes(e.difficulty)).map((e) => e.word),
-        );
+        // tüm kelimeler bankadan ve havuz kuralına uygun (zorluk katmanı VEYA
+        // kısa-kelime gevşemesi — bkz. GENERATOR_PRESETS.shortRelaxMaxLen)
+        const allowed = new Set(bank.filter((e) => isEligible(e, preset)).map((e) => e.word));
         for (const w of p.words) expect(allowed.has(w.word)).toBe(true);
         // hiçbir iki entry aynı (row,col,dir) üzerinde başlamaz (bkz. "ÇAM"/"ÇAMUR"
         // canlı hatası — biri diğerinin ön eki olduğunda hashKey(no,dir) çakışır

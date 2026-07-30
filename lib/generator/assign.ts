@@ -47,6 +47,14 @@ export async function assignPuzzles(db: Db, opts: {
   const baseSeed = opts.baseSeed ?? 1;
   let created = 0;
   let skipped = 0;
+  // Kelime → daha önce kaç bulmacada çıktı. İpucu varyantı bu sayaca göre
+  // SIRAYLA seçilir: aynı kelime tekrar geldiğinde oyuncu farklı bir ipucu
+  // görür. Eskiden varyant rastgele seçiliyordu, yani iki ipuçlu bir kelimenin
+  // tekrarında %50 ihtimalle aynı soru çıkıyordu.
+  const useCount = new Map<string, number>();
+  for (const row of await db.select({ words: puzzles.words }).from(puzzles)) {
+    for (const w of row.words as string[]) useCount.set(w, (useCount.get(w) ?? 0) + 1);
+  }
   for (let d = 0; d < opts.days; d++) {
     const date = addDays(opts.startDate, d);
     // aynı gün içinde kelime tekrarı KESİNLİKLE yasak — önceki (yarım kalmış) bir
@@ -67,6 +75,7 @@ export async function assignPuzzles(db: Db, opts: {
         try {
           generated = generateWithRetries({
             difficulty, bank: opts.bank, seed: seedFor(date, difficulty, baseSeed), exclude,
+            clueIndexFor: (w) => useCount.get(w) ?? 0,
           });
           break;
         } catch {
@@ -74,7 +83,10 @@ export async function assignPuzzles(db: Db, opts: {
         }
       }
       if (!generated) throw new Error(`üretim başarısız: ${date} ${difficulty}`);
-      for (const w of generated.words) sameDay.add(w.word);
+      for (const w of generated.words) {
+        sameDay.add(w.word);
+        useCount.set(w.word, (useCount.get(w.word) ?? 0) + 1);
+      }
       await db.insert(puzzles).values(await buildPuzzleRow(generated, date, difficulty));
       created++;
     }

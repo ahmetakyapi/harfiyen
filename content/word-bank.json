@@ -19,7 +19,8 @@
     "word": "ADA",
     "clues": [
       "Dört yanı su ile çevrili kara",
-      "Denizin ortasındaki kara parçası"
+      "Denizin ortasındaki kara parçası",
+      "Karaya feribotla bağlanan yer"
     ],
     "difficulty": 1
   },
@@ -50,7 +51,8 @@
     "word": "SAÇ",
     "clues": [
       "Başı örten ince teller",
-      "Berberin özenle kestiği şey"
+      "Berberin özenle kestiği şey",
+      "Tarakla düzeltilen tel örtüsü"
     ],
     "difficulty": 1
   },
@@ -58,7 +60,8 @@
     "word": "GÖZ",
     "clues": [
       "Görme organı",
-      "Yüzün penceresi"
+      "Yüzün penceresi",
+      "Kirpiklerin çevrelediği organ"
     ],
     "difficulty": 1
   },
@@ -66,7 +69,8 @@
     "word": "DİŞ",
     "clues": [
       "Ağızda çiğnemeye yarayan sert doku",
-      "Gülüşün beyaz nöbetçileri"
+      "Gülüşün beyaz nöbetçileri",
+      "Fırçayla sabah akşam temizlenen yapı"
     ],
     "difficulty": 1
   },
@@ -74,7 +78,8 @@
     "word": "BAL",
     "clues": [
       "Arının ürettiği tatlı madde",
-      "Kavanozda saklanan altın renkli tatlı"
+      "Kavanozda saklanan altın renkli tatlı",
+      "Petekten süzülerek elde edilen ürün"
     ],
     "difficulty": 1
   },
@@ -82,7 +87,8 @@
     "word": "YOL",
     "clues": [
       "Bir yerden bir yere ulaştıran güzergah",
-      "Asfaltla kaplanan geçit"
+      "Asfaltla kaplanan geçit",
+      "Trafiğin aktığı şerit"
     ],
     "difficulty": 1
   },
@@ -90,7 +96,8 @@
     "word": "KAR",
     "clues": [
       "Kışın gökten yağan beyaz tanecikler",
-      "Çocukları adam yapmaya iten yağış"
+      "Çocukları adam yapmaya iten yağış",
+      "Kayak yapmak için beklenen yağış"
     ],
     "difficulty": 1
   },
@@ -98,7 +105,8 @@
     "word": "BUZ",
     "clues": [
       "Donmuş su",
-      "Kutup ayısının üzerinde yürüdüğü zemin"
+      "Kutup ayısının üzerinde yürüdüğü zemin",
+      "İçeceği soğutmak için bardağa atılan küp"
     ],
     "difficulty": 1
   },
@@ -106,7 +114,8 @@
     "word": "ÇAY",
     "clues": [
       "Demlenip fincanda sunulan sıcak içecek",
-      "Türk misafirperverliğinin vazgeçilmez içeceği"
+      "Türk misafirperverliğinin vazgeçilmez içeceği",
+      "Rize yamaçlarında yetişen ünlü ürün"
     ],
     "difficulty": 1
   },
@@ -114,7 +123,8 @@
     "word": "TOP",
     "clues": [
       "Yuvarlak oyun aracı",
-      "Ayakla vurulup file arasına gönderilen nesne"
+      "Ayakla vurulup file arasına gönderilen nesne",
+      "Sahada oyuncuların peşinden koştuğu nesne"
     ],
     "difficulty": 1
   },
@@ -122,7 +132,8 @@
     "word": "KUŞ",
     "clues": [
       "Kanatlı gökyüzü sakini",
-      "Ötüşüyle sabahı müjdeleyen canlı"
+      "Ötüşüyle sabahı müjdeleyen canlı",
+      "Yuvasını dallara kuran kanatlı"
     ],
     "difficulty": 1
   },
@@ -130,7 +141,8 @@
     "word": "TAŞ",
     "clues": [
       "Yerden çıkan sert madde",
-      "Bahçe duvarının ham malzemesi"
+      "Bahçe duvarının ham malzemesi",
+      "Sapanla fırlatılan sert parça"
     ],
     "difficulty": 1
   },
@@ -138,7 +150,8 @@
     "word": "ODA",
     "clues": [
       "Evin dört duvarla ayrılmış bölümü",
-      "Kapısı kapanan mahremiyet alanı"
+      "Kapısı kapanan mahremiyet alanı",
+      "Otelde geceleme için tutulan bölüm"
     ],
     "difficulty": 1
   },
@@ -146,7 +159,8 @@
     "word": "SÜT",
     "clues": [
       "İneğin verdiği beyaz besin",
-      "Kahvaltı sofrasının beyaz içeceği"
+      "Kahvaltı sofrasının beyaz içeceği",
+      "Peynir ve yoğurdun ham maddesi"
     ],
     "difficulty": 1
   },
@@ -154,7 +168,8 @@
     "word": "GÜL",
     "clues": [
       "Dikenli sap üzerindeki kokulu çiçek",
-      "Aşkın simgesi kabul edilen çiçek"
+      "Aşkın simgesi kabul edilen çiçek",
+      "Bahçenin en çok koklanan çiçeği"
     ],
     "difficulty": 1
   },
@@ -1250,7 +1265,8 @@
     "word": "TUZ",
     "clues": [
       "Yemeklere lezzet katan beyaz kristal",
-      "Denizden elde edilen mineral tat vericisi"
+      "Denizden elde edilen mineral tat vericisi",
+      "Deniz suyunu içilmez kılan madde"
     ],
     "difficulty": 1
   },
@@ -1258,7 +1274,8 @@
     "word": "YAĞ",
     "clues": [
       "Kızartma yaparken tavaya dökülen sıvı",
-      "Zeytinden sıkılıp şişelenen besin"
+      "Zeytinden sıkılıp şişelenen besin",
+      "Salataya gezdirilen zeytin ürünü"
     ],
     "difficulty": 1
   },
@@ -1266,7 +1283,8 @@
     "word": "KAP",
     "clues": [
       "İçine yiyecek konan genel eşya",
-      "Mutfaktaki her türlü saklama nesnesinin ortak adı"
+      "Mutfaktaki her türlü saklama nesnesinin ortak adı",
+      "Yemeği taşımaya yarayan nesne"
     ],
     "difficulty": 1
   },
@@ -1274,7 +1292,8 @@
     "word": "TAS",
     "clues": [
       "Su içmek için kullanılan yayvan kap",
-      "Hamamda su dökmekte kullanılan metal kap"
+      "Hamamda su dökmekte kullanılan metal kap",
+      "Şerbet ve ayran sunulan geleneksel kap"
     ],
     "difficulty": 1
   },
@@ -1346,7 +1365,8 @@
     "word": "ÜTÜ",
     "clues": [
       "Kırışık gömleği düzleştiren cihaz",
-      "Buhar püskürterek kumaşı düzleştiren alet"
+      "Buhar püskürterek kumaşı düzleştiren alet",
+      "Katlamadan önce çamaşıra gezdirilen araç"
     ],
     "difficulty": 1
   },
@@ -1362,7 +1382,8 @@
     "word": "ÇÖP",
     "clues": [
       "Atılacak artıkların toplandığı yer",
-      "Mutfakta kullanılıp atılan artıkların adı"
+      "Mutfakta kullanılıp atılan artıkların adı",
+      "Poşetle kapı önüne bırakılan atık"
     ],
     "difficulty": 1
   },
@@ -1418,7 +1439,8 @@
     "word": "RAF",
     "clues": [
       "Duvara monte edilip eşya konan düz yüzey",
-      "Kitapların dizildiği yatay bölme"
+      "Kitapların dizildiği yatay bölme",
+      "Markette ürünlerin dizildiği yüzey"
     ],
     "difficulty": 1
   },
@@ -1442,7 +1464,8 @@
     "word": "FİŞ",
     "clues": [
       "Kabloyun ucunda prize takılan parça",
-      "Elektrikli aletin duvara bağlandığı uç"
+      "Elektrikli aletin duvara bağlandığı uç",
+      "Şarj kablosunun duvara giren ucu"
     ],
     "difficulty": 1
   },
@@ -1450,7 +1473,8 @@
     "word": "ZİL",
     "clues": [
       "Kapıya gelen misafiri haber veren düğme",
-      "Basınca ses çıkaran uyarı düzeneği"
+      "Basınca ses çıkaran uyarı düzeneği",
+      "Okulda dersin bittiğini duyuran araç"
     ],
     "difficulty": 1
   },
@@ -1522,7 +1546,8 @@
     "word": "DUŞ",
     "clues": [
       "Ayakta yıkanılan banyo bölümü",
-      "Yukarıdan su akıtan yıkanma düzeneği"
+      "Yukarıdan su akıtan yıkanma düzeneği",
+      "Spordan sonra alınan hızlı yıkanma"
     ],
     "difficulty": 1
   },
@@ -1602,7 +1627,8 @@
     "word": "ÇİM",
     "clues": [
       "Bahçeyi kaplayan kısa yeşil bitki örtüsü",
-      "Bahçıvanın düzenli biçtiği yeşil örtü"
+      "Bahçıvanın düzenli biçtiği yeşil örtü",
+      "Futbol sahasını kaplayan yeşillik"
     ],
     "difficulty": 1
   },
@@ -1634,7 +1660,8 @@
     "word": "MUM",
     "clues": [
       "Elektrik kesilince yakılan aydınlatma aracı",
-      "Fitili yanarak eriyen aydınlatma gereci"
+      "Fitili yanarak eriyen aydınlatma gereci",
+      "Doğum günü pastasına dikilen ışık"
     ],
     "difficulty": 1
   },
@@ -1658,7 +1685,8 @@
     "word": "PİL",
     "clues": [
       "Uzaktan kumandaya güç veren küçük enerji kaynağı",
-      "İçinde kimyasal enerji taşıyan silindir"
+      "İçinde kimyasal enerji taşıyan silindir",
+      "Bitince kumandayı susturan enerji parçası"
     ],
     "difficulty": 1
   },
@@ -1666,7 +1694,8 @@
     "word": "GAZ",
     "clues": [
       "Ocakta yanan yakıt türü",
-      "Tüpten borularla eve gelen yakıt"
+      "Tüpten borularla eve gelen yakıt",
+      "Kokusu duyulunca tehlike sayılan yakıt"
     ],
     "difficulty": 1
   },
@@ -1730,7 +1759,8 @@
     "word": "ŞİŞ",
     "clues": [
       "Ete geçirilip ateşte çevrilen ince metal çubuk",
-      "Kebabın pişirildiği sivri uçlu çubuk"
+      "Kebabın pişirildiği sivri uçlu çubuk",
+      "Mangalda etlerin dizildiği çubuk"
     ],
     "difficulty": 1
   },
@@ -2178,7 +2208,8 @@
     "word": "TOZ",
     "clues": [
       "Havada uçuşan ince kir zerresi",
-      "Mobilyaların üzerinde biriken ince kir"
+      "Mobilyaların üzerinde biriken ince kir",
+      "Süpürgenin peşine düştüğü zerre"
     ],
     "difficulty": 1
   },
@@ -2186,7 +2217,8 @@
     "word": "KİR",
     "clues": [
       "Temizlenmesi gereken pislik",
-      "Yıkanınca giden istenmeyen leke ve pislik"
+      "Yıkanınca giden istenmeyen leke ve pislik",
+      "Beyaz gömleğin yakasını karartan şey"
     ],
     "difficulty": 1
   },
@@ -2330,7 +2362,8 @@
     "word": "DAĞ",
     "clues": [
       "Yerden yükselen doğal yükselti",
-      "Tepesi kar tutan yüksek arazi parçası"
+      "Tepesi kar tutan yüksek arazi parçası",
+      "Eteğinde köyler kurulan yüksek arazi"
     ],
     "difficulty": 1
   },
@@ -2338,7 +2371,8 @@
     "word": "GÖL",
     "clues": [
       "Karaların ortasındaki durgun su kütlesi",
-      "Denize göre küçük, çevresi karayla kaplı su birikintisi"
+      "Denize göre küçük, çevresi karayla kaplı su birikintisi",
+      "Van ve Tuz'un birer örneği olduğu su kütlesi"
     ],
     "difficulty": 1
   },
@@ -2346,7 +2380,8 @@
     "word": "OVA",
     "clues": [
       "Düz ve geniş tarım arazisi",
-      "Dağlar arasında kalan geniş düzlük"
+      "Dağlar arasında kalan geniş düzlük",
+      "Konya'nın ünlü tahıl düzlüğü"
     ],
     "difficulty": 1
   },
@@ -2354,7 +2389,8 @@
     "word": "ÇÖL",
     "clues": [
       "Bitki örtüsünden yoksun kurak bölge",
-      "Kum tepelerinin sıkça görüldüğü kurak alan"
+      "Kum tepelerinin sıkça görüldüğü kurak alan",
+      "Develerin yol aldığı susuz bölge"
     ],
     "difficulty": 1
   },
@@ -2370,7 +2406,8 @@
     "word": "KUM",
     "clues": [
       "Deniz kıyısını kaplayan ince taneli madde",
-      "Çölü ve sahili kaplayan ince tanecikler"
+      "Çölü ve sahili kaplayan ince tanecikler",
+      "Saatin içinde akan ince tanecik"
     ],
     "difficulty": 1
   },
@@ -2458,7 +2495,8 @@
     "word": "KOY",
     "clues": [
       "Kıyının içeri girinti yaptığı küçük körfez",
-      "Dalgalardan korunaklı küçük deniz girintisi"
+      "Dalgalardan korunaklı küçük deniz girintisi",
+      "Teknelerin demir attığı sığınak"
     ],
     "difficulty": 2
   },
@@ -2514,7 +2552,8 @@
     "word": "DAL",
     "clues": [
       "Ağacın gövdesinden ayrılan uzantı",
-      "Kuşların üzerine konduğu ağaç uzantısı"
+      "Kuşların üzerine konduğu ağaç uzantısı",
+      "Budama makasının kestiği kısım"
     ],
     "difficulty": 1
   },
@@ -2522,7 +2561,8 @@
     "word": "KÖK",
     "clues": [
       "Bitkinin toprak altındaki besin alan kısmı",
-      "Ağacın yerden su çektiği bölümü"
+      "Ağacın yerden su çektiği bölümü",
+      "Havucun yenilen kısmı"
     ],
     "difficulty": 1
   },
@@ -2569,7 +2609,7 @@
   {
     "word": "ÇİMEN",
     "clues": [
-      "Bahçeyi kaplayan kısa yeşil bitki örtüsü",
+      "Üzerinde piknik yapılan otluk alan",
       "Parklarda üzerine oturulan yeşil örtü"
     ],
     "difficulty": 1
@@ -2602,7 +2642,8 @@
     "word": "ÇAM",
     "clues": [
       "Kozalak taşıyan yeşil yapraklı ağaç",
-      "Yılbaşında süslenen iğne yapraklı ağaç"
+      "Yılbaşında süslenen iğne yapraklı ağaç",
+      "Reçinesiyle bilinen orman ağacı"
     ],
     "difficulty": 1
   },
@@ -2738,7 +2779,8 @@
     "word": "AYI",
     "clues": [
       "Kışın kış uykusuna yatan iri hayvan",
-      "Bal küplerine düşkün orman hayvanı"
+      "Bal küplerine düşkün orman hayvanı",
+      "Boz ve kutup türleri olan hayvan"
     ],
     "difficulty": 1
   },
@@ -2802,7 +2844,8 @@
     "word": "FİL",
     "clues": [
       "Hortumu ve iri kulaklarıyla bilinen dev hayvan",
-      "Kara hayvanlarının en irisi"
+      "Kara hayvanlarının en irisi",
+      "Hafızasıyla anılan dev memeli"
     ],
     "difficulty": 1
   },
@@ -2922,7 +2965,8 @@
     "word": "KAZ",
     "clues": [
       "Gaga ve perde ayaklarıyla bilinen büyük kümes kuşu",
-      "Kanadını çırparak gıdaklayan iri göçmen kuş"
+      "Kanadını çırparak gıdaklayan iri göçmen kuş",
+      "Tüyü yastık dolduran iri kümes hayvanı"
     ],
     "difficulty": 1
   },
@@ -3058,7 +3102,8 @@
     "word": "ARI",
     "clues": [
       "Bal yapan çalışkan böcek",
-      "Kovanında düzenli çalışan sokucu böcek"
+      "Kovanında düzenli çalışan sokucu böcek",
+      "Çiçekten çiçeğe konan kanatlı işçi"
     ],
     "difficulty": 1
   },
@@ -3274,7 +3319,8 @@
     "word": "TÜY",
     "clues": [
       "Kuşun vücudunu örten hafif yapı",
-      "Kuşun uçmasını sağlayan hafif yapı"
+      "Kuşun uçmasını sağlayan hafif yapı",
+      "Yastık ve yorgan dolgusunda kullanılan doğal malzeme"
     ],
     "difficulty": 1
   },
@@ -3322,7 +3368,8 @@
     "word": "GÖÇ",
     "clues": [
       "Kuşların mevsimlik yer değiştirmesi",
-      "Kırlangıçların kışın sıcak ülkelere gidişi"
+      "Kırlangıçların kışın sıcak ülkelere gidişi",
+      "Leyleklerin sonbaharda başlattığı yolculuk"
     ],
     "difficulty": 2
   },
@@ -3354,7 +3401,8 @@
     "word": "KIŞ",
     "clues": [
       "Karın yağdığı soğuk mevsim",
-      "Yılın en soğuk mevsimi"
+      "Yılın en soğuk mevsimi",
+      "Aralık, ocak ve şubatı kapsayan mevsim"
     ],
     "difficulty": 1
   },
@@ -3362,7 +3410,8 @@
     "word": "YAZ",
     "clues": [
       "Güneşin en sıcak olduğu mevsim",
-      "Tatillerin yapıldığı sıcak mevsim"
+      "Tatillerin yapıldığı sıcak mevsim",
+      "Okulların kapandığı mevsim"
     ],
     "difficulty": 1
   },
@@ -3394,7 +3443,8 @@
     "word": "SİS",
     "clues": [
       "Görüşü azaltan yoğun nem bulutu",
-      "Sabahları yolları kaplayan beyaz pus"
+      "Sabahları yolları kaplayan beyaz pus",
+      "Denizde gemileri yavaşlatan görüş engeli"
     ],
     "difficulty": 1
   },
@@ -3402,7 +3452,8 @@
     "word": "ÇİY",
     "clues": [
       "Sabahları çimenlerin üzerinde biriken su damlacıkları",
-      "Gece soğumasıyla otların üzerinde oluşan nem"
+      "Gece soğumasıyla otların üzerinde oluşan nem",
+      "Sabah güneşiyle buharlaşan minik damlalar"
     ],
     "difficulty": 3
   },
@@ -3442,7 +3493,8 @@
     "word": "SEL",
     "clues": [
       "Şiddetli yağış sonrası taşan sular",
-      "Ani yağışla oluşan yıkıcı su baskını"
+      "Ani yağışla oluşan yıkıcı su baskını",
+      "Dere yatağını aşan yıkıcı akıntı"
     ],
     "difficulty": 1
   },
@@ -3466,7 +3518,8 @@
     "word": "LAV",
     "clues": [
       "Volkandan püsküren erimiş kaya",
-      "Yanardağın içinden akan kızgın sıvı"
+      "Yanardağın içinden akan kızgın sıvı",
+      "Etna'dan akan kızgın madde"
     ],
     "difficulty": 2
   },
@@ -3554,7 +3607,8 @@
     "word": "KÖY",
     "clues": [
       "Nüfusu az, tarımla uğraşılan küçük yerleşim",
-      "Kasabadan küçük, kırsal yerleşim birimi"
+      "Kasabadan küçük, kırsal yerleşim birimi",
+      "Muhtarın yönettiği küçük yerleşim"
     ],
     "difficulty": 1
   },
@@ -3842,7 +3896,8 @@
     "word": "TUR",
     "clues": [
       "Rehber eşliğinde yapılan gezi programı",
-      "Belirli bir güzergâhı takip eden gezi"
+      "Belirli bir güzergâhı takip eden gezi",
+      "Otobüsle şehir şehir gezilen program"
     ],
     "difficulty": 1
   },
@@ -4120,7 +4175,8 @@
     "word": "NİL",
     "clues": [
       "Mısır uygarlığının doğduğu uzun nehir",
-      "Afrika'nın en uzun nehri"
+      "Afrika'nın en uzun nehri",
+      "Kahire'nin içinden geçen nehir"
     ],
     "difficulty": 2,
     "tags": [
@@ -4175,7 +4231,8 @@
     "word": "EGE",
     "clues": [
       "Türkiye'nin batısındaki ada dolu deniz",
-      "İzmir kıyılarının bulunduğu deniz"
+      "İzmir kıyılarının bulunduğu deniz",
+      "Bodrum ve Çeşme'nin kıyısındaki deniz"
     ],
     "difficulty": 1,
     "tags": [
@@ -4216,7 +4273,8 @@
     "word": "BAŞ",
     "clues": [
       "Vücudun en üst organı",
-      "Şapkanın giyildiği vücut kısmı"
+      "Şapkanın giyildiği vücut kısmı",
+      "Boynun üzerinde duran bölüm"
     ],
     "difficulty": 1
   },
@@ -4240,7 +4298,8 @@
     "word": "KOL",
     "clues": [
       "Elin bağlı olduğu vücut uzvu",
-      "Gövdeden çıkan, elde biten uzuv"
+      "Gövdeden çıkan, elde biten uzuv",
+      "Saatin takıldığı uzuv"
     ],
     "difficulty": 1
   },
@@ -4296,7 +4355,8 @@
     "word": "BEL",
     "clues": [
       "Gövdenin ortasındaki ince kısım",
-      "Kemerin bağlandığı vücut bölgesi"
+      "Kemerin bağlandığı vücut bölgesi",
+      "Ağır kaldırınca tutulan bölge"
     ],
     "difficulty": 1
   },
@@ -4336,7 +4396,8 @@
     "word": "DİZ",
     "clues": [
       "Bacağın ortasında bükülen eklem",
-      "Bacağın kıvrıldığı orta noktası"
+      "Bacağın kıvrıldığı orta noktası",
+      "Futbolcuların bandaj sardığı eklem"
     ],
     "difficulty": 1
   },
@@ -4360,7 +4421,8 @@
     "word": "KAŞ",
     "clues": [
       "Gözün üzerindeki kıl şeridi",
-      "Şaşırınca kalkan gözün üstündeki kıl çizgisi"
+      "Şaşırınca kalkan gözün üstündeki kıl çizgisi",
+      "Alın ile göz arasındaki kıl sırası"
     ],
     "difficulty": 1
   },
@@ -4392,7 +4454,8 @@
     "word": "DİL",
     "clues": [
       "Ağzın tat alma organı",
-      "Konuşmayı sağlayan ağız içi organ"
+      "Konuşmayı sağlayan ağız içi organ",
+      "İnsanların anlaşmak için kullandığı sözcük dizgesi"
     ],
     "difficulty": 1
   },
@@ -4456,7 +4519,8 @@
     "word": "KAS",
     "clues": [
       "Hareketi sağlayan esnek doku",
-      "Spor yapınca gelişen vücut dokusu"
+      "Spor yapınca gelişen vücut dokusu",
+      "Halterin geliştirdiği doku"
     ],
     "difficulty": 1
   },
@@ -4544,7 +4608,8 @@
     "word": "TEN",
     "clues": [
       "Cildin rengi ve dokusu",
-      "Bronzlaşan vücut yüzeyi"
+      "Bronzlaşan vücut yüzeyi",
+      "Kremle nemlendirilen dış katman"
     ],
     "difficulty": 2
   },
@@ -4552,7 +4617,8 @@
     "word": "KAN",
     "clues": [
       "Damarlarda dolaşan kırmızı sıvı",
-      "Yaralanınca akan vücut sıvısı"
+      "Yaralanınca akan vücut sıvısı",
+      "Bağışlanarak hayat kurtaran sıvı"
     ],
     "difficulty": 1
   },
@@ -4576,7 +4642,8 @@
     "word": "TER",
     "clues": [
       "Sıcakta veya heyecanda deriden çıkan sıvı",
-      "Spor sonrası vücuttan boşalan sıvı"
+      "Spor sonrası vücuttan boşalan sıvı",
+      "Alından süzülen tuzlu damla"
     ],
     "difficulty": 1
   },
@@ -4632,7 +4699,8 @@
     "word": "AŞI",
     "clues": [
       "Hastalıktan korunmak için yapılan enjeksiyon",
-      "Bağışıklık kazandırmak için verilen iğne"
+      "Bağışıklık kazandırmak için verilen iğne",
+      "Çocuklara takvimle uygulanan koruma"
     ],
     "difficulty": 1
   },
@@ -4984,7 +5052,8 @@
     "word": "GÜÇ",
     "clues": [
       "Bir işi yapabilme kapasitesi",
-      "Ağırlık kaldırmayı sağlayan beden özelliği"
+      "Ağırlık kaldırmayı sağlayan beden özelliği",
+      "Motorun beygirle ölçülen özelliği"
     ],
     "difficulty": 1
   },
@@ -5120,7 +5189,8 @@
     "word": "TON",
     "clues": [
       "Bir sesin incelik kalınlık derecesi",
-      "Rengin açıklık koyuluk derecesi"
+      "Rengin açıklık koyuluk derecesi",
+      "Bin kilograma eşit ağırlık birimi"
     ],
     "difficulty": 2
   },
@@ -5128,7 +5198,8 @@
     "word": "SES",
     "clues": [
       "Kulakla algılanan titreşim",
-      "Şarkı söylerken çıkardığımız titreşim"
+      "Şarkı söylerken çıkardığımız titreşim",
+      "Mikrofonun yükselttiği titreşim"
     ],
     "difficulty": 1
   },
@@ -5240,7 +5311,8 @@
     "word": "NEY",
     "clues": [
       "Tasavvuf müziğinde kullanılan kamıştan çalgı",
-      "Mevlevi ayinlerinde çalınan üflemeli çalgı"
+      "Mevlevi ayinlerinde çalınan üflemeli çalgı",
+      "Semazenlere eşlik eden nefesli çalgı"
     ],
     "difficulty": 2
   },
@@ -5248,7 +5320,8 @@
     "word": "SAZ",
     "clues": [
       "Halk müziğinin temel telli çalgısı",
-      "Türkülerin eşlik ettiği geleneksel telli çalgı"
+      "Türkülerin eşlik ettiği geleneksel telli çalgı",
+      "Ozanların omzunda taşıdığı telli çalgı"
     ],
     "difficulty": 1
   },
@@ -5272,7 +5345,8 @@
     "word": "ORG",
     "clues": [
       "Kilise müziğinde kullanılan büyük tuşlu çalgı",
-      "Nefesli borularla ses üreten büyük çalgı"
+      "Nefesli borularla ses üreten büyük çalgı",
+      "Ayakla da çalınan pedallı büyük çalgı"
     ],
     "difficulty": 2
   },
@@ -5368,7 +5442,8 @@
     "word": "SÖZ",
     "clues": [
       "Şarkının anlamlı kısmı",
-      "Bestecinin ezgiye eklediği anlamlı metin"
+      "Bestecinin ezgiye eklediği anlamlı metin",
+      "Verilince tutulması gereken taahhüt"
     ],
     "difficulty": 1
   },
@@ -5464,7 +5539,8 @@
     "word": "ROL",
     "clues": [
       "Oyuncunun sahnede canlandırdığı kişilik",
-      "Bir oyuncuya verilen kahraman ya da figür"
+      "Bir oyuncuya verilen kahraman ya da figür",
+      "Senaryoda bir oyuncuya düşen pay"
     ],
     "difficulty": 1
   },
@@ -6072,7 +6148,8 @@
     "word": "GOL",
     "clues": [
       "Topun kale çizgisini geçmesiyle kazanılan puan",
-      "Maçın kazananını belirleyen isabetli vuruş"
+      "Maçın kazananını belirleyen isabetli vuruş",
+      "Skoru değiştiren isabet"
     ],
     "difficulty": 1
   },
@@ -6112,7 +6189,8 @@
     "word": "ŞUT",
     "clues": [
       "Topu kaleye doğru vurma hareketi",
-      "Gol atmak için yapılan vuruş"
+      "Gol atmak için yapılan vuruş",
+      "Kaleciyi zorlayan sert vuruş"
     ],
     "difficulty": 1
   },
@@ -6120,7 +6198,8 @@
     "word": "PAS",
     "clues": [
       "Topu takım arkadaşına gönderme hareketi",
-      "Oyuncudan oyuncuya topun aktarılması"
+      "Oyuncudan oyuncuya topun aktarılması",
+      "Nemli demirin üzerinde oluşan kızıl tabaka"
     ],
     "difficulty": 1
   },
@@ -6152,7 +6231,8 @@
     "word": "LİG",
     "clues": [
       "Takımların sezon boyunca yarıştığı organizasyon",
-      "Puan durumuyla takip edilen turnuva düzeni"
+      "Puan durumuyla takip edilen turnuva düzeni",
+      "Şampiyonun sezon sonunda belirlendiği yarış"
     ],
     "difficulty": 1
   },
@@ -6304,7 +6384,8 @@
     "word": "YAY",
     "clues": [
       "Okçuların oku fırlattığı esnek araç",
-      "Gerilip bırakılınca oku fırlatan alet"
+      "Gerilip bırakılınca oku fırlatan alet",
+      "Geometride çemberin bir parçası"
     ],
     "difficulty": 1
   },
@@ -6424,7 +6505,8 @@
     "word": "ÇİP",
     "clues": [
       "Devrelerin üzerine yerleştirildiği küçük parça",
-      "Bilgisayarın beyni sayılan küçük elektronik parça"
+      "Bilgisayarın beyni sayılan küçük elektronik parça",
+      "Banka kartına gömülü elektronik parça"
     ],
     "difficulty": 2
   },
@@ -6592,7 +6674,8 @@
     "word": "KOD",
     "clues": [
       "Programın yazıldığı komut dizisi",
-      "Bir yazılımcının satır satır yazdığı talimatlar"
+      "Bir yazılımcının satır satır yazdığı talimatlar",
+      "Bir bilgiyi simgelerle karşılayan dizi"
     ],
     "difficulty": 2
   },
@@ -6792,7 +6875,8 @@
     "word": "ISI",
     "clues": [
       "Sıcaklığın bir başka ifadesi",
-      "Güneşten gelip bedeni sıcak tutan enerji türü"
+      "Güneşten gelip bedeni sıcak tutan enerji türü",
+      "Kaloriferin odaya yaydığı enerji"
     ],
     "difficulty": 1
   },
@@ -6896,7 +6980,8 @@
     "word": "HIZ",
     "clues": [
       "Bir cismin birim zamanda aldığı yol",
-      "Aracın kilometre saat cinsinden değeri"
+      "Aracın kilometre saat cinsinden değeri",
+      "Radarın yolda ölçtüğü değer"
     ],
     "difficulty": 1
   },
@@ -7408,7 +7493,8 @@
     "word": "MUZ",
     "clues": [
       "Sarı kabuklu, eğri biçimli meyve",
-      "Maymunların sevdiği sarı meyve"
+      "Maymunların sevdiği sarı meyve",
+      "Kabuğuna basınca kayılan meyve"
     ],
     "difficulty": 1
   },
@@ -7504,7 +7590,8 @@
     "word": "NAR",
     "clues": [
       "İçi kırmızı tanelerle dolu meyve",
-      "Ekşi tatlı taneleri olan kırmızı kabuklu meyve"
+      "Ekşi tatlı taneleri olan kırmızı kabuklu meyve",
+      "Taneleri tek tek ayıklanan kış meyvesi"
     ],
     "difficulty": 1
   },
@@ -7632,7 +7719,8 @@
     "word": "ACI",
     "clues": [
       "Biberin dilde bıraktığı yakıcı tat",
-      "Tatlının tam zıddı olan keskin tat"
+      "Tatlının tam zıddı olan keskin tat",
+      "Kayıp sonrası duyulan derin üzüntü"
     ],
     "difficulty": 1
   },
@@ -7664,7 +7752,8 @@
     "word": "AŞK",
     "clues": [
       "İki insan arasındaki en güçlü bağlanma duygusu",
-      "Şairlerin en çok dizelere döktüğü duygu"
+      "Şairlerin en çok dizelere döktüğü duygu",
+      "Romanların başrolündeki duygu"
     ],
     "difficulty": 1
   },
@@ -7992,7 +8081,8 @@
     "word": "KİN",
     "clues": [
       "Uzun süre içte tutulan öfke",
-      "Affedilmeyip saklanan düşmanlık duygusu"
+      "Affedilmeyip saklanan düşmanlık duygusu",
+      "İntikam isteğini besleyen duygu"
     ],
     "difficulty": 2
   },
@@ -8128,7 +8218,8 @@
     "word": "HAZ",
     "clues": [
       "Bir eylemden alınan tat ve keyif",
-      "Bedensel veya zihinsel doyum hissi"
+      "Bedensel veya zihinsel doyum hissi",
+      "Acının karşıtı sayılan hoşnutluk"
     ],
     "difficulty": 3
   },
@@ -8392,7 +8483,8 @@
     "word": "CAN",
     "clues": [
       "Bir bedeni yaşatan görünmez güç",
-      "Kaybedilince hayatın da bittiği öz"
+      "Kaybedilince hayatın da bittiği öz",
+      "Sevilen kişiye seslenirken kullanılan söz"
     ],
     "difficulty": 1
   },
@@ -8400,7 +8492,8 @@
     "word": "RUH",
     "clues": [
       "Bedenden bağımsız kabul edilen manevi öz",
-      "Ölümden sonra da var olduğuna inanılan benlik"
+      "Ölümden sonra da var olduğuna inanılan benlik",
+      "Bir eserin ya da mekânın kendine özgü havası"
     ],
     "difficulty": 2
   },
@@ -9296,7 +9389,8 @@
     "word": "NAL",
     "clues": [
       "Atın toynağına çakılan metal parça",
-      "Şans getirdiğine inanılan U biçimli demir"
+      "Şans getirdiğine inanılan U biçimli demir",
+      "Koşum hayvanının ayağını koruyan demir"
     ],
     "difficulty": 3
   },
@@ -9576,7 +9670,8 @@
     "word": "GAM",
     "clues": [
       "İçe çöken hafif hüzün ve tasa",
-      "Şarkı sözlerinde sıkça geçen kederli duygu"
+      "Şarkı sözlerinde sıkça geçen kederli duygu",
+      "Müzikte seslerin kalından inceye sıralanışı"
     ],
     "difficulty": 3
   },
@@ -9912,7 +10007,8 @@
     "word": "ZAM",
     "clues": [
       "Fiyatların yükseltilmesi işlemi",
-      "Maaşa veya fiyata yapılan artış"
+      "Maaşa veya fiyata yapılan artış",
+      "Enflasyonla birlikte gelen artış"
     ],
     "difficulty": 3
   },
