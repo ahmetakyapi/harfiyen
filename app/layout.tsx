@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Fraunces, IBM_Plex_Mono, Inter } from 'next/font/google';
 import { Header } from '@/components/layout/Header';
+import { HeaderSlot } from '@/components/layout/HeaderSlot';
 import { ThemeProvider } from '@/components/layout/ThemeProvider';
 import './globals.css';
 
@@ -37,7 +38,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="tr" suppressHydrationWarning>
       <body className={`${inter.variable} ${fraunces.variable} ${plexMono.variable} min-h-dvh bg-[var(--paper)] font-sans text-[var(--ink)] antialiased`}>
         <ThemeProvider>
-          <Header />
+          <HeaderSlot><Header /></HeaderSlot>
           {children}
         </ThemeProvider>
       </body>

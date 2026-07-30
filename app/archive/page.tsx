@@ -1,10 +1,10 @@
 import Link from 'next/link';
-import { and, eq, lt } from 'drizzle-orm';
+import { and, eq, gte, lt } from 'drizzle-orm';
 import { Check } from 'lucide-react';
 import { auth } from '@/lib/auth';
 import { AutoRefresh } from '@/components/layout/AutoRefresh';
 import { LetterTile } from '@/components/ui/LetterTile';
-import { formatTrtDayMonth, formatTrtWeekday, gameDay, puzzleNumber } from '@/lib/date';
+import { addDays, formatTrtDayMonth, formatTrtMonth, formatTrtWeekday, gameDay, puzzleNumber } from '@/lib/date';
 import { DIFFICULTY_LABELS } from '@/lib/difficulty';
 import { getDb } from '@/lib/db';
 import { playSessions, puzzles } from '@/lib/schema';
@@ -14,11 +14,16 @@ import { formatDuration } from '@/lib/share';
 export const metadata = { title: 'Arşiv' };
 export const dynamic = 'force-dynamic';
 
+// Arşiv sonsuza kadar büyür; tek sayfada her günü listelemek hem sorguyu hem
+// DOM'u zamanla şişirir. Son 90 gün pratik modu için fazlasıyla yeterli.
+const WINDOW_DAYS = 90;
+
 export default async function ArchivePage() {
   const db = getDb();
   const today = gameDay();
+  const since = addDays(today, -WINDOW_DAYS);
   const past = await db.select({ date: puzzles.date, difficulty: puzzles.difficulty })
-    .from(puzzles).where(lt(puzzles.date, today));
+    .from(puzzles).where(and(lt(puzzles.date, today), gte(puzzles.date, since)));
   const session = await auth();
   // `${date}:${difficulty}` → tamamlanan oturumun süresi (kart üstünde göster).
   const doneMs = new Map<string, number | null>();
@@ -49,9 +54,18 @@ export default async function ArchivePage() {
         <p className="py-12 text-center text-[var(--ink-soft)]">Arşiv, lansmandan sonra dolmaya başlayacak.</p>
       )}
       <div className="mt-8 flex flex-col gap-4">
-        {dates.map((date) => {
+        {dates.map((date, i) => {
           const solvedCount = DIFFICULTIES.filter((d) => doneMs.has(`${date}:${d}`)).length;
+          // Ay değiştiğinde yapışkan bir başlık: uzun listede "hangi aydayım"
+          // sorusu kaydırırken cevapsız kalmasın.
+          const monthChanged = i === 0 || date.slice(0, 7) !== dates[i - 1].slice(0, 7);
           return (
+            <div key={`g-${date}`} className="contents">
+            {monthChanged && (
+              <h2 className="sticky top-14 z-10 -mb-1 bg-[var(--paper)]/90 py-1.5 text-sm font-semibold uppercase tracking-wider text-[var(--ink-soft)] backdrop-blur">
+                {formatTrtMonth(date)}
+              </h2>
+            )}
             <section key={date}
               className="overflow-hidden rounded-3xl border border-[var(--line)] bg-[var(--paper-raised)] shadow-[0_10px_30px_-24px_var(--ink)]">
               <header className="flex items-center justify-between gap-3 border-b border-[var(--line)] px-4 py-3">
@@ -96,6 +110,7 @@ export default async function ArchivePage() {
                 })}
               </div>
             </section>
+            </div>
           );
         })}
       </div>

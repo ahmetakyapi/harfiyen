@@ -3,7 +3,7 @@ import { gameDay } from '@/lib/date';
 import type { Db } from '@/lib/db';
 import { playSessions, puzzles } from '@/lib/schema';
 import { HINT_PENALTY_MS } from '@/lib/types';
-import { applyStreak } from './streak';
+import { applyStreak, readStreak, type StreakState } from './streak';
 
 export type Identity = { userId: number | null; anonId: string | null };
 
@@ -118,7 +118,13 @@ export async function useHint(db: Db, opts: {
 
 export type FinishResult =
   | { correct: false }
-  | { correct: true; durationMs: number; isRanked: boolean; rank: number | null; alreadyCompleted: boolean };
+  | {
+      correct: true; durationMs: number; isRanked: boolean; rank: number | null;
+      alreadyCompleted: boolean;
+      // Bitiş ekranında seriyi göstermek için — günlük oyunun en güçlü geri
+      // dönüş kancası. Sıralamaya girmeyen (arşiv/pratik) oyunlarda null.
+      streak: { current: number; best: number } | null;
+    };
 
 export async function finishSession(db: Db, opts: {
   sessionId: number; identity: Identity; letters: (string | null)[][]; now?: Date;
@@ -131,6 +137,7 @@ export async function finishSession(db: Db, opts: {
     return {
       correct: true, durationMs: session.durationMs ?? 0,
       isRanked: session.isRanked, rank, alreadyCompleted: true,
+      streak: await streakFor(db, session.isRanked ? session.userId : null),
     };
   }
 
@@ -151,11 +158,24 @@ export async function finishSession(db: Db, opts: {
   }).where(eq(playSessions.id, session.id));
 
   let rank: number | null = null;
+  let streak: StreakState | null = null;
   if (session.isRanked) {
     rank = await rankOf(db, session.puzzleId, durationMs, now);
-    if (session.userId !== null) await applyStreak(db, session.userId, puzzle.date);
+    if (session.userId !== null) streak = await applyStreak(db, session.userId, puzzle.date);
   }
-  return { correct: true, durationMs, isRanked: session.isRanked, rank, alreadyCompleted: false };
+  return {
+    correct: true, durationMs, isRanked: session.isRanked, rank, alreadyCompleted: false,
+    streak: toStreakDto(streak),
+  };
+}
+
+const toStreakDto = (s: StreakState | null): { current: number; best: number } | null =>
+  s === null ? null : { current: s.currentStreak, best: s.bestStreak };
+
+/** Tamamlanmış oturuma dönüşte seriyi DB'den okur (idempotent submit yolu). */
+async function streakFor(db: Db, userId: number | null): Promise<{ current: number; best: number } | null> {
+  if (userId === null) return null;
+  return toStreakDto(await readStreak(db, userId));
 }
 
 async function rankOf(db: Db, puzzleId: number, durationMs: number, submittedAt: Date): Promise<number> {
