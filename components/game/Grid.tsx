@@ -26,12 +26,13 @@ export function cellSizeOf(gridPx: number, size: number): number {
 // eşitlendiğinden 6×6 ve 10×10 aynı oranda okunur — eski `4vw` yaklaşımı
 // viewport'a bağlıydı ve 10×10'da harfler hücreye sığmıyordu.
 export function Grid({
-  puzzle, letters, sel, activeCells, correctCells, hintCells, flashCell, cellPx,
+  puzzle, letters, sel, activeCells, correctCells, hintCells, wrongCells, flashCell, cellPx,
 }: {
   puzzle: ClientPuzzle; letters: Letters; sel: Selection;
   activeCells: Set<string>;   // `${row}:${col}` — aktif kelimenin hücreleri
   correctCells: Set<string>;  // doğrulanmış kelimelerin hücreleri
   hintCells: Set<string>;     // ipucuyla açılan hücreler — köşe işareti + kilitli
+  wrongCells: Set<string>;    // yanlış tamamlandı, birazdan temizlenecek hücreler
   flashCell?: string | null;  // ipucuyla az önce açılan hücre — kısa parıltı
   cellPx: number | null;      // ölçülen hücre kenarı; null → oransal yedek
 }) {
@@ -86,16 +87,25 @@ export function Grid({
             const ring = isSel
               ? 'z-20 scale-[1.08] ring-[3px] ring-inset ring-[var(--accent)] shadow-lg'
               : '';
+            const isWrong = wrongCells.has(key);
             return (
               <div key={key} role="gridcell" data-sel={isSel || undefined}
+                data-wrong={isWrong || undefined}
                 aria-label={
                   `${r + 1}. satır ${c + 1}. sütun` +
                   (numberAt.has(key) ? `, ${numberAt.get(key)} numaralı kelimenin başı` : '') +
                   `, ${letter ?? 'boş'}` +
                   (isCorrect ? ', doğru' : '') +
+                  (isWrong ? ', yanlış — temizleniyor' : '') +
                   (hintCells.has(key) ? ', ipucuyla açıldı' : '')
                 }
-                className={`relative aspect-square rounded-[3px] ${bg} ${ring} transition-[background-color,transform] duration-100`}>
+                className={`relative aspect-square rounded-[3px] ${bg} ${ring} ${isWrong ? 'cell-wrong' : ''} transition-[background-color,transform] duration-100`}>
+                {isWrong && (
+                  // Sarsıntıya renk de eşlik eder: hangi harflerin gideceği
+                  // (kilitli olanlar bu kümede yok) tek bakışta belli olsun.
+                  <span aria-hidden
+                    className="pointer-events-none absolute inset-0 z-0 rounded-[3px] bg-[var(--wrong-soft)] ring-2 ring-inset ring-[var(--wrong)]" />
+                )}
                 {isCorrect && (
                   <motion.span
                     key={`wave-${key}`}

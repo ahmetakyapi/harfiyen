@@ -16,6 +16,11 @@
   --accent-soft: #dbe7f8;
   --correct: #0f7a5c;
   --correct-soft: #d9eedd;
+  /* Yanlış tamamlanan kelimenin kısa uyarısı. Kırmızı BİLEREK yalnızca burada
+     kullanılır — vermilyon vurgu mavi/altın ailesine ait, bu ton "hata" için
+     ayrılmıştır ve başka hiçbir yerde görünmez. */
+  --wrong: #c0392b;
+  --wrong-soft: #f6dcd8;
   --cell: #fffdf7;
   --cell-active: #f5b787; /* seçili hücre: sıcak şeftali, mavi kelimeden net ayrışır */
   --cell-word: #c3dbf4;   /* aktif kelime: belirgin mavi (eski #dbe8f7 çok soluktu) */
@@ -45,6 +50,8 @@
   --accent-soft: #372b16;
   --correct: #34d399;
   --correct-soft: #113c30;
+  --wrong: #f87171;
+  --wrong-soft: #4a1f1c;
   --cell: #16223c;
   --cell-active: #8a6420; /* seçili hücre: canlı amber (eski #4a3620 çamur gibiydi) */
   --cell-word: #2c4d86;   /* aktif kelime: belirgin mavi */
@@ -252,6 +259,25 @@ body::before {
    tek bir imza vurgusu olarak kalsın diye bilinçli olarak sınırlı tutuldu. */
 .font-display-flourish {
   font-variation-settings: 'SOFT' 60, 'WONK' 1;
+}
+
+/* Yanlış tamamlanan kelime temizlenmeden önce kısa bir sarsıntı atar: harfler
+   sebepsiz kaybolmuş gibi görünmesin, "bu kelime yanlıştı" mesajı otursun.
+   Kayma `em` cinsinden — grid'in font-size'ı hücre kenarına eşit olduğu için
+   sarsıntı 6×6'da da 10×10'da da aynı oranda hissedilir.
+   prefers-reduced-motion altında aşağıdaki kural süreyi sıfırlar; temizlik
+   yine yapılır, yalnızca hareket görünmez. */
+@keyframes cell-shake {
+  0%, 100% { transform: translateX(0); }
+  15% { transform: translateX(-0.09em); }
+  30% { transform: translateX(0.09em); }
+  45% { transform: translateX(-0.06em); }
+  60% { transform: translateX(0.06em); }
+  75% { transform: translateX(-0.03em); }
+}
+
+.cell-wrong {
+  animation: cell-shake 0.45s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @media (prefers-reduced-motion: reduce) {

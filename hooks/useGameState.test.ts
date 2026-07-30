@@ -36,12 +36,13 @@ describe('TYPE', () => {
     const s1 = reduce(initialState(ctx), { type: 'TYPE', letter: 'w' });
     expect(s1).toEqual(initialState(ctx));
   });
-  it('kelime dolunca BAŞKA kelimeye atlamaz, aynı kelimede döngüsel kalır', () => {
+  it('kelime dolunca BAŞKA kelimeye atlamaz, son hücrede kalır', () => {
     let s = initialState(ctx);
     for (const l of ['K', 'A', 'L', 'E', 'M']) s = reduce(s, { type: 'TYPE', letter: l });
-    // across doldu ama doğruluk burada bilinmez → sonraki soruya ATLAMAZ,
-    // aynı kelimenin başına (0,0) döner (kullanıcı yanlışı düzeltebilsin)
-    expect(s.sel).toEqual({ row: 0, col: 0, dir: 'across' });
+    // across doldu ama doğruluk burada bilinmez → sonraki soruya ATLAMAZ.
+    // İmleç SON yazılan hücrede kalır: hemen ardından basılan backspace son
+    // harfi silsin (başa sarsaydı ilk harfi silerdi — şaşırtıcı olurdu).
+    expect(s.sel).toEqual({ row: 0, col: 4, dir: 'across' });
   });
 });
 
@@ -153,12 +154,13 @@ describe('NEXT_INCOMPLETE', () => {
   });
   it('tüm grid doluysa yerinde kalır', () => {
     let s = initialState(ctx);
-    // her beyaz hücreyi doldur
-    for (let i = 0; i < 5; i++) s = reduce(s, { type: 'TYPE', letter: 'A' });
-    s = reduce(s, { type: 'SELECT', row: 0, col: 0 });
-    for (let i = 0; i < 4; i++) s = reduce(s, { type: 'TYPE', letter: 'A' });
-    s = reduce(s, { type: 'SELECT', row: 0, col: 2 });
+    for (let i = 0; i < 5; i++) s = reduce(s, { type: 'TYPE', letter: 'A' }); // 1-across
+    // Kesişimler zaten dolu; kalan hücreler yalnızca dikey kelimelerin altında.
+    s = reduce(s, { type: 'SELECT', row: 1, col: 0 }); // yalnızca 1-down
     for (let i = 0; i < 3; i++) s = reduce(s, { type: 'TYPE', letter: 'A' });
+    s = reduce(s, { type: 'SELECT', row: 1, col: 2 }); // yalnızca 2-down
+    for (let i = 0; i < 2; i++) s = reduce(s, { type: 'TYPE', letter: 'A' });
+    expect(allCellsFilled(ctx, s.letters)).toBe(true);
     const before = s.sel;
     s = reduce(s, { type: 'NEXT_INCOMPLETE' });
     expect(s.sel).toEqual(before);
@@ -174,18 +176,74 @@ describe('kilitli hücreler (doğru/ipucu)', () => {
     expect(s2.letters[0][0]).toBe('K');
     expect(s2.sel).toEqual({ row: 0, col: 1, dir: 'across' });
   });
-  it('DELETE kilitli hücreyi silmez; backspace üzerinden akıp geçer', () => {
+  it('DELETE kilitli hücreleri silmez, TEK basışta üzerlerinden atlar', () => {
     let s = initialState(ctx);
     for (const l of ['K', 'A']) s = reduce(s, { type: 'TYPE', letter: l }); // sel (0,2)
-    // (0,2) boş; bir geri: (0,1)='A' kilitli → harf kalır, seçim üzerine gelir
+    // (0,2) boş; geriye doğru (0,1)='A' KİLİTLİ → atlanır, silinebilir ilk dolu
+    // hücre (0,0). Tek basışta oraya inilir: eskiden her basış yalnızca bir
+    // hücre geri gidiyor, kilitli hücrede hiçbir harf gitmiyordu.
     const s2 = reduce(s, { type: 'DELETE', protectedCells: new Set(['0:1']) });
     expect(s2.letters[0][1]).toBe('A');
+    expect(s2.letters[0][0]).toBeNull();
+    expect(s2.sel).toEqual({ row: 0, col: 0, dir: 'across' });
+  });
+  it('DELETE arka arkaya kilitli hücre dizisini tek basışta geçer', () => {
+    let s = initialState(ctx);
+    for (const l of ['K', 'A', 'L', 'E', 'M']) s = reduce(s, { type: 'TYPE', letter: l });
+    s = reduce(s, { type: 'SELECT', row: 0, col: 4 });
+    // (0,1)…(0,4) kilitli → (0,0)'a kadar tek basışta inilir
+    const locked = new Set(['0:1', '0:2', '0:3', '0:4']);
+    const s2 = reduce(s, { type: 'DELETE', protectedCells: locked });
+    expect(s2.letters[0]).toEqual([null, 'A', 'L', 'E', 'M']);
+    expect(s2.sel).toEqual({ row: 0, col: 0, dir: 'across' });
+  });
+  it('imleç kelime başındaki boşluktayken son yazılan harfi geri alır', () => {
+    // Oyuncu kelimenin ORTASINDAN yazmaya başlarsa (1-down'un 2. hücresi),
+    // son harften sonra imleç kelimede kalan tek boşluğa — yani (0,0)'a — sarar.
+    // Orada backspace eskiden hiçbir şey yapmıyordu.
+    let s = initialState(ctx);
+    s = reduce(s, { type: 'SELECT', row: 1, col: 0 }); // 1-down, 2. hücre
+    for (const l of ['K', 'A', 'Ş']) s = reduce(s, { type: 'TYPE', letter: l });
+    expect(s.sel).toEqual({ row: 0, col: 0, dir: 'down' }); // kalan boşluğa sardı
+    const s2 = reduce(s, { type: 'DELETE' });
+    expect(s2.letters[3][0]).toBeNull();                    // son yazılan 'Ş' gitti
+    expect(s2.letters[1][0]).toBe('K');
+    expect(s2.sel).toEqual({ row: 3, col: 0, dir: 'down' });
+  });
+  it('kelimenin tamamı kilitliyse DELETE hiçbir şeyi bozmaz', () => {
+    let s = initialState(ctx);
+    for (const l of ['K', 'A', 'L', 'E', 'M']) s = reduce(s, { type: 'TYPE', letter: l });
+    s = reduce(s, { type: 'SELECT', row: 0, col: 4 });
+    const locked = new Set(['0:0', '0:1', '0:2', '0:3', '0:4']);
+    const s2 = reduce(s, { type: 'DELETE', protectedCells: locked });
+    expect(s2.letters[0]).toEqual(['K', 'A', 'L', 'E', 'M']);
+  });
+});
+
+describe('CLEAR_ENTRY (yanlış kelimenin otomatik temizliği)', () => {
+  it('hedeflenen kelimeyi temizler, kilitli harfleri bırakır, imleci başa alır', () => {
+    let s = initialState(ctx);
+    for (const l of ['K', 'A', 'L', 'E', 'M']) s = reduce(s, { type: 'TYPE', letter: l });
+    // (0,0) kesişen doğru kelimeden, (0,2) ipucundan gelmiş olsun → korunur
+    const s2 = reduce(s, {
+      type: 'CLEAR_ENTRY', no: 1, dir: 'across', protectedCells: new Set(['0:0', '0:2']),
+    });
+    expect(s2.letters[0]).toEqual(['K', null, 'L', null, null]);
+    // imleç ilk YAZILABİLİR hücreye — (0,0) kilitli olduğu için (0,1)
     expect(s2.sel).toEqual({ row: 0, col: 1, dir: 'across' });
-    // kilitli dolu hücrede tekrar DELETE: yine silinmez, bir geri gidip (0,0)'ı siler
-    const s3 = reduce(s2, { type: 'DELETE', protectedCells: new Set(['0:1']) });
-    expect(s3.letters[0][1]).toBe('A');
-    expect(s3.letters[0][0]).toBeNull();
-    expect(s3.sel).toEqual({ row: 0, col: 0, dir: 'across' });
+  });
+  it('oyuncu başka kelimeye geçtiyse imleci koparmaz', () => {
+    let s = initialState(ctx);
+    for (const l of ['K', 'A', 'L', 'E', 'M']) s = reduce(s, { type: 'TYPE', letter: l });
+    s = reduce(s, { type: 'SELECT', row: 2, col: 2 }); // 2-down'a geç
+    const before = s.sel;
+    const s2 = reduce(s, { type: 'CLEAR_ENTRY', no: 1, dir: 'across', protectedCells: new Set() });
+    expect(s2.letters[0][1]).toBeNull();
+    expect(s2.sel).toEqual(before);
+  });
+  it('bilinmeyen kelime için durumu değiştirmez', () => {
+    const s = initialState(ctx);
+    expect(reduce(s, { type: 'CLEAR_ENTRY', no: 9, dir: 'across', protectedCells: new Set() })).toBe(s);
   });
 });
 

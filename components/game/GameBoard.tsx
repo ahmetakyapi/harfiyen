@@ -7,11 +7,11 @@ import { activeEntry, allCellsFilled, cellsOf, entryString, useGameState } from 
 import { usePlayViewport } from '@/hooks/usePlayHeight';
 import { LetterTile } from '@/components/ui/LetterTile';
 import { DIFFICULTY_BADGE_CLASS, DIFFICULTY_LABELS } from '@/lib/difficulty';
-import { hapticSolve } from '@/lib/haptics';
+import { hapticSolve, hapticWrong } from '@/lib/haptics';
 import { wordHash } from '@/lib/hash';
 import { isTrLetter, trUpper } from '@/lib/tr';
 import { formatTrtDate } from '@/lib/date';
-import { type ClientPuzzle, type Letters, hashKey } from '@/lib/types';
+import { type ClientPuzzle, type Direction, type Letters, hashKey } from '@/lib/types';
 import { ClueBar } from './ClueBar';
 import { ClueList } from './ClueList';
 import { FinishDialog } from './FinishDialog';
@@ -36,6 +36,18 @@ type Phase = 'idle' | 'starting' | 'playing' | 'submitting' | 'done' | 'revisit'
 // ölçülen kutu belirler; bu sınır yalnızca çok büyük monitörlerde devreye
 // girer (bundan sonrası göz gezdirme mesafesini artırmaktan başka işe yaramaz).
 const MAX_GRID_PX = 760;
+
+// Yanlış tamamlanan kelime bu süre boyunca kırmızı yanıp sarsıldıktan SONRA
+// temizlenir. Anında silmek "harflerim sebepsiz kayboldu" hissi veriyor; daha
+// uzun tutmak ise düzeltmeye başlamak isteyen oyuncuyu bekletiyor.
+const WRONG_CLEAR_MS = 620;
+
+// Gizli girdi alanı ASLA boşalmaz: boş bir alanda bazı mobil klavyeler
+// backspace için hiçbir olay üretmez ("silinecek şey yok" sayarlar). Sabit bir
+// dolgu bunu garantiye alır. Dolgu görünmez (alan zaten saydam) ve harf
+// olmadığı için gerçek girdiden her zaman ayırt edilebilir.
+const PAD_CHAR = ' ';
+const INPUT_PAD = PAD_CHAR.repeat(16);
 
 async function post<T>(url: string, body: unknown): Promise<T> {
   const res = await fetch(url, {
@@ -65,6 +77,8 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive, alreadyCompleted }:
   const [correctKeys, setCorrectKeys] = useState<Set<string>>(new Set());
   const [hintCells, setHintCells] = useState<Set<string>>(new Set()); // ipucuyla açılan hücreler
   const [flashCell, setFlashCell] = useState<string | null>(null);
+  // Yanlış tamamlanmış, temizlenmeyi bekleyen kelime (bkz. WRONG_CLEAR_MS).
+  const [wrongEntry, setWrongEntry] = useState<{ no: number; dir: Direction } | null>(null);
   const [hintBusy, setHintBusy] = useState(false);
   const [listOpen, setListOpen] = useState(false); // mobil ipucu listesi paneli
   const submitting = useRef(false);
@@ -128,6 +142,17 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive, alreadyCompleted }:
     return () => clearTimeout(id);
   }, [error]);
 
+  // Seçim, hash efektinin İÇİNDEN okunur ama onun bağımlılığı DEĞİLDİR: sırf
+  // imleç kaydı diye bütün kelimeleri yeniden hash'lemek gereksiz iş olurdu.
+  const selRef = useRef(state.sel);
+  selRef.current = state.sel;
+  // Bir önceki değerlendirmede TAMAMEN dolu olan kelimeler. Otomatik temizlik
+  // yalnızca YENİ dolan bir kelime için çalışsın diye tutulur.
+  const filledKeysRef = useRef<Set<string>>(new Set());
+  // İlk değerlendirme (kayıtlı oyunun localStorage'dan yüklenmesi) temizlik
+  // tetiklemez — oyuncu daha hiçbir şey yazmadan harfleri silinmesin.
+  const autoClearPrimedRef = useRef(false);
+
   // harfler değiştikçe kaydet + doğru kelimeleri hash ile işaretle
   useEffect(() => {
     if (phase !== 'playing' || !storageKey || !session) return;
@@ -135,17 +160,34 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive, alreadyCompleted }:
     let cancelled = false;
     void (async () => {
       const next = new Set<string>();
+      const filled = new Set<string>();
       for (const e of puzzle.entries) {
         const word = entryString(state.letters, e);
         if (word === null) continue;
         const key = hashKey(e.no, e.dir);
+        filled.add(key);
         const h = await wordHash(puzzle.publicId, e.no, e.dir, word);
         if (h === puzzle.wordHashes[key]) next.add(key);
       }
-      if (!cancelled) setCorrectKeys(next);
+      if (cancelled) return;
+      setCorrectKeys(next);
+
+      // ——— Yanlış tamamlanan kelimeyi işaretle ———
+      // Doğruluk yalnızca burada, hash karşılaştırmasıyla ve asenkron bilinir;
+      // bu yüzden karar da burada verilir. Tetikleme YALNIZCA aktif kelime için:
+      // kesişen bir kelime tesadüfen yanlış tamamlandıysa oyuncunun üzerinde
+      // çalışmadığı harfleri silmek şaşırtıcı olurdu.
+      const wasFilled = filledKeysRef.current;
+      filledKeysRef.current = filled;
+      if (!autoClearPrimedRef.current) { autoClearPrimedRef.current = true; return; }
+      const active = activeEntry(ctx, selRef.current);
+      const key = hashKey(active.no, active.dir);
+      if (filled.has(key) && !wasFilled.has(key) && !next.has(key)) {
+        setWrongEntry({ no: active.no, dir: active.dir });
+      }
     })();
     return () => { cancelled = true; };
-  }, [state.letters, phase, storageKey, session, puzzle]);
+  }, [state.letters, phase, storageKey, session, puzzle, ctx]);
 
   // hepsi doğruysa otomatik submit (yeniden denemeli)
   useEffect(() => {
@@ -197,6 +239,35 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive, alreadyCompleted }:
   const lockedRef = useRef(lockedCells);
   lockedRef.current = lockedCells;
 
+  // Temizlenecek hücreler = yanlış kelimenin KİLİTLİ OLMAYAN hücreleri. İpucuyla
+  // açılan harfler ve kesişen doğru kelimeden gelen harfler bu kümede yoktur —
+  // ne kırmızı yanar ne de silinir. Oyuncu kazandığı hiçbir bilgiyi kaybetmez.
+  const wrongCells = new Set<string>();
+  if (wrongEntry) {
+    const e = puzzle.entries.find((x) => x.no === wrongEntry.no && x.dir === wrongEntry.dir);
+    for (const c of e ? cellsOf(e) : []) {
+      const key = `${c.row}:${c.col}`;
+      if (!lockedCells.has(key)) wrongCells.add(key);
+    }
+  }
+
+  // Yanlış tamamlanan kelime kısa bir uyarıdan sonra kendi kendine temizlenir.
+  // Harf harf geri silmeye çalışmak — özellikle mobilde — oyunun en zorlandığı
+  // hareketiydi; yanlış bir kelimeyi baştan yazmak neredeyse her zaman tek tek
+  // düzeltmekten hızlıdır.
+  useEffect(() => {
+    if (!wrongEntry) return;
+    hapticWrong();
+    const id = setTimeout(() => {
+      dispatch({
+        type: 'CLEAR_ENTRY', no: wrongEntry.no, dir: wrongEntry.dir,
+        protectedCells: lockedRef.current,
+      });
+      setWrongEntry(null);
+    }, WRONG_CLEAR_MS);
+    return () => clearTimeout(id);
+  }, [wrongEntry, dispatch]);
+
   // Otomatik "sonraki soru" YALNIZCA aktif kelime DOĞRU tamamlanınca olur.
   // advance() artık kelimeyi tamamlayınca başka soruya atlamıyor (yanlışsa
   // kullanıcı düzeltebilsin diye kelimede kalır); doğruluk hash ile burada,
@@ -228,6 +299,12 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive, alreadyCompleted }:
   const deleteLetter = useCallback(() => {
     dispatch({ type: 'DELETE', protectedCells: lockedRef.current });
   }, [dispatch]);
+  const pushText = useCallback((text: string) => {
+    for (const ch of text) {
+      const letter = trUpper(ch);
+      if (isTrLetter(letter)) typeLetter(letter);
+    }
+  }, [typeLetter]);
 
   // Oyun alanının ölçülen kutusuna sığan en büyük kare. Grid ASLA taşmaz:
   // boyut viewport tahmininden değil, gerçek kutu ölçümünden gelir — her
@@ -266,26 +343,63 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive, alreadyCompleted }:
   // sentinel dışı her karakter bir harf. Bu yöntem iOS/Android/IME farklarından
   // bağımsızdır (keydown mobilde harf vermez).
   const inputRef = useRef<HTMLInputElement | null>(null);
-  const SENTINEL = ' ';
   const resetNativeInput = useCallback((): void => {
     const el = inputRef.current;
     if (!el) return;
-    el.value = SENTINEL;
-    try { el.setSelectionRange(SENTINEL.length, SENTINEL.length); } catch { /* odak yoksa yok say */ }
+    if (el.value !== INPUT_PAD) el.value = INPUT_PAD;
+    try { el.setSelectionRange(INPUT_PAD.length, INPUT_PAD.length); } catch { /* odak yoksa yok say */ }
   }, []);
 
+  // Girdinin ASIL yolu: beforeinput. `inputType` bize niyeti doğrudan söyler
+  // (silme mi, harf mi) ve olayı iptal ederek alanın değerini HİÇ
+  // değiştirmeyiz — böylece klavyenin/IME'nin iç durumu ile alanın gerçek
+  // içeriği asla ayrışmaz. Eskiden her tuştan sonra değeri elle sıfırlıyorduk;
+  // Android klavyeleri bu sıfırlamadan sonra art arda basılan backspace için
+  // olay üretmeyi bırakabiliyordu — "silme çalışmıyor"un kök nedeni buydu.
+  //
+  // React'in sentetik onBeforeInput'ü inputType'ı her tarayıcıda taşımadığı
+  // için dinleyici NATIVE bağlanır.
+  useEffect(() => {
+    const el = inputRef.current;
+    if (!el || phase !== 'playing') return;
+    const onBeforeInput = (ev: Event): void => {
+      const e = ev as InputEvent;
+      const type = e.inputType ?? '';
+      if (type.startsWith('delete')) {
+        e.preventDefault();
+        deleteLetter();
+        return;
+      }
+      if (type === 'insertText' || type === 'insertFromPaste' || type === 'insertReplacementText') {
+        e.preventDefault();
+        pushText(e.data ?? '');
+        return;
+      }
+      // insertCompositionText İPTAL EDİLEMEZ (IME bileşimi sürüyor) — onInput
+      // içindeki fark okuması devralır.
+    };
+    el.addEventListener('beforeinput', onBeforeInput);
+    return () => el.removeEventListener('beforeinput', onBeforeInput);
+  }, [phase, deleteLetter, pushText]);
+
+  // Yedek yol: yalnızca beforeinput iptal EDİLEMEDİĞİNDE (bileşim yapan
+  // klavyeler) buraya düşülür. Dolgu karakteri harf olamayacağı için gerçek
+  // girdi konumdan bağımsız ayıklanabilir.
   const onNativeInput = (e: React.FormEvent<HTMLInputElement>): void => {
     const v = e.currentTarget.value;
-    if (v.length === 0) {
-      deleteLetter();
-    } else {
-      for (const ch of v) {
-        if (ch === SENTINEL) continue;
-        const letter = trUpper(ch);
-        if (isTrLetter(letter)) typeLetter(letter);
-      }
-    }
+    const typed = [...v].filter((ch) => ch !== PAD_CHAR).join('');
+    if (typed.length > 0) pushText(typed);
+    else if (v.length < INPUT_PAD.length) deleteLetter();
     resetNativeInput();
+  };
+
+  // Fiziksel klavyeler ve gerçek tuş kodu gönderen mobil klavyeler için.
+  // preventDefault aynı tuş için beforeinput'un ateşlenmesini de engeller —
+  // iki yol asla üst üste binmez, bir basışta iki harf silinmez.
+  const onInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>): void => {
+    if (e.key !== 'Backspace' && e.key !== 'Delete') return;
+    e.preventDefault();
+    deleteLetter();
   };
 
   // Dokunulan pikselden hücreyi bul. Ölçüler Grid'den içe aktarılan sabitlerle
@@ -556,7 +670,7 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive, alreadyCompleted }:
             style={gridPx !== null ? { width: gridPx, height: gridPx } : { visibility: 'hidden' }}>
             <Grid puzzle={puzzle} letters={state.letters} sel={state.sel}
               activeCells={activeCells} correctCells={correctCells} hintCells={hintCells}
-              flashCell={flashCell} cellPx={cellPx} />
+              wrongCells={wrongCells} flashCell={flashCell} cellPx={cellPx} />
             {/* Grid'i tam kaplayan görünmez ama TIKLANABİLİR input: dokunuş
                 doğrudan input'a gittiği için native klavye ilk dokunuşta açılır
                 (başka öğeye dokunup programatik focus() mobilde güvenilmez).
@@ -564,7 +678,7 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive, alreadyCompleted }:
                 sayfayı YAKINLAŞTIRIR. user-select/touch-callout none +
                 onContextMenu, iOS'in "Yapıştır / Seç" balonunu bastırır. */}
             <input ref={inputRef} type="text" inputMode="text" lang="tr"
-              defaultValue={SENTINEL} aria-label="Bulmaca — harf gir"
+              defaultValue={INPUT_PAD} aria-label="Bulmaca — harf gir"
               className="absolute inset-0 z-10 h-full w-full cursor-pointer select-none rounded-2xl bg-transparent text-transparent outline-none"
               style={{
                 fontSize: 16, caretColor: 'transparent',
@@ -577,6 +691,7 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive, alreadyCompleted }:
               autoCapitalize="off" autoCorrect="off" autoComplete="off"
               spellCheck={false} enterKeyHint="next"
               onInput={onNativeInput}
+              onKeyDown={onInputKeyDown}
               onPointerDown={onGridPointer}
               onFocus={resetNativeInput}
               onContextMenu={(e) => e.preventDefault()} />

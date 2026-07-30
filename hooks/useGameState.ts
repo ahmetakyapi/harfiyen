@@ -20,6 +20,7 @@ export type GameAction =
   | { type: 'REVEAL'; row: number; col: number; letter: string }
   | { type: 'NEXT_INCOMPLETE' }
   | { type: 'CLEAR_WORD'; protectedCells: Set<string> }
+  | { type: 'CLEAR_ENTRY'; no: number; dir: Direction; protectedCells: Set<string> }
   | { type: 'CLEAR_ALL'; protectedCells: Set<string> };
 
 const other = (d: Direction): Direction => (d === 'across' ? 'down' : 'across');
@@ -95,9 +96,11 @@ function advance(ctx: GridCtx, letters: Letters, sel: Selection): Selection {
   if (after) return { row: after.row, col: after.col, dir: entry.dir };
   const before = cells.find((c) => letters[c.row][c.col] === null);
   if (before) return { row: before.row, col: before.col, dir: entry.dir };
-  // kelime dolu → aynı kelimede kal, döngüsel olarak bir sonraki hücreye geç
-  const next = cells[(idx + 1) % cells.length];
-  return { row: next.row, col: next.col, dir: entry.dir };
+  // Kelime dolu → imleç son yazılan hücrede KALIR. Eskiden başa sarıyordu;
+  // bunun bedeli, kelimeyi bitirdikten sonra basılan backspace'in son harfi
+  // değil İLK harfi silmesiydi — mobilde "silme yanlış yeri siliyor" hissinin
+  // başlıca kaynağı buydu.
+  return { ...sel, dir: entry.dir };
 }
 
 // Sıradaki EKSİK (boş hücresi olan) kelimenin ilk boş hücresine git. Aktif
@@ -165,19 +168,42 @@ export function createReducer(ctx: GridCtx) {
         const prot = action.protectedCells;
         const letters = cloneLetters(state.letters);
         const { row, col } = state.sel;
-        // Kilitli dolu hücre "silinebilir" sayılmaz: boşmuş gibi bir geri gidilir.
+        // Kilitli dolu hücre "silinebilir" sayılmaz: boşmuş gibi geriye gidilir.
         if (letters[row][col] !== null && !prot?.has(`${row}:${col}`)) {
           letters[row][col] = null;
           return { letters, sel: state.sel };
         }
         const cells = cellsOf(activeEntry(ctx, state.sel));
         const idx = cells.findIndex((c) => c.row === row && c.col === col);
-        if (idx <= 0) return state;
-        const prev = cells[idx - 1];
-        // Geri gidilen hücre kilitliyse harfi kalır, yalnızca seçim üzerine gelir —
-        // arka arkaya backspace kilitli hücrelerin üzerinden akıp geçer.
-        if (!prot?.has(`${prev.row}:${prev.col}`)) letters[prev.row][prev.col] = null;
-        return { letters, sel: { ...state.sel, row: prev.row, col: prev.col } };
+        if (idx < 0) return state;
+        // Geriye doğru SİLİNEBİLİR ilk hücreye kadar atlanır. Eskiden her basış
+        // yalnızca bir hücre geri gidiyordu; kilitli hücre dizisine denk gelen
+        // oyuncu üst üste backspace'e basıp hiçbir harfin gitmediğini görüyor,
+        // haklı olarak "silme çalışmıyor" diyordu. Kilitli harfler yine korunur —
+        // yalnızca üzerlerinden atlanır.
+        for (let i = idx - 1; i >= 0; i--) {
+          const c = cells[i];
+          if (prot?.has(`${c.row}:${c.col}`)) continue;
+          const sel = { ...state.sel, row: c.row, col: c.col };
+          // Boş ama yazılabilir hücre: silinecek harf yok, imleç oraya oturur.
+          if (letters[c.row][c.col] === null) return { ...state, sel };
+          letters[c.row][c.col] = null;
+          return { letters, sel };
+        }
+        // Geride silinecek hiçbir şey yok. Buraya en sık şöyle düşülür: oyuncu
+        // kelimenin ortasından yazmaya başlar, sona varınca imleç kelimede kalan
+        // BOŞLUĞA sarar (bkz. advance) ve o boşluk kelimenin ilk hücresidir.
+        // Orada backspace hiçbir şey yapmıyordu — oyuncunun gördüğü, dolu bir
+        // kelimenin karşısında ölü bir tuştu. Bunun yerine kelimedeki SON
+        // silinebilir harf kaldırılır: backspace'in insandaki karşılığı
+        // "en son yazdığımı geri al"dır.
+        for (let i = cells.length - 1; i > idx; i--) {
+          const c = cells[i];
+          if (prot?.has(`${c.row}:${c.col}`) || letters[c.row][c.col] === null) continue;
+          letters[c.row][c.col] = null;
+          return { letters, sel: { ...state.sel, row: c.row, col: c.col } };
+        }
+        return state;
       }
       case 'NEXT_ENTRY': {
         const list = orderedEntries(ctx);
@@ -211,6 +237,25 @@ export function createReducer(ctx: GridCtx) {
           if (!action.protectedCells.has(`${c.row}:${c.col}`)) letters[c.row][c.col] = null;
         }
         return { ...state, letters };
+      }
+      case 'CLEAR_ENTRY': {
+        // Belirli bir kelimeyi temizler (CLEAR_WORD aktif kelimeyi temizler).
+        // Yanlış tamamlanan kelimenin otomatik temizliği bunu kullanır: tetikleyen
+        // an ile temizlik anı arasında kısa bir gecikme var, o sırada oyuncu
+        // başka kelimeye geçmiş olabilir — hedef bu yüzden açıkça verilir.
+        const entry = ctx.entries.find((e) => e.no === action.no && e.dir === action.dir);
+        if (!entry) return state;
+        const letters = cloneLetters(state.letters);
+        const cells = cellsOf(entry);
+        for (const c of cells) {
+          if (!action.protectedCells.has(`${c.row}:${c.col}`)) letters[c.row][c.col] = null;
+        }
+        // İmleç yalnızca oyuncu HÂLÂ bu kelimedeyse başa döner (hemen yeniden
+        // yazabilsin); başka kelimeye geçtiyse yerinden koparılmaz.
+        const inside = cells.some((c) => c.row === state.sel.row && c.col === state.sel.col);
+        if (!inside) return { ...state, letters };
+        const first = cells.find((c) => !action.protectedCells.has(`${c.row}:${c.col}`)) ?? cells[0];
+        return { letters, sel: { row: first.row, col: first.col, dir: entry.dir } };
       }
       case 'CLEAR_ALL': {
         const letters = cloneLetters(state.letters);
