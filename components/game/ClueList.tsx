@@ -18,7 +18,10 @@ function Column({ entries, dir, active, solvedKeys, onPick }: {
 }) {
   const list = entries.filter((e) => e.dir === dir).sort((a, b) => a.no - b.no);
   return (
-    <div className="min-w-0 flex-1">
+    // flex-1 KOYMA: dikey akışta iki yön grubu kalan yüksekliği paylaşıp
+    // aralarında kocaman bir boşluk bırakıyordu — gruplar içeriğe göre akar,
+    // taşarsa kapsayıcı kaydırır.
+    <div className="min-w-0">
       <p className="sticky top-0 z-10 bg-[var(--paper)] pb-1.5 pt-0.5 text-[0.7rem] font-bold uppercase tracking-wider text-[var(--ink-soft)]">
         {DIR_TITLE[dir]}
       </p>
@@ -51,15 +54,12 @@ function Column({ entries, dir, active, solvedKeys, onPick }: {
   );
 }
 
-export function ClueList({ entries, active, solvedKeys, onPick, layout = 'stacked' }: {
+export function ClueList({ entries, active, solvedKeys, onPick }: {
   entries: Entry[]; active: Entry | null; solvedKeys: Set<string>;
   onPick: (entry: Entry) => void;
-  layout?: 'stacked' | 'columns'; // stacked: dar panel (masaüstü kenar çubuğu)
 }) {
   return (
-    <div className={`min-h-0 flex-1 overflow-y-auto overscroll-contain ${
-      layout === 'columns' ? 'flex gap-5' : 'flex flex-col gap-4'
-    }`}>
+    <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto overscroll-contain">
       <Column entries={entries} dir="across" active={active} solvedKeys={solvedKeys} onPick={onPick} />
       <Column entries={entries} dir="down" active={active} solvedKeys={solvedKeys} onPick={onPick} />
     </div>

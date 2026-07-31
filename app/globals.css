@@ -246,11 +246,12 @@ body::before {
   /* SABİT genişlik, bilinçli olarak ölçülen grid'e BAĞLANMADI: şeridi
      --grid-px'e bağlamak geri besleme yaratıyor (dar şerit → iki satır → daha
      az yükseklik → daha küçük grid → daha dar şerit). Eşik genişliklerde
-     titremeye yol açabilir. 40rem her masaüstü boyutunda grid'e yakın durur
-     ve ölçümden tamamen bağımsızdır. */
+     titremeye yol açabilir. 47.5rem = MAX_GRID_PX (760px, GameBoard.tsx) —
+     şerit gridle aynı üst sınırı paylaşır, yanında cılız kalmaz ama ölçümden
+     tamamen bağımsız kalır. */
   .play-clue {
     width: 100%;
-    max-width: 40rem;
+    max-width: 47.5rem;
     margin-inline: auto;
   }
 }

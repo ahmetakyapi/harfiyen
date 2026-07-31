@@ -35,6 +35,7 @@ type Phase = 'idle' | 'starting' | 'playing' | 'submitting' | 'done' | 'revisit'
 // Grid sonsuz büyümesin diye bir üst sınır. Gerçek boyutu neredeyse her zaman
 // ölçülen kutu belirler; bu sınır yalnızca çok büyük monitörlerde devreye
 // girer (bundan sonrası göz gezdirme mesafesini artırmaktan başka işe yaramaz).
+// Değişirse .play-clue max-width'i de güncelle (globals.css) — şerit bu sınırı aynalar.
 const MAX_GRID_PX = 760;
 
 // Yanlış tamamlanan kelime bu süre boyunca kırmızı yanıp sarsıldıktan SONRA
@@ -610,8 +611,11 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive, alreadyCompleted }:
 
       {/* Başlık şeridi 320 px'e kadar TAŞMADAN sığmalı: metin etiketleri
           kademeli olarak devreye girer (ipucu sayacı 360'tan, "+15sn" yazısı
-          400'den sonra), böylece en dar telefonda bile hiçbir düğme kırpılmaz. */}
-      <header className="flex shrink-0 items-center gap-1 px-1 py-1 sm:gap-2 sm:px-3">
+          400'den sonra), böylece en dar telefonda bile hiçbir düğme kırpılmaz.
+          Masaüstünde süre/sayaç/ipucu buradan ÇIKAR (sağ paneldeki HUD'a
+          taşınır — ekranın en sağ ucu oyun alanından çok uzaktaydı) ve başlık
+          oyun alanıyla aynı genişliğe hizalanır. */}
+      <header className="flex shrink-0 items-center gap-1 px-1 py-1 sm:gap-2 sm:px-3 lg:mx-auto lg:w-full lg:max-w-6xl lg:px-6">
         <Link href="/" aria-label="Oyundan çık, ana sayfaya dön"
           className="flex h-11 w-8 shrink-0 items-center justify-center rounded-full text-[var(--ink-soft)] transition-colors hover:bg-[var(--paper-raised)] hover:text-[var(--ink)]">
           <ChevronLeft aria-hidden className="h-6 w-6" />
@@ -620,11 +624,15 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive, alreadyCompleted }:
         <span className="font-display text-lg font-semibold leading-none text-[var(--ink)]">
           #{puzzleNumber}
         </span>
-        <span className="ml-auto hidden shrink-0 font-mono text-xs tabular-nums text-[var(--ink-soft)] min-[360px]:inline">
+        {/* Gazete başlığı gibi: solda sayı, sağda tarih (yalnızca masaüstü). */}
+        <span className="hidden text-sm text-[var(--ink-soft)] lg:ml-auto lg:inline">
+          {formatTrtDate(puzzle.date)}
+        </span>
+        <span className="ml-auto hidden shrink-0 font-mono text-xs tabular-nums text-[var(--ink-soft)] min-[360px]:inline lg:hidden">
           {solvedCount}/{totalCount}
         </span>
         {session && (
-          <span className="ml-auto shrink-0 rounded-full border border-[var(--line)] bg-[var(--paper-raised)] px-2 py-1.5 min-[360px]:ml-0">
+          <span className="ml-auto shrink-0 rounded-full border border-[var(--line)] bg-[var(--paper-raised)] px-2 py-1.5 min-[360px]:ml-0 lg:hidden">
             <Timer startedAt={session.startedAt} serverNow={session.serverNow}
               penaltyMs={penaltyMs} finalMs={result?.durationMs ?? null} />
           </span>
@@ -635,7 +643,7 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive, alreadyCompleted }:
           <List aria-hidden className="h-[18px] w-[18px]" />
         </button>
         <button type="button" onClick={hint} disabled={hintBusy} onPointerDown={(e) => e.preventDefault()} aria-label="İpucu al (+15 saniye ceza)"
-          className="flex min-h-11 shrink-0 items-center gap-1 rounded-full bg-[var(--accent-soft)] px-2.5 text-sm font-medium text-[var(--ink)] transition-transform active:scale-95 disabled:opacity-60">
+          className="flex min-h-11 shrink-0 items-center gap-1 rounded-full bg-[var(--accent-soft)] px-2.5 text-sm font-medium text-[var(--ink)] transition-transform active:scale-95 disabled:opacity-60 lg:hidden">
           <Lightbulb aria-hidden className={`h-4 w-4 shrink-0 text-[var(--accent)] ${hintBusy ? 'animate-pulse' : ''}`} />
           <span className="hidden min-[380px]:inline">{hintBusy ? '…' : '+15sn'}</span>
         </button>
@@ -643,7 +651,7 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive, alreadyCompleted }:
 
       {error && (
         <p role="status"
-          className="mx-2 mb-1 shrink-0 rounded-lg bg-[var(--accent-soft)] px-3 py-2 text-center text-sm text-[var(--accent)]">
+          className="mx-2 mb-1 shrink-0 rounded-lg bg-[var(--accent-soft)] px-3 py-2 text-center text-sm text-[var(--accent)] lg:mx-auto lg:w-full lg:max-w-md">
           {error}
         </p>
       )}
@@ -700,6 +708,40 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive, alreadyCompleted }:
 
         <aside className="play-list">
           <div className="play-list-inner">
+            {/* Masaüstü HUD'u: süre, ilerleme ve harf açma OYUNUN YANINDA durur.
+                Başlığın en sağ ucundaki eski konumları, ortalanmış oyun
+                alanından çok uzaktı — göz sürekli köşeye gidip geliyordu. */}
+            {session && (
+              <div className="mb-3 shrink-0 rounded-2xl border border-[var(--line)] bg-[var(--paper-raised)] p-4 shadow-[0_18px_40px_-34px_var(--ink)]">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <p className="text-[0.65rem] font-bold uppercase tracking-wider text-[var(--ink-soft)]">Süre</p>
+                    <Timer startedAt={session.startedAt} serverNow={session.serverNow}
+                      penaltyMs={penaltyMs} finalMs={result?.durationMs ?? null}
+                      className="text-[1.75rem] leading-tight" />
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[0.65rem] font-bold uppercase tracking-wider text-[var(--ink-soft)]">Çözülen</p>
+                    <p className="font-mono text-[1.75rem] font-semibold leading-tight tabular-nums text-[var(--ink)]">
+                      {solvedCount}
+                      <span className="text-base font-medium text-[var(--ink-soft)]">/{totalCount}</span>
+                    </p>
+                  </div>
+                </div>
+                <button type="button" onClick={hint} disabled={hintBusy} onPointerDown={(e) => e.preventDefault()}
+                  title="Seçili hücrenin harfini açar; süreye 15 saniye eklenir"
+                  className="mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[var(--accent-soft)] text-sm font-semibold text-[var(--ink)] transition-transform active:scale-[0.98] disabled:opacity-60">
+                  <Lightbulb aria-hidden className={`h-4 w-4 shrink-0 text-[var(--accent)] ${hintBusy ? 'animate-pulse' : ''}`} />
+                  {hintBusy ? 'Harf açılıyor…' : 'Harf Aç'}
+                  <span className="font-normal text-[var(--ink-soft)]">+15 sn</span>
+                </button>
+                {hintCount > 0 && (
+                  <p className="mt-2 text-center text-xs text-[var(--ink-soft)]">
+                    {hintCount} harf açıldı · süreye +{Math.round(penaltyMs / 1000)} sn eklendi
+                  </p>
+                )}
+              </div>
+            )}
             <ClueList entries={puzzle.entries} active={entry} solvedKeys={correctKeys}
               onPick={(e) => pickEntry(e.no, e.dir)} />
             <button type="button" onClick={clearAll}

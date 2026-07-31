@@ -17,23 +17,23 @@ export function ClueBar({ entry, solved, onPrev, onNext, onToggleDir, onClearWor
   onPrev: () => void; onNext: () => void; onToggleDir: () => void; onClearWord: () => void;
 }) {
   return (
-    <div className="flex min-h-[3.25rem] shrink-0 items-stretch gap-1 rounded-2xl bg-[var(--ink)] px-1 text-[var(--paper)] shadow-[0_10px_28px_-20px_var(--ink)]">
+    <div className="flex min-h-[3.25rem] shrink-0 items-stretch gap-1 rounded-2xl bg-[var(--ink)] px-1 text-[var(--paper)] shadow-[0_10px_28px_-20px_var(--ink)] lg:min-h-[4rem] lg:px-1.5">
       <button type="button" onClick={onPrev} onPointerDown={keepFocus} aria-label="Önceki ipucu" className={ARROW_BTN}>
-        <ChevronLeft aria-hidden className="h-5 w-5" />
+        <ChevronLeft aria-hidden className="h-5 w-5 lg:h-6 lg:w-6" />
       </button>
       <button type="button" onClick={onToggleDir} onPointerDown={keepFocus}
         aria-label={`${entry.clue} — yönü değiştir`}
-        className="flex flex-1 items-center gap-2.5 py-1.5 text-left">
+        className="flex flex-1 items-center gap-2.5 py-1.5 text-left lg:gap-3 lg:py-2">
         {/* text-white DEĞİL: --paper her iki temada da doğru yönde ters döner. */}
         <span
-          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full font-display text-sm font-semibold text-[var(--paper)] ${
+          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full font-display text-sm font-semibold text-[var(--paper)] lg:h-9 lg:w-9 lg:text-base ${
             solved ? 'bg-[var(--correct)]' : 'bg-[var(--accent)]'
           }`}
           aria-hidden>
           {solved ? <Check className="h-4 w-4" strokeWidth={3} /> : entry.no}
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block text-[0.65rem] font-semibold uppercase tracking-wider text-[var(--paper)]/60">
+          <span className="block text-[0.65rem] font-semibold uppercase tracking-wider text-[var(--paper)]/60 lg:text-[0.7rem]">
             {DIR_LABEL[entry.dir]} · {entry.len} harf
           </span>
           {/* İpuçları uzun olabiliyor; iki satıra izin verilir, fazlası kırpılır
@@ -43,7 +43,7 @@ export function ClueBar({ entry, solved, onPrev, onNext, onToggleDir, onClearWor
               yerini yiyordu — dar ekranda hücreler 20 px'e düşüyordu. */}
           {/* Grid büyük ekranda büyüdüğü için ipucu da büyür — aksi halde
               şerit grid'in yanında cılız kalıyor. */}
-          <span className="line-clamp-2 text-[0.9375rem] font-medium leading-snug sm:text-base xl:text-[1.0625rem]">
+          <span className="line-clamp-2 text-[0.9375rem] font-medium leading-snug sm:text-base lg:text-lg xl:text-[1.1875rem]">
             {entry.clue}
           </span>
         </span>
@@ -51,10 +51,10 @@ export function ClueBar({ entry, solved, onPrev, onNext, onToggleDir, onClearWor
       <button type="button" onClick={onClearWord} onPointerDown={keepFocus}
         aria-label="Bu kelimeyi temizle (doğrular korunur)" title="Kelimeyi temizle"
         className={`${ARROW_BTN} min-w-10`}>
-        <Eraser aria-hidden className="h-4 w-4" />
+        <Eraser aria-hidden className="h-4 w-4 lg:h-5 lg:w-5" />
       </button>
       <button type="button" onClick={onNext} onPointerDown={keepFocus} aria-label="Sonraki ipucu" className={ARROW_BTN}>
-        <ChevronRight aria-hidden className="h-5 w-5" />
+        <ChevronRight aria-hidden className="h-5 w-5 lg:h-6 lg:w-6" />
       </button>
     </div>
   );
