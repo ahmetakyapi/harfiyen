@@ -9,8 +9,8 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           # Sürüm TEK yerden gelir (.nvmrc): yerel, CI ve Vercel aynı major'da
           # buluşsun. Sabit "20" yazıldığında CI npm 10, geliştirme makinesi
