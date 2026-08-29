@@ -7,6 +7,7 @@ import { DIFFICULTY_TAB_CLASS, DIFFICULTY_LABELS } from '@/lib/difficulty';
 import { getDb } from '@/lib/db';
 import { getLeaderboard } from '@/lib/game/leaderboard';
 import { DIFFICULTIES, type Difficulty } from '@/lib/types';
+import { DateJump } from '@/components/calendar/DateJump';
 import { LeaderboardTable } from '@/components/leaderboard/LeaderboardTable';
 import { formatDuration } from '@/lib/share';
 
@@ -49,12 +50,18 @@ export default async function LeaderboardPage({ searchParams }: {
           ? <Link href={`/leaderboard?date=${addDays(date, -1)}&difficulty=${difficulty}`} aria-label="Önceki gün"
               className="flex h-11 w-11 items-center justify-center rounded-full border border-[var(--line)] transition-colors hover:bg-[var(--paper-raised)]">←</Link>
           : <span aria-hidden className="flex h-11 w-11 items-center justify-center opacity-30">←</span>}
-        <span className="min-w-[11rem] text-center">
-          <span className="block font-medium leading-tight">{formatTrtDate(date)}</span>
-          <span className="block text-xs text-[var(--ink-soft)]">
-            {date === today ? 'Bugün' : formatTrtWeekday(date)}
-          </span>
-        </span>
+        {/* Tarih etiketi artık takvimi açan düğme: geçmişe gitmek günde bir
+            tık değil, iki tık. Oklar günlük ince ayar için yerinde kalır. */}
+        <DateJump selected={date} today={today}
+          hrefPattern={`/leaderboard?date={date}&difficulty=${difficulty}`}
+          label={
+            <span className="min-w-[9.5rem] text-center">
+              <span className="block font-medium leading-tight">{formatTrtDate(date)}</span>
+              <span className="block text-xs text-[var(--ink-soft)]">
+                {date === today ? 'Bugün' : formatTrtWeekday(date)}
+              </span>
+            </span>
+          } />
         {date < today
           ? <Link href={`/leaderboard?date=${addDays(date, 1)}&difficulty=${difficulty}`} aria-label="Sonraki gün"
               className="flex h-11 w-11 items-center justify-center rounded-full border border-[var(--line)] transition-colors hover:bg-[var(--paper-raised)]">→</Link>

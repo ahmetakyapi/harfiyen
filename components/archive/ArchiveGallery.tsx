@@ -1,17 +1,28 @@
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { ArchiveDayCard } from '@/components/archive/ArchiveDayCard';
-import { formatTrtDayNumber, formatTrtMonth, formatTrtWeekday, puzzleNumber } from '@/lib/date';
+import { DateJump } from '@/components/calendar/DateJump';
+import {
+  formatTrtDayMonth, formatTrtDayNumber, formatTrtMonth, formatTrtWeekday, puzzleNumber,
+} from '@/lib/date';
 import { DIFFICULTIES } from '@/lib/types';
 import { trUpper } from '@/lib/tr';
 
 // Arşivin görsel katmanı, veri katmanından ayrı: sayfa yalnızca sorgu atar,
 // yerleşim/tipografi burada. Böylece tasarım gerçek veriye ihtiyaç duymadan
 // da render edilip doğrulanabiliyor.
-export function ArchiveGallery({ dates, doneMs, page, pageCount, totalDays }: {
+export function ArchiveGallery({
+  dates, doneMs, page, pageCount, totalDays, today, highlight, latest,
+}: {
   dates: string[];
   doneMs: Map<string, number | null>;
   page: number; pageCount: number; totalDays: number;
+  /** Oyun günü — takvimde bundan sonrası "henüz yayınlanmadı". */
+  today: string;
+  /** Takvimden seçilerek gelinen gün: kartı işaretlenir. */
+  highlight: string | null;
+  /** Arşivin en yeni günü — takvim bu güne kadar seçilebilir. */
+  latest: string;
 }) {
   const pageHref = (p: number): string => (p <= 1 ? '/archive' : `/archive?sayfa=${p}`);
   const solvedOnPage = dates.filter((d) => DIFFICULTIES.every((x) => doneMs.has(`${d}:${x}`))).length;
@@ -40,6 +51,21 @@ export function ArchiveGallery({ dates, doneMs, page, pageCount, totalDays }: {
             {solvedOnPage > 0 && ` · bu sayfada ${solvedOnPage} gün tamamlandı`}
           </p>
         )}
+        {/* 12'şer sayfalarda ay öncesine gitmek onlarca tık ediyordu. */}
+        {totalDays > 0 && (
+          <div className="mt-4 flex justify-center">
+            <DateJump selected={highlight ?? latest} today={today} maxSelectable={latest}
+              hrefPattern="/archive?gun={date}#gun-{date}"
+              label={<span className="font-medium">Güne Git</span>} />
+          </div>
+        )}
+        {highlight && (
+          <p role="status" className="mt-3 text-sm text-[var(--ink-soft)]">
+            {dates.includes(highlight)
+              ? `${formatTrtDayMonth(highlight)} aşağıda işaretlendi.`
+              : `${formatTrtDayMonth(highlight)} için bulmaca yok — en yakın günler aşağıda.`}
+          </p>
+        )}
       </header>
 
       {dates.length === 0 && (
@@ -50,7 +76,7 @@ export function ArchiveGallery({ dates, doneMs, page, pageCount, totalDays }: {
 
       <div className="mt-9 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {dates.map((date) => (
-          <ArchiveDayCard key={date} date={date}
+          <ArchiveDayCard key={date} date={date} highlighted={date === highlight}
             dayNumber={formatTrtDayNumber(date)}
             weekday={formatTrtWeekday(date)}
             monthName={formatTrtMonth(date)}
