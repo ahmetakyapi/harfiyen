@@ -16,6 +16,17 @@ export function gameDay(now: Date = new Date()): string {
   return trtDate(new Date(now.getTime() - RESET_HOUR * HOUR_MS));
 }
 
+// Biçim DOĞRU ama takvimde OLMAYAN tarihler (2026-02-30, 2026-11-31) eskiden
+// doğrudan Postgres'e gidiyor ve "date/time field value out of range" ile 500
+// üretiyordu. String karşılaştırması da bunları yakalayamaz: '2026-02-30' >
+// bugünden küçük olduğu için /play'in "gelecek" kapısına takılmıyorlardı.
+export function isValidGameDate(date: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return false;
+  const t = Date.parse(`${date}T00:00:00Z`);
+  if (Number.isNaN(t)) return false;
+  return new Date(t).toISOString().slice(0, 10) === date;
+}
+
 export function addDays(date: string, n: number): string {
   const t = Date.parse(`${date}T00:00:00Z`) + n * DAY_MS;
   return new Date(t).toISOString().slice(0, 10);

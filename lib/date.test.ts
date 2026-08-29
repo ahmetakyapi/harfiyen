@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { LAUNCH_DATE, addDays, formatTrtDate, gameDay, msUntilNextReset, puzzleNumber, trtDate } from './date';
+import {
+  LAUNCH_DATE, addDays, formatTrtDate, gameDay, isValidGameDate, msUntilNextReset,
+  puzzleNumber, trtDate,
+} from './date';
 
 describe('trtDate', () => {
   it('UTC 21:30 iken İstanbul ertesi gündedir', () => {
@@ -48,5 +51,25 @@ describe('msUntilNextReset', () => {
 describe('formatTrtDate', () => {
   it('Türkçe uzun tarih üretir', () => {
     expect(formatTrtDate('2026-07-18')).toBe('18 Temmuz 2026');
+  });
+});
+
+describe('isValidGameDate', () => {
+  it('takvimde olmayan ama biçime uyan tarihleri reddeder', () => {
+    // Bu tarihler doğrudan Postgres'e gidiyor ve "date/time field value out of
+    // range" ile 500 üretiyordu.
+    expect(isValidGameDate('2026-02-30')).toBe(false);
+    expect(isValidGameDate('2026-11-31')).toBe(false);
+    expect(isValidGameDate('2026-99-99')).toBe(false);
+    expect(isValidGameDate('2026-13-01')).toBe(false);
+  });
+  it('biçimsiz girdileri reddeder', () => {
+    expect(isValidGameDate('2026-2-3')).toBe(false);
+    expect(isValidGameDate('bugün')).toBe(false);
+    expect(isValidGameDate('')).toBe(false);
+  });
+  it('gerçek tarihleri kabul eder', () => {
+    expect(isValidGameDate('2026-08-29')).toBe(true);
+    expect(isValidGameDate('2024-02-29')).toBe(true); // artık yıl
   });
 });

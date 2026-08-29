@@ -1,7 +1,13 @@
 import NextAuth from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import { getDb } from './db';
+import { requireEnv } from './env';
+import { limit } from './rate-limit';
 import { checkCredentials } from './register';
+import { normalizeUsername } from './tr';
+
+const LOGIN_ATTEMPTS = 10;
+const LOGIN_WINDOW_MS = 15 * 60 * 1000;
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   // Oturum çerezi 90 gün geçerli ve her ziyarette yenilenir (updateAge): aktif
@@ -19,7 +25,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     Credentials({
       credentials: { username: {}, password: {} },
       authorize: async (creds) => {
-        const username = String(creds?.username ?? '').toLocaleLowerCase('tr-TR');
+        // Eksik AUTH_SECRET burada anlaşılır bir hataya dönüşür; eskiden
+        // next-auth'un `MissingSecret`i olarak ilk girişte patlıyordu.
+        requireEnv();
+        const username = normalizeUsername(String(creds?.username ?? ''));
+        // Şifre kurtarma akışı yok (e-posta istemiyoruz), yani ele geçirilen
+        // hesap kalıcı olarak kaybedilir. Kullanıcı adı başına deneme sınırı
+        // en azından tek hesaba yönelen kaba kuvveti kesiyor.
+        if (!limit(`login:${username}`, LOGIN_ATTEMPTS, LOGIN_WINDOW_MS).ok) return null;
         const password = String(creds?.password ?? '');
         const user = await checkCredentials(getDb(), username, password);
         return user ? { id: String(user.id), name: user.username } : null;

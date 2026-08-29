@@ -6,7 +6,7 @@ import { generateWithRetries } from '@/lib/generator/generator';
 import { buildPuzzleRow } from '@/lib/generator/assign';
 import { playSessions, puzzles, users } from '@/lib/schema';
 import { createTestDb } from '@/tests/helpers/testDb';
-import { finishSession, startSession, useHint } from './session';
+import { finishSession, getSessionWords, revealLetter, startSession } from './session';
 
 const bank = loadBank();
 
@@ -65,7 +65,7 @@ describe('startSession', () => {
   });
 });
 
-describe('useHint', () => {
+describe('revealLetter', () => {
   it('çözümdeki harfi döner ve ceza biriktirir', async () => {
     const db = await createTestDb();
     const p = await makePuzzle(db, today);
@@ -78,10 +78,10 @@ describe('useHint', () => {
       }
     }
     if (!cell) throw new Error('fikstürde beyaz hücre yok');
-    const h1 = await useHint(db, { sessionId: s.sessionId, identity: { userId: uid, anonId: null }, row: cell.r, col: cell.c });
+    const h1 = await revealLetter(db, { sessionId: s.sessionId, identity: { userId: uid, anonId: null }, row: cell.r, col: cell.c });
     expect(h1.letter).toBe(p.solution[cell.r][cell.c]);
     expect(h1.penaltyMs).toBe(15000);
-    const h2 = await useHint(db, { sessionId: s.sessionId, identity: { userId: uid, anonId: null }, row: cell.r, col: cell.c });
+    const h2 = await revealLetter(db, { sessionId: s.sessionId, identity: { userId: uid, anonId: null }, row: cell.r, col: cell.c });
     expect(h2.penaltyMs).toBe(30000);
   });
   it('siyah hücre için INVALID_CELL fırlatır', async () => {
@@ -97,7 +97,7 @@ describe('useHint', () => {
     }
     if (!black) return; // tümü beyazsa atla
     await expect(
-      useHint(db, { sessionId: s.sessionId, identity: { userId: uid, anonId: null }, row: black.r, col: black.c }),
+      revealLetter(db, { sessionId: s.sessionId, identity: { userId: uid, anonId: null }, row: black.r, col: black.c }),
     ).rejects.toThrow('INVALID_CELL');
   });
 });
@@ -112,7 +112,7 @@ describe('finishSession', () => {
     const wrong = p.solution.map((row) => row.map((c) => (c === null ? null : 'A')));
     const r1 = await finishSession(db, { sessionId: s.sessionId, identity: { userId: uid, anonId: null }, letters: wrong });
     expect(r1).toEqual({ correct: false });
-    await useHint(db, { sessionId: s.sessionId, identity: { userId: uid, anonId: null }, ...firstWhite(p.solution) });
+    await revealLetter(db, { sessionId: s.sessionId, identity: { userId: uid, anonId: null }, ...firstWhite(p.solution) });
     const t1 = new Date(t0.getTime() + 90_000);
     const r2 = await finishSession(db, { sessionId: s.sessionId, identity: { userId: uid, anonId: null }, letters: p.solution, now: t1 });
     if (!r2.correct) throw new Error('doğru çözüm reddedildi');
@@ -170,3 +170,110 @@ function firstWhite(solution: (string | null)[][]): { row: number; col: number }
   }
   throw new Error('beyaz hücre yok');
 }
+
+describe('yayınlanmamış bulmaca kapısı', () => {
+  it('gelecek tarihli bulmacada oturum açılamaz', async () => {
+    const db = await createTestDb();
+    // Sayfa katmanı gelecek tarihleri kesiyordu ama API kesmiyordu: puzzles.id
+    // serial olduğu için tahmin edilebilir, oturum açılabilseydi ipucu ucu
+    // yarınki çözümü hücre hücre boşaltabilirdi.
+    const future = await makePuzzle(db, addDays(today, 1));
+    const uid = await makeUser(db, 'sizinti');
+    await expect(startSession(db, {
+      puzzleId: future.id, identity: { userId: uid, anonId: null }, now: T0,
+    })).rejects.toMatchObject({ code: 'PUZZLE_NOT_FOUND' });
+  });
+});
+
+describe('harf açma tavanı', () => {
+  it("beyaz hücrelerin %25'inden fazlası açılamaz", async () => {
+    const db = await createTestDb();
+    const p = await makePuzzle(db, today);
+    const uid = await makeUser(db, 'acgozlu');
+    const identity = { userId: uid, anonId: null };
+    const s = await startSession(db, { puzzleId: p.id, identity, now: T0 });
+
+    const white: { r: number; c: number }[] = [];
+    p.solution.forEach((row, r) => row.forEach((cell, c) => {
+      if (cell !== null) white.push({ r, c });
+    }));
+    const cap = Math.max(1, Math.floor(white.length * 0.25));
+    for (let i = 0; i < cap; i++) {
+      await revealLetter(db, { sessionId: s.sessionId, identity, row: white[i].r, col: white[i].c });
+    }
+    // Ceza tek başına fren değildi: sıralamayı umursamayan biri çözüm
+    // ızgarasını hücre hücre boşaltabiliyordu.
+    await expect(revealLetter(db, {
+      sessionId: s.sessionId, identity, row: white[cap].r, col: white[cap].c,
+    })).rejects.toMatchObject({ code: 'HINT_LIMIT' });
+  });
+});
+
+describe('bayat oturum', () => {
+  it('dünkü bulmacayı bugün bitirmek sıralamaya girmez', async () => {
+    const db = await createTestDb();
+    const yesterday = addDays(today, -1);
+    const p = await makePuzzle(db, yesterday);
+    const uid = await makeUser(db, 'gecikmis');
+    const identity = { userId: uid, anonId: null };
+
+    // Dün, kendi oyun günü içinde başlatılmış oturum: isRanked = true.
+    const s = await startSession(db, {
+      puzzleId: p.id, identity, now: new Date('2026-07-29T12:00:00Z'),
+    });
+    expect(s.isRanked).toBe(true);
+
+    // Bugün bitiriliyor: 24 saati aşan süre sıralamaya YAZILMAMALI.
+    const r = await finishSession(db, {
+      sessionId: s.sessionId, identity, letters: p.solution, now: T0,
+    });
+    expect(r.correct).toBe(true);
+    if (!r.correct) return;
+    expect(r.isRanked).toBe(false);
+    expect(r.rank).toBeNull();
+  });
+
+  it('arşivde açık "tekrar oyna" bayat oturumun sayacını sıfırlar', async () => {
+    const db = await createTestDb();
+    const yesterday = addDays(today, -1);
+    const p = await makePuzzle(db, yesterday);
+    const uid = await makeUser(db, 'tekraroyna');
+    const identity = { userId: uid, anonId: null };
+    const old = await startSession(db, {
+      puzzleId: p.id, identity, now: new Date('2026-07-29T12:00:00Z'),
+    });
+    const fresh = await startSession(db, { puzzleId: p.id, identity, replay: true, now: T0 });
+    expect(fresh.sessionId).toBe(old.sessionId);
+    expect(Date.parse(fresh.startedAt)).toBe(T0.getTime());
+    expect(fresh.isRanked).toBe(false);
+  });
+});
+
+describe('getSessionWords', () => {
+  it('yalnızca kendi TAMAMLANMIŞ oturumuna cevapları açar', async () => {
+    const db = await createTestDb();
+    const p = await makePuzzle(db, today);
+    const uid = await makeUser(db, 'sahip');
+    const otherId = await makeUser(db, 'baskasi');
+    const identity = { userId: uid, anonId: null };
+    const s = await startSession(db, { puzzleId: p.id, identity, now: T0 });
+
+    // Yarım oturumda cevap dökümü YOK — bu uç bir sızıntı kanalı olmamalı.
+    await expect(getSessionWords(db, { sessionId: s.sessionId, identity }))
+      .rejects.toMatchObject({ code: 'NOT_ACTIVE' });
+
+    await finishSession(db, { sessionId: s.sessionId, identity, letters: p.solution, now: T0 });
+
+    // Başkasının oturumu okunamaz.
+    await expect(getSessionWords(db, {
+      sessionId: s.sessionId, identity: { userId: otherId, anonId: null },
+    })).rejects.toMatchObject({ code: 'FORBIDDEN' });
+
+    const words = await getSessionWords(db, { sessionId: s.sessionId, identity });
+    expect(words.length).toBeGreaterThan(0);
+    for (const w of words) {
+      expect(w.word).toHaveLength(w.len);
+      expect(w.clue.length).toBeGreaterThan(0);
+    }
+  });
+});

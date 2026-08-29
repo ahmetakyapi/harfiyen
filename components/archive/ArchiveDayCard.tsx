@@ -19,7 +19,7 @@ export function ArchiveDayCard({ date, dayNumber, weekday, monthName, puzzleNo, 
 
   return (
     <section
-      className={`group relative overflow-hidden rounded-[1.4rem] border bg-[var(--paper-raised)] transition-[transform,box-shadow,border-color] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-0.5 ${
+      className={`relative overflow-hidden rounded-[1.4rem] border bg-[var(--paper-raised)] transition-[transform,box-shadow,border-color] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-0.5 ${
         allDone
           ? 'border-[var(--correct)]/35 shadow-[0_14px_40px_-30px_var(--correct)]'
           : 'border-[var(--line)] shadow-[0_14px_40px_-32px_var(--ink)] hover:shadow-[0_20px_50px_-28px_var(--ink)]'
@@ -45,7 +45,13 @@ export function ArchiveDayCard({ date, dayNumber, weekday, monthName, puzzleNo, 
             Mühür AKIŞ İÇİNDE duruyor — mutlak konumlandırıldığında baskı
             numarasının üstüne biniyordu. */}
         <span className="flex shrink-0 flex-col items-end gap-1.5">
-          <span className="font-mono text-[0.7rem] text-[var(--ink-soft)]">#{puzzleNo}</span>
+          {/* Arşivden o günün sıralamasına geçiş yoktu; künye numarası artık
+              oraya götürüyor. */}
+          <Link href={`/leaderboard?date=${date}&difficulty=easy`}
+            aria-label={`${dayNumber} ${monthName} sıralaması`}
+            className="font-mono text-[0.7rem] text-[var(--ink-soft)] underline-offset-2 hover:underline">
+            #{puzzleNo}
+          </Link>
           {allDone && (
             // Dekoratif: "3/3 çözüldü" bilgisi zaten aşağıdaki satırlardan geliyor.
             <span aria-hidden
@@ -65,7 +71,7 @@ export function ArchiveDayCard({ date, dayNumber, weekday, monthName, puzzleNo, 
           const ms = doneMs.get(key) ?? null;
           return (
             <Link key={d} href={`/play/${date}/${d}`}
-              className="flex min-h-11 items-center gap-2.5 px-4 py-2 transition-colors hover:bg-[var(--paper)]"
+              className="group/row flex min-h-11 items-center gap-2.5 px-4 py-2 transition-colors hover:bg-[var(--paper)]"
               aria-label={`${dayNumber} ${monthName} ${DIFFICULTY_LABELS[d]}${isDone ? ' — çözüldü' : ''}`}>
               <LetterTile difficulty={d} size="sm" />
               <span className="flex-1 text-sm font-medium">{DIFFICULTY_LABELS[d]}</span>
@@ -74,7 +80,7 @@ export function ArchiveDayCard({ date, dayNumber, weekday, monthName, puzzleNo, 
                     <Check aria-hidden className="h-3 w-3" strokeWidth={3} />
                     {ms !== null && <span className="font-mono tabular-nums">{formatDuration(ms)}</span>}
                   </span>
-                : <span className="text-xs text-[var(--ink-soft)] transition-colors group-hover:text-[var(--accent)]">
+                : <span className="text-xs text-[var(--ink-soft)] transition-colors group-hover/row:text-[var(--accent)]">
                     Oyna →
                   </span>}
             </Link>

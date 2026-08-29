@@ -18,10 +18,24 @@ const plexMono = IBM_Plex_Mono({
   subsets: ['latin', 'latin-ext'], variable: '--font-plex-mono', weight: ['500', '600'],
 });
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://harfiyen.vercel.app';
+const DESCRIPTION =
+  'Her gün 09:00\'da üç yeni Türkçe kare bulmaca. Çöz, süreni gör, sıralamaya gir.';
+
 export const metadata: Metadata = {
+  // metadataBase olmadan göreli openGraph görselleri çözülemiyor ve paylaşılan
+  // bağlantı çıplak bir URL olarak görünüyordu.
+  metadataBase: new URL(SITE_URL),
   title: { default: 'Harfiyen — Günlük Kelime Bulmacası', template: '%s — Harfiyen' },
-  description: 'Her gün 09:00\'da üç yeni Türkçe kare bulmaca. Çöz, süreni gör, sıralamaya gir.',
+  description: DESCRIPTION,
+  applicationName: 'Harfiyen',
+  keywords: ['bulmaca', 'kare bulmaca', 'Türkçe', 'günlük oyun', 'kelime oyunu'],
   icons: { icon: '/icon.svg' },
+  openGraph: {
+    type: 'website', locale: 'tr_TR', siteName: 'Harfiyen',
+    title: 'Harfiyen — Günlük Kelime Bulmacası', description: DESCRIPTION, url: SITE_URL,
+  },
+  twitter: { card: 'summary_large_image', title: 'Harfiyen', description: DESCRIPTION },
 };
 
 export const viewport: Viewport = {

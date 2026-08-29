@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Lock } from 'lucide-react';
 import { LetterTile } from '@/components/ui/LetterTile';
 import { DIFFICULTY_BADGE_CLASS } from '@/lib/difficulty';
 import { formatDuration } from '@/lib/share';
@@ -23,13 +24,16 @@ const GLOW_CLASS: Record<Difficulty, string> = {
   hard: 'shadow-[0_12px_30px_-22px_var(--diff-hard)] hover:shadow-[0_20px_44px_-18px_var(--diff-hard)]',
 };
 
-export function DailyCard({ difficulty, size, wordCount, date, status, durationMs }: {
+export function DailyCard({ difficulty, size, wordCount, date, status, durationMs, locked = false }: {
   difficulty: Difficulty; size: number; wordCount: number; date: string;
   status: 'yeni' | 'devam' | 'bitti'; durationMs: number | null;
+  /** Üye olmayan ziyaretçi: karta dokunduğunda giriş duvarına çarpacağını
+   *  ÖNCEDEN bilsin. Eskiden hiçbir işaret yoktu. */
+  locked?: boolean;
 }) {
   const meta = META[difficulty];
   return (
-    <Link href={`/play/${date}/${difficulty}`}
+    <Link href={locked ? `/login?next=/play/${date}/${difficulty}` : `/play/${date}/${difficulty}`}
       className={`group flex items-center gap-4 rounded-[1.6rem] border border-[var(--line)] bg-gradient-to-r ${WASH_CLASS[difficulty]} via-[var(--paper-raised)] to-[var(--paper-raised)] p-4 transition-[transform,box-shadow] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-1 ${GLOW_CLASS[difficulty]}`}>
       <LetterTile difficulty={difficulty} />
       <div className="min-w-0 flex-1">
@@ -44,13 +48,18 @@ export function DailyCard({ difficulty, size, wordCount, date, status, durationM
         </p>
       </div>
       <div className="shrink-0 text-right text-sm">
-        {status === 'bitti' && durationMs !== null && (
+        {!locked && status === 'bitti' && durationMs !== null && (
           <span className="flex items-center gap-1 rounded-full bg-[var(--correct-soft)] px-3 py-1.5 font-mono text-xs font-semibold tabular-nums text-[var(--correct)]">
             ✓ {formatDuration(durationMs)}
           </span>
         )}
-        {status === 'devam' && <span className="font-medium text-[var(--accent)]">Devam Et →</span>}
-        {status === 'yeni' && (
+        {!locked && status === 'devam' && <span className="font-medium text-[var(--accent)]">Devam Et →</span>}
+        {locked && (
+          <span className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--line)] bg-[var(--paper-raised)] text-[var(--ink-soft)]">
+            <Lock aria-label="Üyelik gerekir" className="h-4 w-4" />
+          </span>
+        )}
+        {!locked && status === 'yeni' && (
           <span className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--line)] bg-[var(--paper-raised)] text-[var(--ink-soft)] transition-colors duration-200 group-hover:border-transparent group-hover:bg-[var(--ink)] group-hover:text-[var(--paper)]">
             →
           </span>

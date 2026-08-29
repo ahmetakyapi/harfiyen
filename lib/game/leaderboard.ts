@@ -1,4 +1,5 @@
 import { and, asc, eq, lte, or, sql } from 'drizzle-orm';
+import { gameDay } from '@/lib/date';
 import type { Db } from '@/lib/db';
 import { playSessions, puzzles, users } from '@/lib/schema';
 import type { Difficulty } from '@/lib/types';
@@ -12,14 +13,15 @@ const TOP_LIMIT = 100;
 export async function getLeaderboard(db: Db, opts: {
   date: string; difficulty: Difficulty; userId?: number | null;
 }): Promise<{
-  // puzzleId çağıran tarafa döner: sıralama sayfası, oyuncunun bu bulmacayı
-  // bitirip bitirmediğine bakıp "Oyna" çağrısı gösteriyor.
-  puzzleId: number; top: LeaderboardRow[];
+  top: LeaderboardRow[];
   me: { rank: number; durationMs: number } | null; total: number;
   // Oyuncunun bu bulmacayı bitirip bitirmediği — sıralamaya GİRMEYEN (arşiv)
   // oturumlar dahil. `me`den farkı bu: `me` yalnızca sıralı oturumu gösterir.
   meCompleted: boolean;
 } | null> {
+  // Yayınlanmamış gün YOK sayılır: aksi hâlde bu uç yarınki bulmacanın
+  // varlığını (ve eskiden id'sini) doğruluyordu.
+  if (opts.date > gameDay()) return null;
   const [puzzle] = await db.select({ id: puzzles.id }).from(puzzles)
     .where(and(eq(puzzles.date, opts.date), eq(puzzles.difficulty, opts.difficulty)));
   if (!puzzle) return null;
@@ -81,7 +83,7 @@ export async function getLeaderboard(db: Db, opts: {
   }
 
   return {
-    puzzleId: puzzle.id, top, me,
+    top, me,
     total: rows.length > 0 ? Number(rows[0].total) : 0,
     meCompleted: mine.length > 0,
   };

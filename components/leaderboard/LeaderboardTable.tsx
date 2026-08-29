@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { Lightbulb } from 'lucide-react';
 import { formatDuration } from '@/lib/share';
 import type { LeaderboardRow } from '@/lib/game/leaderboard';
@@ -7,14 +8,23 @@ import type { LeaderboardRow } from '@/lib/game/leaderboard';
 // sade: kenarlı, düz taş + display fontlu numara. Böylece tüm liste "1 2 3"
 // mantığında tutarlı görünür.
 const PODIUM: Record<number, { ring: string; num: string; glow: string }> = {
-  1: { ring: 'bg-gradient-to-br from-[#4a6fd4] to-[#0c2f6b]', num: 'text-[#0c2f6b]', glow: 'shadow-[0_0_0_3px_color-mix(in_srgb,#0c2f6b_18%,transparent),0_6px_16px_-6px_#0c2f6b]' },
-  2: { ring: 'bg-gradient-to-br from-[#3f8fd9] to-[#0d5799]', num: 'text-[#0d5799]', glow: 'shadow-[0_0_0_3px_color-mix(in_srgb,#0d5799_18%,transparent),0_6px_16px_-6px_#0d5799]' },
-  3: { ring: 'bg-gradient-to-br from-[#38c3e8] to-[#0086bf]', num: 'text-[#0083b8]', glow: 'shadow-[0_0_0_3px_color-mix(in_srgb,#0086bf_18%,transparent),0_6px_16px_-6px_#0086bf]' },
+  1: { ring: 'bg-gradient-to-br from-[var(--ladder-3-from)] to-[var(--ladder-3-to)]', num: 'text-[var(--ladder-3-ink)]', glow: 'shadow-[0_0_0_3px_color-mix(in_srgb,var(--ladder-3-to)_18%,transparent),0_6px_16px_-6px_var(--ladder-3-to)]' },
+  2: { ring: 'bg-gradient-to-br from-[var(--ladder-2-from)] to-[var(--ladder-2-to)]', num: 'text-[var(--ladder-2-ink)]', glow: 'shadow-[0_0_0_3px_color-mix(in_srgb,var(--ladder-2-to)_18%,transparent),0_6px_16px_-6px_var(--ladder-2-to)]' },
+  3: { ring: 'bg-gradient-to-br from-[var(--ladder-1-from)] to-[var(--ladder-1-to)]', num: 'text-[var(--ladder-1-ink)]', glow: 'shadow-[0_0_0_3px_color-mix(in_srgb,var(--ladder-1-to)_18%,transparent),0_6px_16px_-6px_var(--ladder-1-to)]' },
 };
 
-export function LeaderboardTable({ rows, myUsername }: { rows: LeaderboardRow[]; myUsername?: string | null }) {
+export function LeaderboardTable({ rows, myUsername, isToday = true }: {
+  rows: LeaderboardRow[]; myUsername?: string | null;
+  // Boş durum metni güne göre değişir: geçmiş bir günde "ilk sen ol" çağrısı
+  // yanlış — o gün çoktan kapandı, oradaki oyun artık pratik.
+  isToday?: boolean;
+}) {
   if (rows.length === 0) {
-    return <p className="py-12 text-center text-[var(--ink-soft)]">Bugün henüz kimse bitirmedi — ilk sen ol!</p>;
+    return (
+      <p className="py-12 text-center text-[var(--ink-soft)]">
+        {isToday ? 'Bugün henüz kimse bitirmedi — ilk sen ol!' : 'O gün kimse sıralamaya girmedi.'}
+      </p>
+    );
   }
   return (
     <ol className="overflow-hidden rounded-2xl border border-[var(--line)]">
@@ -28,17 +38,22 @@ export function LeaderboardTable({ rows, myUsername }: { rows: LeaderboardRow[];
             }`}>
             {podium
               ? <span className={`block h-9 w-9 shrink-0 rounded-[0.7rem] p-[2px] ${podium.ring} ${podium.glow}`}>
-                  <span className={`flex h-full w-full items-center justify-center rounded-[0.56rem] bg-[#fdf8ec] font-display text-base font-bold ${podium.num}`}>
+                  <span className={`flex h-full w-full items-center justify-center rounded-[0.56rem] bg-[var(--tile-face)] font-display text-base font-bold ${podium.num}`}>
                     {r.rank}
                   </span>
                 </span>
               : <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[0.7rem] border border-[var(--line)] bg-[var(--paper)] font-display text-base font-semibold text-[var(--ink-soft)]">
                   {r.rank}
                 </span>}
-            <span className={`flex-1 truncate ${podium ? 'font-semibold' : ''}`}>{r.username}</span>
+            {/* Kullanıcı adı profile bağlanır: profiller herkese açık ama
+                sıralamadan başka keşif yolu yoktu. */}
+            <Link href={`/profile/${r.username}`}
+              className={`flex-1 truncate rounded px-1 py-0.5 hover:underline ${podium ? 'font-semibold' : ''}`}>
+              {r.username}
+            </Link>
             {r.hintCount > 0 && (
-              <span className="flex items-center gap-0.5 text-xs text-[var(--ink-soft)]" title={`${r.hintCount} ipucu`}>
-                <Lightbulb className="h-3.5 w-3.5 text-[#d97706]" />
+              <span className="flex items-center gap-0.5 text-xs text-[var(--ink-soft)]" title={`${r.hintCount} harf açıldı`}>
+                <Lightbulb className="h-3.5 w-3.5 text-[var(--flame)]" />
                 {r.hintCount}
               </span>
             )}

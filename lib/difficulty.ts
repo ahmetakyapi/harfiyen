@@ -29,13 +29,13 @@ export const DIFFICULTY_TAB_CLASS: Record<Difficulty, string> = {
 // İmza öğe: zorluk işaretleri, köşesinde numarası olan birer çengel bulmaca
 // hücresi görünümünde "taşlar". Taşın zemini her iki temada da SABİT krem
 // (fiziksel bir taş gibi), içindeki glif de sabit derin renklerde: krem
-// (#fdf8ec) üzerinde üçü de ≥4.8:1. Gradyan çerçeve zorluk merdivenini
+// (--tile-face) üzerinde üçü de ≥4.8:1. Gradyan çerçeve zorluk merdivenini
 // taşır (turkuaz → azur → lacivert). Glifin kendisi LetterTile'da çizilir:
 // zorlukla yoğunlaşan mini bulmaca ızgarası (2×2 → artı → dolu 3×3).
 export const DIFFICULTY_TILE: Record<Difficulty, {
   no: number; ringClass: string; glyphClass: string;
 }> = {
-  easy: { no: 1, ringClass: 'bg-gradient-to-br from-[#38c3e8] to-[#0086bf]', glyphClass: 'text-[#0083b8]' },
-  medium: { no: 2, ringClass: 'bg-gradient-to-br from-[#3f8fd9] to-[#0d5799]', glyphClass: 'text-[#0d5799]' },
-  hard: { no: 3, ringClass: 'bg-gradient-to-br from-[#4a6fd4] to-[#0c2f6b]', glyphClass: 'text-[#0c2f6b]' },
+  easy: { no: 1, ringClass: 'bg-gradient-to-br from-[var(--ladder-1-from)] to-[var(--ladder-1-to)]', glyphClass: 'text-[var(--ladder-1-ink)]' },
+  medium: { no: 2, ringClass: 'bg-gradient-to-br from-[var(--ladder-2-from)] to-[var(--ladder-2-to)]', glyphClass: 'text-[var(--ladder-2-ink)]' },
+  hard: { no: 3, ringClass: 'bg-gradient-to-br from-[var(--ladder-3-from)] to-[var(--ladder-3-to)]', glyphClass: 'text-[var(--ladder-3-ink)]' },
 };

@@ -3,6 +3,7 @@
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { normalizeUsername } from '@/lib/tr';
 
 // Yalnızca site-içi göreli yollara izin verilir — açık yönlendirme (open
 // redirect) riskine karşı ("//evil.com" gibi protokol-göreli yollar reddedilir).
@@ -28,8 +29,11 @@ export function AuthForm({ mode, next }: { mode: 'login' | 'register'; next?: st
         body: JSON.stringify({ username, password }),
       });
       if (!res.ok) {
-        const body = (await res.json()) as { error?: string };
-        setError(body.error ?? 'Kayıt başarısız.');
+        // Gövde JSON olmayabilir (500/429): korumasız res.json() burada
+        // reject edip setBusy(false)'a hiç ulaşmıyordu — kullanıcı hiçbir
+        // mesaj görmeden kilitli bir düğmeyle kalıyordu.
+        const body = (await res.json().catch(() => ({}))) as { error?: string };
+        setError(body.error ?? 'Kayıt başarısız. Biraz sonra tekrar dene.');
         setBusy(false);
         return;
       }
@@ -47,8 +51,8 @@ export function AuthForm({ mode, next }: { mode: 'login' | 'register'; next?: st
         Kullanıcı Adı
         <input
           value={username}
-          onChange={(e) => setUsername(e.target.value.toLocaleLowerCase('tr-TR'))}
-          autoComplete="username"
+          onChange={(e) => setUsername(normalizeUsername(e.target.value))}
+          autoComplete="username" autoCapitalize="none" autoCorrect="off" spellCheck={false}
           className="min-h-11 rounded-lg border border-[var(--line)] bg-transparent px-3 py-2"
           required minLength={3} maxLength={20}
         />
@@ -67,7 +71,7 @@ export function AuthForm({ mode, next }: { mode: 'login' | 'register'; next?: st
           E-posta istemiyoruz; bu yüzden şifreni unutursan kurtaramayız. Güvenli bir yere not et.
         </p>
       )}
-      {error && <p className="text-sm text-[var(--accent)]">{error}</p>}
+      {error && <p role="alert" className="text-sm text-[var(--wrong)]">{error}</p>}
       <button type="submit" disabled={busy}
         className="min-h-11 rounded-lg bg-[var(--ink)] py-2 font-medium text-[var(--paper)] disabled:opacity-50">
         {mode === 'register' ? 'Üye Ol' : 'Giriş Yap'}

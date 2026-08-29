@@ -17,7 +17,10 @@ export function Timer({ startedAt, serverNow, penaltyMs, finalMs, className = 't
   }, [finalMs]);
   const elapsed = finalMs ?? Math.max(0, nowMs + offset - Date.parse(startedAt)) + penaltyMs;
   return (
-    <span className={`font-mono font-semibold tabular-nums text-[var(--ink)] ${className}`} aria-label="Geçen süre">
+    // aria-label KULLANILMAZ: erişilebilir adı ezip sürenin kendisini
+    // okunmaz hâle getiriyordu ("Geçen süre" deyip rakamları yutuyordu).
+    <span className={`font-mono font-semibold tabular-nums text-[var(--ink)] ${className}`}>
+      <span className="sr-only">Geçen süre: </span>
       {formatDuration(elapsed)}
     </span>
   );

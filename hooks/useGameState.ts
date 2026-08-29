@@ -11,6 +11,11 @@ export type GameState = { letters: Letters; sel: Selection };
 // hücreler — TYPE üzerine yazamaz, DELETE/CLEAR_* silemez.
 export type GameAction =
   | { type: 'SELECT'; row: number; col: number }
+  // SELECT'ten farkı: yön AÇIKÇA verilir, "aynı hücreye ikinci dokunuş yönü
+  // çevirir" davranışı devreye girmez. İpucu (harf açma) imleci taşırken bunu
+  // kullanır — SELECT ile taşındığında yön ters dönüp oyuncu farkında olmadan
+  // kesişen kelimeyi doldurmaya başlıyordu.
+  | { type: 'SET_SEL'; row: number; col: number; dir: Direction }
   | { type: 'TYPE'; letter: string; protectedCells?: Set<string> }
   | { type: 'DELETE'; protectedCells?: Set<string> }
   | { type: 'NEXT_ENTRY'; delta: 1 | -1 }
@@ -145,6 +150,13 @@ export function createReducer(ctx: GridCtx) {
           dir = hasCur ? cur : other(cur);
         }
         return { ...state, sel: { row, col, dir } };
+      }
+      case 'SET_SEL': {
+        const { row, col, dir } = action;
+        if (row < 0 || col < 0 || row >= ctx.size || col >= ctx.size || ctx.black[row][col]) return state;
+        const usable = entryAt(ctx, row, col, dir) !== undefined ? dir : other(dir);
+        if (entryAt(ctx, row, col, usable) === undefined) return state;
+        return { ...state, sel: { row, col, dir: usable } };
       }
       case 'TYPE': {
         if (!isTrLetter(action.letter)) return state;

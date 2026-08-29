@@ -1,11 +1,16 @@
-export const metadata = { title: 'Nasıl Oynanır' };
+import Link from 'next/link';
+
+export const metadata = {
+  title: 'Nasıl Oynanır',
+  description: 'Harfiyen nasıl oynanır: ipuçları, kesişimler, harf açma ve süre.',
+};
 
 const STEPS = [
   ['İpucunu Oku', 'Her kelimenin gazete bulmacası tarzında kısa bir ipucu var. Numara ve yön (soldan sağa / yukarıdan aşağıya) ipucu şeridinde yazar. Listeye dokunarak bütün ipuçlarını görebilir, istediğin kelimeye atlayabilirsin.'],
   ['Hücreye Dokun, Yaz', 'Hücreye dokununca kelime seçilir ve telefonunun klavyesi açılır; aynı hücreye ikinci dokunuş yönü değiştirir. Harfler otomatik olarak sonraki boş hücreye ilerler. Bilgisayarda fiziksel klavye, ok tuşları ve Tab da çalışır. İpucu şeridi klavye açıkken de ekranın üstünde kalır.'],
   ['Kesişimleri Kullan', 'Bir kelimeyi çözmek, kesiştiği kelimelere harf kazandırır. Doğru tamamlanan kelime yeşil yanar.'],
   ['Yanlışı Dert Etme', 'Bir kelimeyi yanlış tamamlarsan kısa bir uyarıdan sonra o kelime kendiliğinden temizlenir; harf harf geri silmen gerekmez. İpucuyla açtığın harfler ve kesiştiği çözülmüş kelimeden gelen harfler yerinde kalır — kazandığın hiçbir bilgiyi kaybetmezsin.'],
-  ['Takılırsan İpucu Al', 'Seçili hücrenin harfini açar; karşılığında sürene +15 saniye eklenir. Açılan harf köşesinde turuncu işaret taşır — silinemez ve değiştirilemez.'],
+  ['Takılırsan Harf Aç', 'Seçili hücrenin harfini açar; karşılığında sürene +15 saniye eklenir. Açılan harf köşesinde turuncu işaret taşır — silinemez ve değiştirilemez.'],
   ['Süreni Yarıştır', 'Süre "Başla" dediğin an başlar, bulmaca bitince durur. Üyeler günün sıralamasına girer; her gün 09:00\'da üç yeni bulmaca gelir.'],
 ] as const;
 
@@ -30,6 +35,17 @@ export default function HowToPlayPage() {
           </li>
         ))}
       </ol>
+      {/* Sayfa ölü uçtu: altı adımı okuyup bitiyordu, hiçbir çıkışı yoktu. */}
+      <div className="mt-8 flex flex-col gap-2">
+        <Link href="/"
+          className="flex min-h-12 items-center justify-center rounded-2xl bg-[var(--ink)] font-semibold text-[var(--paper)] transition-transform active:scale-[0.98]">
+          Bugünün Bulmacalarına Git
+        </Link>
+        <Link href="/archive"
+          className="flex min-h-11 items-center justify-center rounded-2xl border border-[var(--line)] text-sm font-medium">
+          Arşivde Pratik Yap
+        </Link>
+      </div>
     </main>
   );
 }

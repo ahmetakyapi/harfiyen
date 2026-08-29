@@ -14,7 +14,7 @@ describe('validateBank', () => {
     expect(() => validateBank([{ word: 'KALEM', clues: ['x'], difficulty: 4 }])).toThrow();
   });
   it('tekrar eden kelimeyi reddeder', () => {
-    const e = { word: 'KALEM', clues: ['xyz'], difficulty: 1 };
+    const e = { word: 'KALEM', clues: ['xyz', 'abc'], difficulty: 1 };
     expect(() => validateBank([e, e])).toThrow(/tekrar/i);
   });
 });
@@ -86,5 +86,56 @@ describe('loadBank (gerçek dosya)', () => {
       })
       .map((e) => e.word);
     expect(leaks).toEqual([]);
+  });
+});
+
+describe('ipucu kalitesi — bankanın tamamı', () => {
+  const bank = loadBank();
+  const low = (s: string): string => s.toLocaleLowerCase('tr-TR');
+  // Türkçe eklemeli olduğu için "ayrı sözcük" araması yetmiyor: KALECİ'nin
+  // "Kalede topu tutan oyuncu" ipucunda cevap sözcük olarak geçmiyor ama
+  // gövdesi geçiyor ve kelimeyi fiilen veriyor.
+  const stem = (w: string): string => low(w).slice(0, Math.max(4, w.length - 2));
+
+  it('hiçbir ipucu cevabın gövdesini içermez', () => {
+    const leaks: string[] = [];
+    for (const e of bank) {
+      const st = stem(e.word);
+      if (st.length < 4) continue;
+      for (const c of e.clues) if (low(c).includes(st)) leaks.push(`${e.word}: ${c}`);
+    }
+    expect(leaks).toEqual([]);
+  });
+
+  it('her kelimenin en az üç ipucu varyantı vardır', () => {
+    // Varyant sayısı tekrar hissini belirliyor: 60 günlük simülasyonda iki
+    // varyantla yerleşimlerin %21'i daha önce görülen ipucuyla dönüyordu.
+    const few = bank.filter((e) => e.clues.length < 3).map((e) => e.word);
+    expect(few).toEqual([]);
+  });
+
+  it('aynı ipucu iki farklı kelimede kullanılmaz', () => {
+    const seen = new Map<string, string>();
+    const clashes: string[] = [];
+    for (const e of bank) {
+      for (const c of e.clues) {
+        const key = low(c);
+        const owner = seen.get(key);
+        if (owner !== undefined && owner !== e.word) clashes.push(`${owner} ≡ ${e.word}: ${c}`);
+        seen.set(key, e.word);
+      }
+    }
+    expect(clashes).toEqual([]);
+  });
+
+  it('düzeltme işaretli yazımlar tutarlıdır', () => {
+    // "Modern gazete" tonunda aynı sözcüğün iki yazımı gözle görünür bir kusur.
+    const inconsistent: string[] = [];
+    for (const e of bank) {
+      for (const c of e.clues) {
+        if (/\b(hali|halinde|haline|kagit|ruzgar)\b/i.test(c)) inconsistent.push(`${e.word}: ${c}`);
+      }
+    }
+    expect(inconsistent).toEqual([]);
   });
 });
