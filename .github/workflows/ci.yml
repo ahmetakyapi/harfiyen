@@ -12,7 +12,11 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # Sürüm TEK yerden gelir (.nvmrc): yerel, CI ve Vercel aynı major'da
+          # buluşsun. Sabit "20" yazıldığında CI npm 10, geliştirme makinesi
+          # npm 11 kullanıyordu ve npm 11'in ürettiği lockfile'ı npm 10'un
+          # `npm ci`si reddediyordu — CI'ın ilk kırılma sebebi buydu.
+          node-version-file: .nvmrc
           cache: npm
       - run: npm ci
       - run: npm run typecheck

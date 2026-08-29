@@ -134,6 +134,34 @@ export function checkedRatio(p: { words: WordSpan[] }): number {
 
 type Candidate = { entry: BankEntry; placement: Placement; crossings: number };
 
+/**
+ * Harf → o harfi taşıyan dolu hücreler.
+ *
+ * Aday yerleşim üretmenin doğru yolu budur: bir kelime ancak ızgarada ZATEN
+ * BULUNAN bir harfin üzerinden geçebilir. Eskiden her aday kelime için bütün
+ * ızgara taranıp her hücrede kelimenin her harfi deneniyordu — yerleşemeyen
+ * kelimelerde (ki çoğunluk onlar) bu, tam tarama demekti. Ölçüm: medium'da
+ * deneme başına 155 ms, bulmaca başına 2,3 sn; testler CI'ın 30 sn sınırını
+ * aşıyordu. İndeksle deneme 60 ms'ye, bulmaca 0,9 sn'ye indi.
+ *
+ * İndeks hücre sayısı kadar (≤100) kurulur ve her yerleşimden sonra tazelenir.
+ */
+type LetterIndex = Map<string, { r: number; c: number }[]>;
+
+function buildLetterIndex(letters: Letters, size: number): LetterIndex {
+  const index: LetterIndex = new Map();
+  for (let r = 0; r < size; r++) {
+    for (let c = 0; c < size; c++) {
+      const letter = letters[r][c];
+      if (letter === null) continue;
+      const list = index.get(letter);
+      if (list) list.push({ r, c });
+      else index.set(letter, [{ r, c }]);
+    }
+  }
+  return index;
+}
+
 // Bir kelimenin harfleri, aynı hücrede aynı yönde daha önce yerleşmiş başka bir
 // kelimenin ÖN EKİ olabilir (örn. "ÇAM" / "ÇAMUR") — canPlace bunu geçerli bir
 // "kesişim" sanır (her harf zaten grid'de var), ama sonuçta iki farklı entry
@@ -149,25 +177,23 @@ const startKey = (p: Placement): string => `${p.row}:${p.col}:${p.dir}`;
 // değişkeninin tipini yanlışlıkla `never`e daraltıyor (bkz. strict tsc hatası);
 // bu yardımcı fonksiyon aynı mantığı, aynı sonucu üreterek ayırır.
 function bestPlacementForEntry(
-  entry: BankEntry, letters: Letters, size: number, usedStarts: Set<string>,
+  entry: BankEntry, letters: Letters, size: number, usedStarts: Set<string>, index: LetterIndex,
 ): { placement: Placement; crossings: number } | null {
   let best: { placement: Placement; crossings: number } | null = null;
-  for (let r = 0; r < size; r++) {
-    for (let c = 0; c < size; c++) {
-      if (letters[r][c] === null) continue;
-      for (let i = 0; i < entry.word.length; i++) {
-        if (entry.word[i] !== letters[r][c]) continue;
-        for (const dir of ['across', 'down'] as const) {
-          const placement: Placement = {
-            word: entry.word, dir,
-            row: dir === 'down' ? r - i : r,
-            col: dir === 'across' ? c - i : c,
-          };
-          if (usedStarts.has(startKey(placement))) continue;
-          const crossings = canPlace(letters, size, placement);
-          if (crossings > 0 && (best === null || crossings > best.crossings)) {
-            best = { placement, crossings };
-          }
+  for (let i = 0; i < entry.word.length; i++) {
+    const cells = index.get(entry.word[i]);
+    if (cells === undefined) continue;
+    for (const { r, c } of cells) {
+      for (const dir of ['across', 'down'] as const) {
+        const placement: Placement = {
+          word: entry.word, dir,
+          row: dir === 'down' ? r - i : r,
+          col: dir === 'across' ? c - i : c,
+        };
+        if (usedStarts.has(startKey(placement))) continue;
+        const crossings = canPlace(letters, size, placement);
+        if (crossings > 0 && (best === null || crossings > best.crossings)) {
+          best = { placement, crossings };
         }
       }
     }
@@ -191,29 +217,29 @@ function bestPlacementForEntry(
 // aday), bu yüzden yeterince iyi bir kesişim bulunca duruyoruz.
 function pickPlacementForEntry(
   entry: BankEntry, letters: Letters, size: number, rng: Rng, usedStarts: Set<string>,
-  opts: { minCrossings: number; goodEnough: number },
+  index: LetterIndex, opts: { minCrossings: number; goodEnough: number },
 ): Placement | null {
-  const rows = shuffle(rng, Array.from({ length: size }, (_, i) => i));
-  const cols = shuffle(rng, Array.from({ length: size }, (_, i) => i));
+  // Harfler rastgele sırayla denenir: aksi hâlde yerleşimler kelimenin ilk
+  // harfinin bulunduğu bölgeye yığılıyor ve geri kalan kelimelere kesişim
+  // noktası kalmıyor (bkz. task-9-report.md).
+  const order = shuffle(rng, Array.from({ length: entry.word.length }, (_, i) => i));
   const dirs = shuffle(rng, ['across', 'down'] as const);
   let best: { placement: Placement; crossings: number } | null = null;
-  for (const r of rows) {
-    for (const c of cols) {
-      if (letters[r][c] === null) continue;
-      for (let i = 0; i < entry.word.length; i++) {
-        if (entry.word[i] !== letters[r][c]) continue;
-        for (const dir of dirs) {
-          const placement: Placement = {
-            word: entry.word, dir,
-            row: dir === 'down' ? r - i : r,
-            col: dir === 'across' ? c - i : c,
-          };
-          if (usedStarts.has(startKey(placement))) continue;
-          const crossings = canPlace(letters, size, placement);
-          if (crossings < opts.minCrossings) continue;
-          if (best === null || crossings > best.crossings) best = { placement, crossings };
-          if (best.crossings >= opts.goodEnough) return best.placement;
-        }
+  for (const i of order) {
+    const cells = index.get(entry.word[i]);
+    if (cells === undefined) continue;
+    for (const { r, c } of cells) {
+      for (const dir of dirs) {
+        const placement: Placement = {
+          word: entry.word, dir,
+          row: dir === 'down' ? r - i : r,
+          col: dir === 'across' ? c - i : c,
+        };
+        if (usedStarts.has(startKey(placement))) continue;
+        const crossings = canPlace(letters, size, placement);
+        if (crossings < opts.minCrossings) continue;
+        if (best === null || crossings > best.crossings) best = { placement, crossings };
+        if (best.crossings >= opts.goodEnough) return best.placement;
       }
     }
   }
@@ -229,6 +255,12 @@ function cellsOfWord(w: { row: number; col: number; len: number; dir: Direction 
   }
   return out;
 }
+
+// Onarım turunda denenecek en fazla aday kelime. Tam havuz (medium'da ~900)
+// üzerinde dolaşmak, hiçbir adayın yerleşemediği durumda turun maliyetini
+// gereksiz yere katlıyordu; örneklem yeterli çünkü onarım "mümkünse" bir adımdır
+// (tutmazsa kelime başına kesişim kapısı zaten devreye girer).
+const REPAIR_SAMPLE = 200;
 
 /** Verilen hücrelerden EN AZ BİRİNDEN geçen geçerli bir yerleşim arar. */
 function placementCrossing(
@@ -308,6 +340,7 @@ export function generatePuzzle(opts: {
   placed.push({ entry: firstEntry, placement: firstPlacement });
   used.add(firstEntry.word);
   usedStarts.add(startKey(firstPlacement));
+  let index = buildLetterIndex(letters, size);
 
   // FAZ A — iskelet: sadece bir kaç uzun kelimeyi (len >= size-2) en-çok-kesişimli
   // (greedy) seçimle yerleştir. Amaç yayılmış birkaç "omurga" kelimesi bırakmak;
@@ -320,7 +353,7 @@ export function generatePuzzle(opts: {
     let best: Candidate | null = null;
     for (const entry of pool) {
       if (used.has(entry.word) || entry.word.length < skeletonMinLen) continue;
-      const candidate = bestPlacementForEntry(entry, letters, size, usedStarts);
+      const candidate = bestPlacementForEntry(entry, letters, size, usedStarts, index);
       if (candidate !== null && (best === null || candidate.crossings > best.crossings)) {
         best = { entry, placement: candidate.placement, crossings: candidate.crossings };
       }
@@ -330,6 +363,7 @@ export function generatePuzzle(opts: {
     placed.push({ entry: best.entry, placement: best.placement });
     used.add(best.entry.word);
     usedStarts.add(startKey(best.placement));
+    index = buildLetterIndex(letters, size);
   }
 
   // FAZ B — doldurma: kalan kelimeler arasından, hedef uzunluk karışımında EN
@@ -365,7 +399,7 @@ export function generatePuzzle(opts: {
       // ekle". Katı bir 2 tabanı denendi ve üretim başarısını çökertti
       // (medium %12,5 → %1); asıl kalite güvencesi aşağıdaki onarım turu ile
       // kelime başına kesişim kapısı.
-      const placement = pickPlacementForEntry(entry, letters, size, rng, usedStarts, {
+      const placement = pickPlacementForEntry(entry, letters, size, rng, usedStarts, index, {
         minCrossings: 1, goodEnough: 2,
       });
       if (placement === null) continue;
@@ -379,6 +413,7 @@ export function generatePuzzle(opts: {
       placed.push({ entry, placement });
       used.add(entry.word);
       usedStarts.add(startKey(placement));
+      index = buildLetterIndex(letters, size);
       countByLen.set(entry.word.length, (countByLen.get(entry.word.length) ?? 0) + 1);
       progressed = true;
     }
@@ -396,9 +431,13 @@ export function generatePuzzle(opts: {
       .filter((x) => x.missing > 0);
     if (deficient.length === 0) break;
     let repaired = false;
+    // Havuz tur başına BİR KEZ karıştırılıp örneklenir; eskiden her eksik kelime
+    // için yeniden karıştırılıyordu (medium'da ~900 öğelik dizi, kelime başına).
+    const candidates = shuffle(rng, pool.filter((e) => !used.has(e.word))).slice(0, REPAIR_SAMPLE);
     for (const { w } of deficient) {
       const target = cellsOfWord(w);
-      for (const entry of shuffle(rng, pool.filter((e) => !used.has(e.word)))) {
+      for (const entry of candidates) {
+        if (used.has(entry.word)) continue;
         const placement = placementCrossing(entry, letters, size, usedStarts, target);
         if (placement === null) continue;
         if (whiteCount + newCellsOf(letters, placement) > maxWhite) continue;
@@ -407,6 +446,7 @@ export function generatePuzzle(opts: {
         placed.push({ entry, placement });
         used.add(entry.word);
         usedStarts.add(startKey(placement));
+        index = buildLetterIndex(letters, size);
         repaired = true;
         break;
       }
