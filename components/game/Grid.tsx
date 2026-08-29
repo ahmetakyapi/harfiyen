@@ -130,8 +130,14 @@ export function Grid({
                   // sonradan yeşile dönse bile işaret kalır — kim bakarsa baksın
                   // bu harfin ipucuyla geldiği belli olur.
                   <span aria-hidden
-                    className="pointer-events-none absolute right-0 top-0 z-10 rounded-tr-[3px] border-l-transparent border-t-[#d97706]"
-                    style={{ borderLeftWidth: '0.3em', borderTopWidth: '0.3em' }} />
+                    className="pointer-events-none absolute right-0 top-0 z-10 rounded-tr-[3px] border-l-transparent border-t-[var(--hint-mark)]"
+                    // Altına hücre renginden bağımsız ince bir kâğıt kenarı
+                    // çizilir: işaret hangi dolgunun (seçili/aktif/doğru)
+                    // üstüne düşerse düşsün kontrast sınırı korunur.
+                    style={{
+                      borderLeftWidth: '0.32em', borderTopWidth: '0.32em',
+                      filter: 'drop-shadow(-0.04em 0.04em 0 var(--cell))',
+                    }} />
                 )}
                 {numberAt.has(key) && (
                   <span aria-hidden

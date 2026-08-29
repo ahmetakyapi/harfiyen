@@ -1,6 +1,6 @@
 import { cookies } from 'next/headers';
 import { currentUserId } from '@/lib/auth';
-import { ANON_COOKIE, makeAnonToken, verifyAnonToken } from '@/lib/anon';
+import { ANON_COOKIE, verifyAnonToken } from '@/lib/anon';
 import type { Identity } from './session';
 
 function secret(): string {
@@ -16,13 +16,11 @@ export async function getIdentity(): Promise<Identity> {
   return { userId: null, anonId: verifyAnonToken(token, secret()) };
 }
 
-// basla route'unda: misafirse ve cookie yoksa oluşturup yazar
-export async function ensureIdentity(): Promise<Identity> {
-  const identity = await getIdentity();
-  if (identity.userId !== null || identity.anonId !== null) return identity;
-  const token = makeAnonToken(secret());
-  cookies().set(ANON_COOKIE, token, {
-    httpOnly: true, sameSite: 'lax', secure: true, maxAge: 60 * 60 * 24 * 365, path: '/',
-  });
-  return { userId: null, anonId: verifyAnonToken(token, secret()) };
-}
+// NOT (v1 sapması): Misafir oyunu kapalı. Oyun ekranı ve /api/session/start
+// üyelik istiyor (bkz. app/play/[date]/[difficulty]/page.tsx'teki gerekçe:
+// misafir → üye geçişi süre sıralamasını anlamsızlaştırıyordu). Bu yüzden
+// misafire imzalı çerez YAZAN `ensureIdentity` kaldırıldı — çerezi yazıp aynı
+// isteği 401 ile reddetmek en kafa karıştırıcı ara durumdu.
+//
+// Okuma yolu (`verifyAnonToken`) bilerek duruyor: misafirin oynayabildiği bir
+// tanışma bulmacası eklendiğinde imzalı kimlik altyapısı hazır olacak.

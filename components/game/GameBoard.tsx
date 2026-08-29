@@ -2,16 +2,19 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { ChevronLeft, Lightbulb, List, Trash2, X } from 'lucide-react';
+import { ChevronLeft, HelpCircle, Lightbulb, List, Sparkles, Trash2, X } from 'lucide-react';
 import { activeEntry, allCellsFilled, cellsOf, entryString, useGameState } from '@/hooks/useGameState';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 import { usePlayViewport } from '@/hooks/usePlayHeight';
+import { readJson, remove as removeStored, writeJson } from '@/lib/storage';
 import { LetterTile } from '@/components/ui/LetterTile';
 import { DIFFICULTY_BADGE_CLASS, DIFFICULTY_LABELS } from '@/lib/difficulty';
 import { hapticSolve, hapticWrong } from '@/lib/haptics';
 import { wordHash } from '@/lib/hash';
 import { isTrLetter, trUpper } from '@/lib/tr';
 import { formatTrtDate } from '@/lib/date';
-import { type ClientPuzzle, type Direction, type Letters, hashKey } from '@/lib/types';
+import { buildShareGrid, formatDuration } from '@/lib/share';
+import { type ClientPuzzle, type Difficulty, type Direction, type Letters, hashKey } from '@/lib/types';
 import { ClueBar } from './ClueBar';
 import { ClueList } from './ClueList';
 import { FinishDialog } from './FinishDialog';
@@ -24,13 +27,28 @@ type SessionInfo = {
   status: 'active' | 'completed'; hintCount: number; penaltyMs: number;
   durationMs: number | null; isRanked: boolean;
 };
+export type FinishStats = {
+  medianMs: number | null; fasterThanPct: number | null; solverCount: number;
+  previousBestMs: number | null; isPersonalBest: boolean;
+};
 type SubmitResult =
   | { correct: false }
   | {
       correct: true; durationMs: number; rank: number | null; isRanked: boolean;
       streak?: { current: number; best: number } | null;
+      stats?: FinishStats;
     };
 type Phase = 'idle' | 'starting' | 'playing' | 'submitting' | 'done' | 'revisit';
+
+// Kayıtlı harfler bu bulmacaya gerçekten ait mi? Şema değişikliği ya da
+// yarım yazılmış bir kayıt eskiden parse hatasına düşüp oyuncuyu bulmacadan
+// tamamen dışarıda bırakıyordu (oturum sunucuda açık, süre işliyor).
+function isValidLetters(value: unknown, size: number): value is Letters {
+  return Array.isArray(value)
+    && value.length === size
+    && value.every((row) => Array.isArray(row) && row.length === size
+      && row.every((c) => c === null || (typeof c === 'string' && c.length === 1)));
+}
 
 // Grid sonsuz büyümesin diye bir üst sınır. Gerçek boyutu neredeyse her zaman
 // ölçülen kutu belirler; bu sınır yalnızca çok büyük monitörlerde devreye
@@ -58,8 +76,16 @@ async function post<T>(url: string, body: unknown): Promise<T> {
   return (await res.json()) as T;
 }
 
-export function GameBoard({ puzzle, puzzleNumber, isArchive, alreadyCompleted }: {
+export function GameBoard({
+  puzzle, puzzleNumber, isArchive, alreadyCompleted, completedMs, activeStartedAt, siblings,
+}: {
   puzzle: ClientPuzzle; puzzleNumber: number; isArchive: boolean; alreadyCompleted: boolean;
+  /** Daha önce bitirilmişse süresi — arşiv giriş kartında gösterilir. */
+  completedMs: number | null;
+  /** Yarım kalmış oturumun başlangıcı; varsa kart "Devam Et" olur. */
+  activeStartedAt: string | null;
+  /** Aynı günün öbür zorluklarının durumu (bitiş ekranındaki geçişler için). */
+  siblings: Partial<Record<Difficulty, number | null>>;
 }) {
   const ctx = useMemo(
     () => ({ size: puzzle.size, black: puzzle.black, entries: puzzle.entries }),
@@ -73,6 +99,7 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive, alreadyCompleted }:
   const [result, setResult] = useState<{
     durationMs: number; rank: number | null; isRanked: boolean;
     streak?: { current: number; best: number } | null;
+    stats?: FinishStats;
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [correctKeys, setCorrectKeys] = useState<Set<string>>(new Set());
@@ -82,58 +109,90 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive, alreadyCompleted }:
   const [wrongEntry, setWrongEntry] = useState<{ no: number; dir: Direction } | null>(null);
   const [hintBusy, setHintBusy] = useState(false);
   const [listOpen, setListOpen] = useState(false); // mobil ipucu listesi paneli
+  // Bitiş kartı kapatılabilir: kapatınca altta ÇÖZÜLMÜŞ grid kalır (kare
+  // bulmacanın en doyurucu anı) ve "Sonucu Yeniden Gör" ile geri açılır.
+  const [finishOpen, setFinishOpen] = useState(true);
+  // Ekran okuyucu duyuruları: oyunun bütün geri bildirimi görseldi.
+  const [liveMessage, setLiveMessage] = useState('');
+  // Nasıl Oynanır artık oyun ekranından da elle açılabiliyor: modal bir kez
+  // kapatılınca localStorage yüzünden bir daha hiç görünmüyordu.
+  const [howToOpen, setHowToOpen] = useState(false);
+  const listPanelRef = useRef<HTMLDivElement | null>(null);
   const submitting = useRef(false);
+  // Sunucunun REDDETTİĞİ harf dizisi. Aynı içerik ikinci kez gönderilmez —
+  // yoksa 'submitting' → 'playing' geçişi efekti yeniden tetikliyor ve
+  // /api/session/submit'e sıkı bir döngüde istek yağıyordu.
+  const rejectedRef = useRef<string | null>(null);
 
   const storageKey = session ? `harfiyen:letters:${session.sessionId}` : null;
   const hintsKey = session ? `harfiyen:hints:${session.sessionId}` : null;
 
-  const start = useCallback(async () => {
+  // `replay` yalnızca oyuncunun AÇIKÇA "tekrar oyna" dediği durumda true olur.
+  // Eskiden `isArchive`den türetiliyordu; arşivde daha önce çözülmüş bir
+  // bulmacaya dönen oyuncu, hiçbir şeye dokunmadan, çalışan sayaçlı yepyeni
+  // bir oturumun içinde buluyordu kendini.
+  const start = useCallback(async (replay = false) => {
     setPhase('starting');
     setError(null);
     try {
-      const s = await post<SessionInfo>('/api/session/start', { puzzleId: puzzle.id, replay: isArchive });
+      const s = await post<SessionInfo>('/api/session/start', { puzzleId: puzzle.id, replay });
       setSession(s);
       setPenaltyMs(s.penaltyMs);
       setHintCount(s.hintCount);
       if (s.status === 'completed') {
-        // Daha önce bitirilmiş bir bölüme dönüldüğünde grid HİÇBİR ZAMAN
-        // render edilmez (aşağıdaki 'revisit' dalı) — cevapların ekran
-        // görüntüsüyle başkasına sızması engellenir. Sırayı/puanı yine de
-        // göstermek için submit'i idempotent olarak tekrar çağırıyoruz:
-        // tamamlanmış bir oturumda letters hiç karşılaştırılmadan önbellekten
-        // rank döner (bkz. lib/game/session.ts finishSession).
+        // Tamamlanmış oturuma dönüş: submit idempotenttir ve harfleri hiç
+        // karşılaştırmadan önbellekten sonucu döner (bkz. finishSession), bu
+        // yüzden boş bir ızgara göndermek yeterli — istemcinin o anki
+        // harflerine bağlanmak gereksizdi.
+        const blank: Letters = Array.from({ length: puzzle.size }, () =>
+          Array.from({ length: puzzle.size }, () => null));
         try {
           const r = await post<SubmitResult>('/api/session/submit', {
-            sessionId: s.sessionId, letters: state.letters,
+            sessionId: s.sessionId, letters: blank,
           });
           if (r.correct) {
-            setResult({ durationMs: r.durationMs, rank: r.rank, isRanked: r.isRanked, streak: r.streak });
+            setResult({
+              durationMs: r.durationMs, rank: r.rank, isRanked: r.isRanked,
+              streak: r.streak, stats: r.stats,
+            });
           } else {
             setResult({ durationMs: s.durationMs ?? 0, rank: null, isRanked: s.isRanked });
           }
         } catch {
           setResult({ durationMs: s.durationMs ?? 0, rank: null, isRanked: s.isRanked });
         }
+        setFinishOpen(true);
         setPhase('revisit');
         return;
       }
-      const saved = localStorage.getItem(`harfiyen:letters:${s.sessionId}`);
-      if (saved) dispatch({ type: 'SET_LETTERS', letters: JSON.parse(saved) as Letters });
-      const savedHints = localStorage.getItem(`harfiyen:hints:${s.sessionId}`);
-      if (savedHints) setHintCells(new Set(JSON.parse(savedHints) as string[]));
+      const saved = readJson<unknown>(`harfiyen:letters:${s.sessionId}`);
+      if (isValidLetters(saved, puzzle.size)) dispatch({ type: 'SET_LETTERS', letters: saved });
+      else if (saved !== null) removeStored(`harfiyen:letters:${s.sessionId}`);
+      const savedHints = readJson<unknown>(`harfiyen:hints:${s.sessionId}`);
+      if (Array.isArray(savedHints)) setHintCells(new Set(savedHints as string[]));
       setPhase('playing');
     } catch {
       setError('Bağlantı kurulamadı. Tekrar dene.');
       setPhase('idle');
     }
-  }, [puzzle.id, isArchive, dispatch, state.letters]);
+  }, [puzzle.id, puzzle.size, dispatch]);
 
-  // Bitirilmiş bulmacada "Başla" beklenmez — açılışta sonuç doğrudan yüklenir.
-  // error guard'ı, başarısız denemede sonsuz döngüyü keser (Tekrar Dene butonu
-  // start'ı elle çağırır ve error'u sıfırlar).
+  // Günün bitirilmiş bulmacasında "Başla" beklenmez — açılışta sonuç doğrudan
+  // yüklenir. ARŞİVDE bu otomatik akış YOK: orada oyuncuya "Sonucumu Gör" ve
+  // "Tekrar Oyna" diye iki ayrı seçenek sunulur (bkz. idle ekranı).
+  //
+  // Tek seferlik: eski guard `!error` idi ama hatalar 5 sn sonra kendiliğinden
+  // temizleniyor (aşağıdaki efekt) — yani ağ koptuğunda bu efekt her 5 saniyede
+  // bir yeniden başlatma isteği atıyordu. Yeniden deneme artık YALNIZCA
+  // oyuncunun "Tekrar Dene" dokunuşuyla olur.
+  const autoStartedRef = useRef(false);
   useEffect(() => {
-    if (alreadyCompleted && phase === 'idle' && !error) void start();
-  }, [alreadyCompleted, phase, error, start]);
+    if (autoStartedRef.current) return;
+    if (alreadyCompleted && !isArchive && phase === 'idle') {
+      autoStartedRef.current = true;
+      void start(false);
+    }
+  }, [alreadyCompleted, isArchive, phase, start]);
 
   // Hata mesajları kendiliğinden kaybolur: eskiden bir sonraki eyleme kadar
   // ekranda kalıyor, dar ekranda yer kaplıyordu.
@@ -157,7 +216,7 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive, alreadyCompleted }:
   // harfler değiştikçe kaydet + doğru kelimeleri hash ile işaretle
   useEffect(() => {
     if (phase !== 'playing' || !storageKey || !session) return;
-    localStorage.setItem(storageKey, JSON.stringify(state.letters));
+    writeJson(storageKey, state.letters);
     let cancelled = false;
     void (async () => {
       const next = new Set<string>();
@@ -195,6 +254,12 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive, alreadyCompleted }:
     if (phase !== 'playing' || !session || submitting.current) return;
     if (!allCellsFilled(ctx, state.letters)) return;
     if (correctKeys.size !== puzzle.entries.length) return;
+    // Sunucu bu tam ızgarayı zaten reddettiyse tekrar gönderme. Reddedilen
+    // içerik değişmediği sürece sonuç da değişmez; bu kontrol olmadan
+    // 'submitting' → 'playing' geçişi efekti yeniden tetikleyip sonsuz bir
+    // istek döngüsü kuruyordu.
+    const payload = JSON.stringify(state.letters);
+    if (rejectedRef.current === payload) return;
     submitting.current = true;
     setPhase('submitting');
     void (async () => {
@@ -204,12 +269,17 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive, alreadyCompleted }:
             sessionId: session.sessionId, letters: state.letters,
           });
           if (r.correct) {
-            setResult({ durationMs: r.durationMs, rank: r.rank, isRanked: r.isRanked, streak: r.streak });
+            setResult({
+              durationMs: r.durationMs, rank: r.rank, isRanked: r.isRanked,
+              streak: r.streak, stats: r.stats,
+            });
+            setFinishOpen(true);
             setPhase('done');
-            if (storageKey) localStorage.removeItem(storageKey);
-            if (hintsKey) localStorage.removeItem(hintsKey);
+            if (storageKey) removeStored(storageKey);
+            if (hintsKey) removeStored(hintsKey);
           } else {
-            setError('Bir şeyler uyuşmuyor — kontrol edip tekrar dene.');
+            rejectedRef.current = payload;
+            setError('Bir şeyler uyuşmuyor — bir harfi düzeltip tekrar dene.');
             setPhase('playing');
           }
           submitting.current = false;
@@ -226,31 +296,44 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive, alreadyCompleted }:
 
   const inGame = phase === 'playing' || phase === 'submitting';
   const entry = inGame ? activeEntry(ctx, state.sel) : null;
-  const activeCells = new Set(entry ? cellsOf(entry).map((c) => `${c.row}:${c.col}`) : []);
-  const correctCells = new Set<string>();
-  for (const e of puzzle.entries) {
-    if (correctKeys.has(hashKey(e.no, e.dir))) {
-      for (const c of cellsOf(e)) correctCells.add(`${c.row}:${c.col}`);
+  // Bu dört küme her render'da yeniden kuruluyordu; grid her tuşta yeniden
+  // hesaplanan yeni Set referanslarıyla besleniyordu. useMemo hem gereksiz
+  // işi hem de aşağıdaki useCallback'lerin her render'da yenilenmesini keser.
+  const activeCells = useMemo(
+    () => new Set(entry ? cellsOf(entry).map((c) => `${c.row}:${c.col}`) : []),
+    [entry],
+  );
+  const correctCells = useMemo(() => {
+    const set = new Set<string>();
+    for (const e of puzzle.entries) {
+      if (correctKeys.has(hashKey(e.no, e.dir))) {
+        for (const c of cellsOf(e)) set.add(`${c.row}:${c.col}`);
+      }
     }
-  }
+    return set;
+  }, [puzzle.entries, correctKeys]);
   // Kilitli hücreler = doğrulanmış (yeşil) ∪ ipucuyla açılmış; TYPE/DELETE/
   // CLEAR_* hiçbirine dokunamaz. Fiziksel klavye dinleyicisi her render'da
   // yeniden bağlanmasın diye ref üzerinden okur.
-  const lockedCells = new Set([...correctCells, ...hintCells]);
+  const lockedCells = useMemo(
+    () => new Set([...correctCells, ...hintCells]), [correctCells, hintCells],
+  );
   const lockedRef = useRef(lockedCells);
   lockedRef.current = lockedCells;
 
   // Temizlenecek hücreler = yanlış kelimenin KİLİTLİ OLMAYAN hücreleri. İpucuyla
   // açılan harfler ve kesişen doğru kelimeden gelen harfler bu kümede yoktur —
   // ne kırmızı yanar ne de silinir. Oyuncu kazandığı hiçbir bilgiyi kaybetmez.
-  const wrongCells = new Set<string>();
-  if (wrongEntry) {
+  const wrongCells = useMemo(() => {
+    const set = new Set<string>();
+    if (!wrongEntry) return set;
     const e = puzzle.entries.find((x) => x.no === wrongEntry.no && x.dir === wrongEntry.dir);
     for (const c of e ? cellsOf(e) : []) {
       const key = `${c.row}:${c.col}`;
-      if (!lockedCells.has(key)) wrongCells.add(key);
+      if (!lockedCells.has(key)) set.add(key);
     }
-  }
+    return set;
+  }, [wrongEntry, puzzle.entries, lockedCells]);
 
   // Yanlış tamamlanan kelime kısa bir uyarıdan sonra kendi kendine temizlenir.
   // Harf harf geri silmeye çalışmak — özellikle mobilde — oyunun en zorlandığı
@@ -259,6 +342,10 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive, alreadyCompleted }:
   useEffect(() => {
     if (!wrongEntry) return;
     hapticWrong();
+    setLiveMessage(
+      `${wrongEntry.no} ${wrongEntry.dir === 'across' ? 'soldan sağa' : 'yukarıdan aşağıya'} `
+      + 'yanlış — harfler temizleniyor.',
+    );
     const id = setTimeout(() => {
       dispatch({
         type: 'CLEAR_ENTRY', no: wrongEntry.no, dir: wrongEntry.dir,
@@ -280,13 +367,21 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive, alreadyCompleted }:
     const prev = prevCorrectRef.current;
     prevCorrectRef.current = correctKeys;
     if (phase !== 'playing') return;
-    if (correctKeys.size > prev.size) hapticSolve();
+    if (correctKeys.size > prev.size) {
+      hapticSolve();
+      const solved = [...correctKeys].find((k) => !prev.has(k));
+      const [no, dir] = (solved ?? ':').split(':');
+      setLiveMessage(
+        `${no} ${dir === 'across' ? 'soldan sağa' : 'yukarıdan aşağıya'} doğru. `
+        + `${correctKeys.size} / ${puzzle.entries.length} kelime çözüldü.`,
+      );
+    }
     const active = activeEntry(ctx, state.sel);
     const key = hashKey(active.no, active.dir);
     if (correctKeys.has(key) && !prev.has(key)) {
       dispatch({ type: 'NEXT_INCOMPLETE' });
     }
-  }, [correctKeys, phase, ctx, state.sel, dispatch]);
+  }, [correctKeys, phase, ctx, state.sel, dispatch, puzzle.entries.length]);
 
   // ——— GİRDİ ———
   // Girdi kullanıcının KENDİ (native) klavyesinden gelir. Bunun bedeli,
@@ -426,7 +521,10 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive, alreadyCompleted }:
   // sessizce başarısız oluyor, masaüstünde ilk harf kayboluyordu.
   useEffect(() => {
     if (phase === 'playing' && gridPx !== null) { inputRef.current?.focus(); resetNativeInput(); }
-    if (phase === 'done' || phase === 'submitting') inputRef.current?.blur();
+    // Blur YALNIZCA bitişte. 'submitting' sırasında da blur edilince, sunucu
+    // çözümü reddettiğinde mobilde klavye bir daha açılmıyordu (programatik
+    // focus() iOS/Android'de kullanıcı jesti olmadan klavyeyi getirmez).
+    if (phase === 'done') inputRef.current?.blur();
   }, [phase, gridPx, resetNativeInput]);
 
   const hint = useCallback(async () => {
@@ -457,36 +555,62 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive, alreadyCompleted }:
       const nextHints = new Set(hintCells);
       nextHints.add(key);
       setHintCells(nextHints);
-      if (hintsKey) localStorage.setItem(hintsKey, JSON.stringify([...nextHints]));
+      if (hintsKey) writeJson(hintsKey, [...nextHints]);
       dispatch({ type: 'REVEAL', row: target.row, col: target.col, letter: r.letter });
       if (target.row !== state.sel.row || target.col !== state.sel.col) {
-        dispatch({ type: 'SELECT', row: target.row, col: target.col });
+        // SET_SEL (SELECT değil): SELECT aynı hücreye ikinci dokunuş sayılıp
+        // yönü TERS ÇEVİREBİLİYORDU — oyuncu harf açtıktan sonra farkında
+        // olmadan kesişen kelimeyi doldurmaya başlıyordu.
+        dispatch({ type: 'SET_SEL', row: target.row, col: target.col, dir: state.sel.dir });
       }
+      setLiveMessage(`${r.letter} harfi açıldı, süreye 15 saniye eklendi.`);
       setFlashCell(key);
-      setTimeout(() => setFlashCell((current) => (current === key ? null : current)), 500);
     } catch {
-      setError('İpucu alınamadı. Tekrar dene.');
+      setError('Harf açılamadı. Tekrar dene.');
     } finally {
       setHintBusy(false);
     }
   }, [session, phase, hintBusy, state.sel, lockedCells, hintCells, hintsKey, ctx, dispatch]);
 
+  // Parıltı zamanlayıcısı efektte: bileşen sökülürse temizlenir.
+  useEffect(() => {
+    if (flashCell === null) return;
+    const id = setTimeout(() => setFlashCell(null), 500);
+    return () => clearTimeout(id);
+  }, [flashCell]);
+
   const clearWord = useCallback(() => {
     dispatch({ type: 'CLEAR_WORD', protectedCells: lockedCells });
   }, [dispatch, lockedCells]);
 
+  // "Tümünü Temizle" iki aşamalı: ilk dokunuş onay ister, 4 sn içinde
+  // tekrarlanmazsa geri alınır. Tek tıkla bütün ilerlemenin gitmesi ve geri
+  // alma olmaması, masaüstünde listeyi kaydıran oyuncu için gerçek bir risktı.
+  const [confirmClear, setConfirmClear] = useState(false);
+  useEffect(() => {
+    if (!confirmClear) return;
+    const id = setTimeout(() => setConfirmClear(false), 4000);
+    return () => clearTimeout(id);
+  }, [confirmClear]);
   const clearAll = useCallback(() => {
+    if (!confirmClear) { setConfirmClear(true); return; }
     dispatch({ type: 'CLEAR_ALL', protectedCells: lockedCells });
-  }, [dispatch, lockedCells]);
+    setConfirmClear(false);
+    setLiveMessage('Girilen bütün harfler temizlendi.');
+  }, [confirmClear, dispatch, lockedCells]);
 
-  // Fiziksel klavye (masaüstü). Odaklanmış bir metin alanı yok, bu yüzden tüm
-  // tuşlar burada işlenir; harfler `tr-TR` büyütmeden geçer (i→İ, ı→I).
+  // Fiziksel klavye (masaüstü). Kısayollar YALNIZCA odak gizli grid input'unda
+  // iken çalışır: eskiden window'daki dinleyici hedefe bakmadan Tab/Enter/Boşluk
+  // için preventDefault ediyordu, yani oyun boyunca Tab odağı hiç ilerletmiyor
+  // ve düğmeler Enter/Boşluk ile çalışmıyordu — WCAG 2.1.2 anlamında bir klavye
+  // tuzağı. TAB ARTIK HİÇ YAKALANMIYOR; kelime dolaşımı Enter / Shift+Enter'da.
   useEffect(() => {
     if (phase !== 'playing') return;
     const onKey = (e: KeyboardEvent): void => {
       if (e.metaKey || e.ctrlKey || e.altKey) return;
       if (e.key === 'Escape') { setListOpen(false); return; }
-      if (e.key === 'Tab' || e.key === 'Enter') {
+      if (e.target !== inputRef.current) return;
+      if (e.key === 'Enter') {
         e.preventDefault();
         dispatch({ type: 'NEXT_ENTRY', delta: e.shiftKey ? -1 : 1 });
       } else if (e.key === ' ') {
@@ -504,23 +628,30 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive, alreadyCompleted }:
     return () => window.removeEventListener('keydown', onKey);
   }, [phase, dispatch, state.sel]);
 
+  // `aria-modal="true"` ilan eden panelin klavye sözleşmesi (odak içeri, Tab
+  // döngüsü, kapanışta geri verme) hiç kurulmamıştı.
+  useFocusTrap(listPanelRef, listOpen);
+
   const pickEntry = useCallback((no: number, dir: 'across' | 'down') => {
     dispatch({ type: 'SELECT_ENTRY', no, dir });
     setListOpen(false);
+    // Mobil panel bir kullanıcı jestiyle kapandığı için focus() burada
+    // klavyeyi geri açar; masaüstünde de yazmaya kaldığı yerden devam edilir.
+    requestAnimationFrame(() => inputRef.current?.focus());
   }, [dispatch]);
 
   if (phase === 'idle' || phase === 'starting') {
-    if (alreadyCompleted) {
-      // Bitirilmiş bulmacada "Başla" kartı kafa karıştırır (başlayacak bir şey
-      // yok) — sonuç yüklenirken sade bir bekleme durumu gösterilir; start()
-      // yukarıdaki efektle otomatik tetiklenir ve 'revisit' ekranına düşer.
+    if (alreadyCompleted && !isArchive) {
+      // Günün bitirilmiş bulmacasında "Başla" kartı kafa karıştırır (başlayacak
+      // bir şey yok) — sonuç yüklenirken sade bir bekleme durumu gösterilir;
+      // start() yukarıdaki efektle otomatik tetiklenir ve 'revisit'e düşer.
       return (
         <div className="mx-auto max-w-sm px-4 py-24 text-center">
           <p className="text-sm text-[var(--ink-soft)]">Sonucun yükleniyor…</p>
           {error && (
             <>
               <p className="mt-3 text-sm text-[var(--accent)]">{error}</p>
-              <button type="button" onClick={start}
+              <button type="button" onClick={() => void start(false)}
                 className="mt-4 min-h-11 rounded-xl border border-[var(--line)] px-5 text-sm font-medium">
                 Tekrar Dene
               </button>
@@ -556,12 +687,44 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive, alreadyCompleted }:
             </span>
           </div>
           {isArchive && <p className="mt-4 text-sm text-[var(--ink-soft)]">Arşiv oyunu — sıralamaya girmez.</p>}
-          <p className="mt-4 text-sm text-[var(--ink-soft)]">Süre &quot;Başla&quot; dediğin an işlemeye başlar.</p>
+          {alreadyCompleted && completedMs !== null && (
+            <p className="mt-4 text-sm text-[var(--ink-soft)]">
+              Bu bulmacayı{' '}
+              <strong className="font-mono tabular-nums text-[var(--ink)]">
+                {formatDuration(completedMs)}
+              </strong>{' '}
+              sürede çözmüştün.
+            </p>
+          )}
+          {/* Devam eden oyunda "süre şimdi başlar" bir yalandı: oturum
+              sunucuda açık kaldığı için sayaç kapatılan sekmeden beri kesintisiz
+              işliyordu (spec §4: duraklatma yok). */}
+          <p className="mt-4 text-sm text-[var(--ink-soft)]">
+            {activeStartedAt !== null
+              ? 'Süren kaldığı yerden işliyor — duraklatma yok.'
+              : 'Süre "Başla" dediğin an işlemeye başlar.'}
+          </p>
           {error && <p className="mt-3 text-sm text-[var(--accent)]">{error}</p>}
-          <button type="button" onClick={start} disabled={phase === 'starting'}
-            className="mt-6 w-full rounded-2xl bg-[var(--ink)] py-3.5 text-lg font-semibold text-[var(--paper)] shadow-lg transition-transform duration-150 ease-[cubic-bezier(0.22,1,0.36,1)] active:scale-[0.98] disabled:opacity-50">
-            {phase === 'starting' ? 'Hazırlanıyor…' : 'Başla'}
-          </button>
+          {alreadyCompleted ? (
+            // Arşivde çözülmüş bulmaca: iki eylem AÇIKÇA ayrılır. Eskiden hiçbir
+            // şeye dokunmadan yeni bir oturum açılıyor, oyuncu farkında olmadan
+            // çalışan bir sayacın içinde buluyordu kendini.
+            <div className="mt-6 flex flex-col gap-2">
+              <button type="button" onClick={() => void start(false)} disabled={phase === 'starting'}
+                className="w-full rounded-2xl bg-[var(--ink)] py-3.5 text-lg font-semibold text-[var(--paper)] shadow-lg transition-transform duration-150 ease-[cubic-bezier(0.22,1,0.36,1)] active:scale-[0.98] disabled:opacity-50">
+                {phase === 'starting' ? 'Yükleniyor…' : 'Sonucumu Gör'}
+              </button>
+              <button type="button" onClick={() => void start(true)} disabled={phase === 'starting'}
+                className="min-h-11 w-full rounded-2xl border border-[var(--line)] text-sm font-medium text-[var(--ink-soft)] transition-colors hover:bg-[var(--paper)] disabled:opacity-50">
+                Tekrar Oyna · süre yeniden başlar
+              </button>
+            </div>
+          ) : (
+            <button type="button" onClick={() => void start(false)} disabled={phase === 'starting'}
+              className="mt-6 w-full rounded-2xl bg-[var(--ink)] py-3.5 text-lg font-semibold text-[var(--paper)] shadow-lg transition-transform duration-150 ease-[cubic-bezier(0.22,1,0.36,1)] active:scale-[0.98] disabled:opacity-50">
+              {phase === 'starting' ? 'Hazırlanıyor…' : activeStartedAt !== null ? 'Devam Et' : 'Başla'}
+            </button>
+          )}
         </div>
         <HowToModal />
       </div>
@@ -569,11 +732,14 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive, alreadyCompleted }:
   }
 
   if (phase === 'revisit') {
-    // Grid/ClueBar BİLEREK hiç render edilmiyor — daha önce çözülmüş
-    // bir bölüme dönüldüğünde cevapların ekran görüntüsüyle sızması engellenir.
+    // Grid BİLEREK render edilmiyor: bu ekrana çok sonra da gelinebiliyor ve
+    // dolu bir ızgara, sonuç kartını okumak isteyen oyuncuya cevapları
+    // gösterme dışında hiçbir şey katmıyor. Bunun yerine diyaloğun içindeki
+    // "Bugünün Kelimeleri" dökümü var — aynı bilgi, oyuncunun istediği anda.
     return (
       <FinishDialog open durationMs={result?.durationMs ?? 0} rank={result?.rank ?? null}
         isRanked={result?.isRanked ?? false} streak={result?.streak ?? null}
+        stats={result?.stats} sessionId={session?.sessionId ?? null} siblings={siblings}
         hintCount={hintCount} puzzleNumber={puzzleNumber}
         difficulty={puzzle.difficulty} date={puzzle.date} />
     );
@@ -610,9 +776,10 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive, alreadyCompleted }:
       </div>
 
       {/* Başlık şeridi 320 px'e kadar TAŞMADAN sığmalı: metin etiketleri
-          kademeli olarak devreye girer (ipucu sayacı 360'tan, "+15sn" yazısı
-          400'den sonra), böylece en dar telefonda bile hiçbir düğme kırpılmaz.
-          Masaüstünde süre/sayaç/ipucu buradan ÇIKAR (sağ paneldeki HUD'a
+          kademeli olarak devreye girer (çözülen sayacı 360'tan, "Harf Aç"
+          380'den, "+15 sn" 420'den sonra), böylece en dar telefonda bile
+          hiçbir düğme kırpılmaz.
+          Masaüstünde süre/sayaç/harf açma buradan ÇIKAR (sağ paneldeki HUD'a
           taşınır — ekranın en sağ ucu oyun alanından çok uzaktaydı) ve başlık
           oyun alanıyla aynı genişliğe hizalanır. */}
       <header className="flex shrink-0 items-center gap-1 px-1 py-1 sm:gap-2 sm:px-3 lg:mx-auto lg:w-full lg:max-w-6xl lg:px-6">
@@ -638,14 +805,15 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive, alreadyCompleted }:
           </span>
         )}
         {/* Masaüstünde liste hep görünür olduğundan düğme yalnızca dar ekranda */}
-        <button type="button" onClick={() => setListOpen(true)} onPointerDown={(e) => e.preventDefault()} aria-label="Tüm ipuçları"
+        <button type="button" onClick={() => setListOpen(true)} onPointerDown={(e) => e.preventDefault()} aria-label="İpucu listesini aç"
           className="flex h-11 w-9 shrink-0 items-center justify-center rounded-full border border-[var(--line)] text-[var(--ink-soft)] transition-colors hover:bg-[var(--paper-raised)] lg:hidden">
           <List aria-hidden className="h-[18px] w-[18px]" />
         </button>
-        <button type="button" onClick={hint} disabled={hintBusy} onPointerDown={(e) => e.preventDefault()} aria-label="İpucu al (+15 saniye ceza)"
+        <button type="button" onClick={hint} disabled={hintBusy} onPointerDown={(e) => e.preventDefault()} aria-label="Harf aç (+15 saniye ceza)"
           className="flex min-h-11 shrink-0 items-center gap-1 rounded-full bg-[var(--accent-soft)] px-2.5 text-sm font-medium text-[var(--ink)] transition-transform active:scale-95 disabled:opacity-60 lg:hidden">
           <Lightbulb aria-hidden className={`h-4 w-4 shrink-0 text-[var(--accent)] ${hintBusy ? 'animate-pulse' : ''}`} />
-          <span className="hidden min-[380px]:inline">{hintBusy ? '…' : '+15sn'}</span>
+          <span className="hidden min-[380px]:inline">Harf Aç</span>
+          <span className="hidden text-[var(--ink-soft)] min-[420px]:inline">+15 sn</span>
         </button>
       </header>
 
@@ -743,10 +911,15 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive, alreadyCompleted }:
               </div>
             )}
             <ClueList entries={puzzle.entries} active={entry} solvedKeys={correctKeys}
-              onPick={(e) => pickEntry(e.no, e.dir)} />
-            <button type="button" onClick={clearAll}
-              className="mt-2 flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-[var(--line)] text-sm text-[var(--ink-soft)] transition-colors hover:bg-[var(--paper-raised)]">
-              <Trash2 aria-hidden className="h-4 w-4" /> Tümünü Temizle
+              onPick={(e) => pickEntry(e.no, e.dir)} keepFocus />
+            <button type="button" onClick={clearAll} onPointerDown={(e) => e.preventDefault()}
+              className={`mt-2 flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl border text-sm transition-colors ${
+                confirmClear
+                  ? 'border-[var(--wrong)] text-[var(--wrong)]'
+                  : 'border-[var(--line)] text-[var(--ink-soft)] hover:bg-[var(--paper-raised)]'
+              }`}>
+              <Trash2 aria-hidden className="h-4 w-4" />
+              {confirmClear ? 'Emin misin? Dokun ve Sil' : 'Tümünü Temizle'}
             </button>
           </div>
         </aside>
@@ -755,32 +928,65 @@ export function GameBoard({ puzzle, puzzleNumber, isArchive, alreadyCompleted }:
       {/* Mobil ipucu paneli: 10×10'da 20 ipucunu tek şeritten görmek imkânsızdı.
           Kare bulmacanın olmazsa olmazı olan "bütün ipuçlarını tara" hareketi. */}
       {listOpen && (
-        <div role="dialog" aria-modal="true" aria-label="Tüm ipuçları"
+        <div ref={listPanelRef} role="dialog" aria-modal="true" aria-label="Tüm ipuçları"
           className="fixed inset-0 z-50 flex flex-col bg-[var(--paper)] lg:hidden"
           style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
           <div className="flex shrink-0 items-center justify-between border-b border-[var(--line)] px-3 py-2">
             <p className="font-display text-xl font-semibold">İpuçları</p>
-            <button type="button" onClick={() => setListOpen(false)} aria-label="Kapat"
-              className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--ink-soft)] hover:bg-[var(--paper-raised)]">
-              <X aria-hidden className="h-5 w-5" />
-            </button>
+            <div className="flex items-center gap-1">
+              <button type="button" onClick={() => setHowToOpen(true)} aria-label="Nasıl oynanır"
+                className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--ink-soft)] hover:bg-[var(--paper-raised)]">
+                <HelpCircle aria-hidden className="h-5 w-5" />
+              </button>
+              <button type="button" onClick={() => setListOpen(false)} aria-label="Kapat"
+                className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--ink-soft)] hover:bg-[var(--paper-raised)]">
+                <X aria-hidden className="h-5 w-5" />
+              </button>
+            </div>
           </div>
           <div className="flex min-h-0 flex-1 flex-col px-3 py-2">
             <ClueList entries={puzzle.entries} active={entry} solvedKeys={correctKeys}
               onPick={(e) => pickEntry(e.no, e.dir)} />
-            <button type="button" onClick={() => { clearAll(); setListOpen(false); }}
-              className="mt-2 flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-[var(--line)] text-sm text-[var(--ink-soft)]">
-              <Trash2 aria-hidden className="h-4 w-4" /> Tümünü Temizle
+            <button type="button" onClick={() => { clearAll(); if (confirmClear) setListOpen(false); }}
+              className={`mt-2 flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl border text-sm ${
+                confirmClear ? 'border-[var(--wrong)] text-[var(--wrong)]' : 'border-[var(--line)] text-[var(--ink-soft)]'
+              }`}>
+              <Trash2 aria-hidden className="h-4 w-4" />
+              {confirmClear ? 'Emin misin? Dokun ve Sil' : 'Tümünü Temizle'}
             </button>
           </div>
         </div>
       )}
 
-      <FinishDialog open={phase === 'done'} durationMs={result?.durationMs ?? 0}
+      {/* Ekran okuyucu için tek canlı bölge: kelime doğrulandı, yanlış kelime
+          temizlendi, harf açıldı — hepsi buradan duyurulur. Görsel karşılığı
+          zaten var; sesli karşılığı yoktu. */}
+      <p aria-live="polite" aria-atomic="true" className="sr-only">{liveMessage}</p>
+
+      {howToOpen && <HowToModal forceOpen onClose={() => setHowToOpen(false)} />}
+
+      <FinishDialog open={phase === 'done' && finishOpen}
+        // Odak tuzağı kapanışta odağı geri veriyor; hedef gizli grid input'u
+        // olduğu için mobilde klavye yeniden açılıyordu — bulmaca bitmişken.
+        onClose={() => { setFinishOpen(false); requestAnimationFrame(() => inputRef.current?.blur()); }}
+        durationMs={result?.durationMs ?? 0}
         rank={result?.rank ?? null} isRanked={result?.isRanked ?? false}
-        streak={result?.streak ?? null}
+        streak={result?.streak ?? null} stats={result?.stats}
+        sessionId={session?.sessionId ?? null} siblings={siblings}
+        gridLines={buildShareGrid(puzzle.black, hintCells)}
         hintCount={hintCount} puzzleNumber={puzzleNumber} difficulty={puzzle.difficulty}
         date={puzzle.date} />
+
+      {/* Diyalog kapatıldığında çözülmüş ızgara ortada kalır; sonuç kartı bu
+          şeritten geri açılır. */}
+      {phase === 'done' && !finishOpen && (
+        <div className="shrink-0 px-3 pb-3">
+          <button type="button" onClick={() => setFinishOpen(true)}
+            className="flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[var(--ink)] font-semibold text-[var(--paper)] shadow-lg transition-transform active:scale-[0.98]">
+            <Sparkles aria-hidden className="h-4 w-4" /> Sonucu Yeniden Gör
+          </button>
+        </div>
+      )}
     </div>
   );
 }

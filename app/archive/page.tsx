@@ -6,7 +6,10 @@ import { gameDay } from '@/lib/date';
 import { getDb } from '@/lib/db';
 import { playSessions, puzzles } from '@/lib/schema';
 
-export const metadata = { title: 'Arşiv' };
+export const metadata = {
+  title: 'Arşiv',
+  description: 'Geçmiş Harfiyen bulmacaları — pratik modunda, sıralamasız.',
+};
 export const dynamic = 'force-dynamic';
 
 // Sayfa başına gün: 3 sütunlu ızgarada tam 4 sıra, 2 sütunda 6 sıra.
@@ -59,7 +62,16 @@ export default async function ArchivePage({ searchParams }: {
         eq(playSessions.status, 'completed'),
         inArray(puzzles.date, dates),
       ));
-    for (const m of mine) doneMs.set(`${m.date}:${m.difficulty}`, m.durationMs);
+    // Arşivde aynı bulmaca tekrar oynanabildiği için bir gün/zorluk için
+    // birden çok tamamlanmış oturum olabilir — kartta EN İYİ süre gösterilir
+    // (eskiden sıra rastgeleydi).
+    for (const m of mine) {
+      const key = `${m.date}:${m.difficulty}`;
+      const prev = doneMs.get(key);
+      if (prev === undefined || (m.durationMs ?? 0) < (prev ?? Number.MAX_SAFE_INTEGER)) {
+        doneMs.set(key, m.durationMs);
+      }
+    }
   }
 
   return (

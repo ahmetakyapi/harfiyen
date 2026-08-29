@@ -37,7 +37,7 @@ function Glyph({ difficulty }: { difficulty: Difficulty }) {
       {[0.8, 8.8, 16.8].map((y) =>
         [0.8, 8.8, 16.8].map((x) => (
           <rect key={`${x}:${y}`} x={x} y={y} width="6.4" height="6.4" rx="2"
-            fill={x === 8.8 && y === 8.8 ? '#1f2a44' : 'currentColor'} />
+            fill={x === 8.8 && y === 8.8 ? 'var(--tile-void)' : 'currentColor'} />
         )),
       )}
     </svg>
@@ -54,9 +54,9 @@ export function LetterTile({ difficulty, size = 'md' }: { difficulty: Difficulty
   const glyph = size === 'md' ? 'h-6 w-6' : 'h-4 w-4';
   return (
     <span className={`block shrink-0 ${outer} ${t.ringClass} shadow-md`}>
-      <span className={`relative flex h-full w-full items-center justify-center ${inner} bg-[#fdf8ec]`}>
+      <span className={`relative flex h-full w-full items-center justify-center ${inner} bg-[var(--tile-face)]`}>
         {size === 'md' && (
-          <span className="absolute left-1 top-0.5 text-[0.55rem] font-bold leading-none text-[#8b8268]">
+          <span className="absolute left-1 top-0.5 text-[0.62rem] font-bold leading-none text-[var(--tile-face-ink)]">
             {t.no}
           </span>
         )}

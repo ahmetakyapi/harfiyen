@@ -42,6 +42,27 @@
   --diff-hard-soft: #d4def2;
   --title-from: #0086bf;
   --title-to: #023e8a;
+  /* Modal örtüsü tek yerde: iki modal iki farklı siyah kullanıyordu. */
+  --overlay: rgba(24, 39, 66, 0.45);
+  /* İmza "taş" yüzü (zorluk taşları, sıralama podyumu, profil avatarı).
+     Sabit krem bir hexti; koyu temada gece göğünde parlayan bir leke
+     bırakıyordu. */
+  --tile-face: #fdf8ec;
+  --tile-face-ink: #6d6650;
+  --tile-void: #1f2a44;
+  /* İpucuyla açılan harfin köşe işareti. Sabit #d97706 hiçbir hücre
+     durumunda 3:1 kontrastı geçmiyordu (seçili hücrenin şeftali dolgusunda
+     1.82:1) — oysa bu işaret harfin kilitli olduğunu anlatan TEK görsel. */
+  --hint-mark: #8a4b00;
+  /* Seri alevi: "ateş" her iki temada da sıcak kalır ama zemine göre ayarlanır. */
+  --flame: #b45309;
+  /* Zorluk/sıra merdiveni: turkuaz → azur → lacivert. Bu üçlü HER İKİ temada da
+     aynı kalır, çünkü daima --tile-face (açık krem taş yüzü) üstünde çizilir —
+     "fiziksel taş" metaforu temayla dönmez. Üç dosyada birebir kopyalanmışlardı;
+     tek kaynak burası. */
+  --ladder-1-from: #38c3e8; --ladder-1-to: #0086bf; --ladder-1-ink: #076d94;
+  --ladder-2-from: #3f8fd9; --ladder-2-to: #0d5799; --ladder-2-ink: #0d5799;
+  --ladder-3-from: #4a6fd4; --ladder-3-to: #0c2f6b; --ladder-3-ink: #0c2f6b;
 }
 
 .dark {
@@ -72,7 +93,18 @@
   --diff-hard-soft: #16294a;
   --title-from: #6db8ee;
   --title-to: #e9cf9e;
+  --overlay: rgba(3, 7, 15, 0.62);
+  --tile-face: #efe6d2;
+  --tile-face-ink: #6f6853;
+  --tile-void: #24304c;
+  --hint-mark: #fbbf24;
+  --flame: #fbbf24;
 }
+
+/* Native kontroller, autofill kutuları ve kaydırma çubukları temayı izlesin —
+   tanımlanmadığında koyu temada beyaz kalıyorlardı. */
+:root { color-scheme: light; }
+.dark { color-scheme: dark; }
 
 html {
   -webkit-text-size-adjust: 100%;
@@ -171,8 +203,12 @@ body::before {
 /* Klavye erişilebilirliği: hiçbir yerde odak göstergesi yoktu. Yalnızca
    :focus-visible → fare/dokunmada halka çıkmaz, Tab'la gezende çıkar. */
 :where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  /* Çift halka: iç halka kâğıt, dış halka mürekkep. Tek renkli --accent halkası
+     ipucu şeridi gibi mürekkep zeminli yüzeylerde 2.37:1'de kayboluyordu;
+     iki zıt katman her zeminde görünür kalmayı garantiler. */
   outline: 2px solid var(--accent);
   outline-offset: 2px;
+  box-shadow: 0 0 0 4px var(--paper);
   border-radius: 0.35rem;
 }
 
@@ -222,7 +258,7 @@ body::before {
 }
 
 /* Masaüstü: grid'in yanında sabit ipucu listesi (spec §"Girdi ve klavye"). */
-@media (min-width: 1024px) {
+@media (min-width: 1024px) and (min-height: 561px) {
   .play-layout {
     grid-template-areas: 'clue list' 'grid list';
     grid-template-columns: minmax(0, 1fr) 20rem;
@@ -339,6 +375,9 @@ body::before {
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
+    /* iteration-count olmadan sonsuz animasyonlar (iskelet parıltısı) 0.01 ms'de
+       saniyede binlerce kez tekrarlıyor — hareket azaltma isteğinin tam tersi. */
+    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
 }

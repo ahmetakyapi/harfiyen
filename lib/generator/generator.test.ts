@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { loadBank } from '@/lib/content';
 import { DIFFICULTIES } from '@/lib/types';
 import {
-  GENERATOR_PRESETS, WHITE_RATIO_MAX, WHITE_RATIO_MIN,
-  generateWithRetries, isEligible, validateGenerated,
+  GENERATOR_PRESETS, WHITE_RATIO_MAX, WHITE_RATIO_MIN, crossingsPerWord,
+  generateWithRetries, isEligible, minCrossingsFor, validateGenerated,
 } from './generator';
 
 const bank = loadBank();
@@ -71,5 +71,39 @@ describe('validateGenerated — aynı başlangıçta çakışan entry (canlı ha
       ],
     };
     expect(validateGenerated(puzzle)).toEqual(['aynı başlangıçta çakışan entry: 0:0:down (ÇAM)']);
+  });
+});
+
+describe('kör nokta güvencesi', () => {
+  it('her kelime uzunluğuna göre yeterli kesişim taşır', () => {
+    // Asıl oyuncu acısı: ipucunu bilemediğin kelimeyi kesişimlerden
+    // türetememek. Eski üreteçte kelimelerin %26-40'ı tek harften kontrollüydü.
+    for (const difficulty of DIFFICULTIES) {
+      for (let seed = 0; seed < 6; seed++) {
+        const p = generateWithRetries({ difficulty, bank, seed: 3000 + seed * 97 });
+        const crossings = crossingsPerWord(p);
+        p.words.forEach((w, i) => {
+          expect(
+            crossings[i],
+            `${difficulty}/${seed}: ${w.word} (${w.len} harf) yalnızca ${crossings[i]} kesişim`,
+          ).toBeGreaterThanOrEqual(minCrossingsFor(w.len));
+        });
+      }
+    }
+  });
+
+  it('omurga her bulmacada aynı satırda ve aynı yönde değil', () => {
+    // Eskiden ilk kelime HER ZAMAN en uzun kelimeydi ve HER ZAMAN orta satıra
+    // yatay yerleşiyordu: her bulmacanın orta satırı baştan sona doluydu.
+    const rows = new Set<number>();
+    const dirs = new Set<string>();
+    for (let seed = 0; seed < 12; seed++) {
+      const p = generateWithRetries({ difficulty: 'hard', bank, seed: 7000 + seed * 131 });
+      const longest = [...p.words].sort((a, b) => b.len - a.len)[0];
+      rows.add(longest.row);
+      dirs.add(longest.dir);
+    }
+    expect(rows.size).toBeGreaterThan(1);
+    expect(dirs.size).toBe(2);
   });
 });

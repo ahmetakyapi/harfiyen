@@ -5,7 +5,9 @@ import { isValidWord } from './tr';
 
 const entrySchema = z.object({
   word: z.string().refine(isValidWord, 'kelime 3-10 büyük Türkçe harf olmalı'),
-  clues: z.array(z.string().min(3)).min(1),
+  // En az iki varyant: tek ipuçlu bir kelime her çıkışında birebir aynı
+  // soruyu gösterir. Bankanın tamamı üçe çıkarıldı (bkz. content.test.ts).
+  clues: z.array(z.string().min(3)).min(2),
   difficulty: z.union([z.literal(1), z.literal(2), z.literal(3)]),
   tags: z.array(z.string()).optional(),
 });

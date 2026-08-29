@@ -1,43 +1,60 @@
 import Link from 'next/link';
-import { and, eq, inArray, isNull } from 'drizzle-orm';
+import { and, eq, inArray, sql } from 'drizzle-orm';
+import { Lock } from 'lucide-react';
 import { AutoRefresh } from '@/components/layout/AutoRefresh';
 import { Countdown } from '@/components/home/Countdown';
 import { DailyCard } from '@/components/home/DailyCard';
 import { StreakBadge } from '@/components/home/StreakBadge';
+import { auth } from '@/lib/auth';
 import { formatTrtDate, gameDay, puzzleNumber } from '@/lib/date';
 import { getDb } from '@/lib/db';
-import { getIdentity } from '@/lib/game/identity';
 import { playSessions, puzzles, users } from '@/lib/schema';
-import { DIFFICULTIES, type Entry } from '@/lib/types';
+import { DIFFICULTIES } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 
 export default async function HomePage() {
   const db = getDb();
   const today = gameDay();
-  const rows = await db.select({
-    id: puzzles.id, difficulty: puzzles.difficulty, size: puzzles.size, entries: puzzles.entries,
-  }).from(puzzles).where(eq(puzzles.date, today));
 
-  const identity = await getIdentity(); // RSC: cookie sadece OKUNUR (yazma /api/session/start'ta)
+  // Bulmaca listesi ile oturum kimliği birbirini beklemiyor — paralel.
+  // `entries` JSONB'i eskiden yalnızca uzunluğu için TAMAMEN çekiliyordu;
+  // 10×10'da bu, sayfa başına onlarca kilobayt boşa taşınan ipucu metniydi.
+  const [rows, session] = await Promise.all([
+    db.select({
+      id: puzzles.id, difficulty: puzzles.difficulty, size: puzzles.size,
+      wordCount: sql<number>`jsonb_array_length(${puzzles.entries})`,
+    }).from(puzzles).where(eq(puzzles.date, today)),
+    auth(),
+  ]);
+
+  const userId = session ? Number(session.user.id) : null;
   const sessionByPuzzle = new Map<number, { status: string; durationMs: number | null }>();
-  if (rows.length > 0 && (identity.userId !== null || identity.anonId !== null)) {
-    const mine = await db.select().from(playSessions).where(and(
-      inArray(playSessions.puzzleId, rows.map((r) => r.id)),
-      identity.userId !== null
-        ? eq(playSessions.userId, identity.userId)
-        : and(isNull(playSessions.userId), eq(playSessions.anonId, identity.anonId ?? '')),
-    ));
+  let streak: { currentStreak: number; bestStreak: number } | null = null;
+  if (userId !== null && rows.length > 0) {
+    const [mine, [me]] = await Promise.all([
+      db.select({
+        puzzleId: playSessions.puzzleId, status: playSessions.status,
+        durationMs: playSessions.durationMs,
+      }).from(playSessions).where(and(
+        inArray(playSessions.puzzleId, rows.map((r) => r.id)),
+        eq(playSessions.userId, userId),
+      )),
+      db.select({ currentStreak: users.currentStreak, bestStreak: users.bestStreak })
+        .from(users).where(eq(users.id, userId)),
+    ]);
     for (const s of mine) {
       const prev = sessionByPuzzle.get(s.puzzleId);
       if (!prev || s.status === 'completed') {
         sessionByPuzzle.set(s.puzzleId, { status: s.status, durationMs: s.durationMs });
       }
     }
+    streak = me ?? null;
   }
-  const streak = identity.userId !== null
-    ? (await db.select().from(users).where(eq(users.id, identity.userId)))[0] ?? null
-    : null;
+
+  const doneCount = rows.filter((r) => sessionByPuzzle.get(r.id)?.status === 'completed').length;
+  const allDone = rows.length > 0 && doneCount === rows.length;
+  const totalMs = rows.reduce((sum, r) => sum + (sessionByPuzzle.get(r.id)?.durationMs ?? 0), 0);
 
   return (
     <main className="page-enter mx-auto max-w-lg px-4 py-8 sm:py-12">
@@ -51,15 +68,23 @@ export default async function HomePage() {
       <div className="mt-5 flex justify-center">
         {streak
           ? <StreakBadge current={streak.currentStreak} best={streak.bestStreak} />
-          : <p className="text-sm text-[var(--ink-soft)]">
-              <Link href="/register" className="underline">Üye Ol</Link> — süreni sıralamada gör, serini başlat.
-            </p>}
+          : (
+            // Eski metin "oynayabilirsin, üyelik sadece sıralama için" vaadi
+            // kuruyordu; oysa /play üyeliğe kapalı. Kapı ne ise onu söylüyoruz.
+            <p className="text-center text-sm text-[var(--ink-soft)]">
+              Oynamak için <Link href="/register" className="underline">üye ol</Link> — 10 saniye sürer.
+            </p>
+          )}
       </div>
       <div className="mt-8 flex flex-col gap-3">
         {rows.length === 0 && (
-          <p className="py-12 text-center text-[var(--ink-soft)]">
-            Bugünün bulmacaları henüz yüklenmedi. Birazdan tekrar bak.
-          </p>
+          <div className="rounded-2xl border border-[var(--line)] bg-[var(--paper-raised)] px-5 py-10 text-center">
+            <p className="font-medium">Bugünün bulmacaları henüz hazır değil.</p>
+            <p className="mt-2 text-sm text-[var(--ink-soft)]">
+              Bu beklenmedik bir durum. Bu arada{' '}
+              <Link href="/archive" className="underline">arşivden</Link> bir bulmaca çözebilirsin.
+            </p>
+          </div>
         )}
         {DIFFICULTIES.map((d) => {
           const row = rows.find((r) => r.difficulty === d);
@@ -67,13 +92,40 @@ export default async function HomePage() {
           const s = sessionByPuzzle.get(row.id);
           return (
             <DailyCard key={d} difficulty={d} size={row.size}
-              wordCount={(row.entries as Entry[]).length} date={today}
+              wordCount={Number(row.wordCount)} date={today}
               status={s?.status === 'completed' ? 'bitti' : s ? 'devam' : 'yeni'}
-              durationMs={s?.durationMs ?? null} />
+              durationMs={s?.durationMs ?? null} locked={userId === null} />
           );
         })}
       </div>
+
+      {/* Ürün her gün üç bulmaca vaat ediyor; üçünü bitirmenin görsel bir
+          karşılığı yoktu. Günün kapanışı burada. */}
+      {allDone && (
+        <div className="mt-6 rounded-2xl border border-[var(--correct)]/40 bg-[var(--correct-soft)] px-5 py-4 text-center">
+          <p className="font-display text-2xl text-[var(--correct)]">Günün Üçlüsü Tamam</p>
+          <p className="mt-1 font-mono text-sm tabular-nums text-[var(--ink-soft)]">
+            3/3 · toplam {Math.floor(totalMs / 60000)} dk {Math.round((totalMs % 60000) / 1000)} sn
+          </p>
+          <p className="mt-2 text-sm">
+            <Link href="/leaderboard" className="underline">Sıralamaya bak</Link>
+            {' · '}
+            <Link href="/archive" className="underline">arşivde devam et</Link>
+          </p>
+        </div>
+      )}
+      {!allDone && doneCount > 0 && (
+        <p className="mt-6 text-center text-sm text-[var(--ink-soft)]">
+          Bugün <strong className="text-[var(--ink)]">{doneCount}/{rows.length}</strong> bitti.
+        </p>
+      )}
+
       <p className="mt-8 text-center text-sm text-[var(--ink-soft)]">
+        {userId === null && (
+          <span className="mb-2 flex items-center justify-center gap-1.5">
+            <Lock aria-hidden className="h-3.5 w-3.5" /> Bulmacalar üyelere açık
+          </span>
+        )}
         Yeni bulmacalara <Countdown /> kaldı
       </p>
       <p className="mt-2 text-center text-sm">

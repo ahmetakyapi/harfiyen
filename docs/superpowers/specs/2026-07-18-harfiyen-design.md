@@ -201,3 +201,23 @@ play_sessions
 - Cihazlar arası oyun durumu senkronu
 - Admin paneli (üretim script + DB yeterli)
 - Push bildirim / PWA offline
+
+---
+
+## 11. Uygulama notları — spec'ten bilinçli sapmalar
+
+Spec 2026-07-18'de onaylandı; aşağıdakiler uygulama sırasında ölçüme ve gerçek
+kullanıma dayanarak değiştirildi.
+
+| Konu | Spec | Uygulama | Gerekçe |
+|------|------|----------|---------|
+| Misafir oyunu (§1) | Misafir günün bulmacalarını oynayabilir | Oyun ekranı **üyeliğe kapalı** | Misafir bulmacayı görüp cevapları öğrenip sonra üye olarak "temiz" bir oturumla tekrar oynayabiliyordu; süre bazlı sıralama anlamsızlaşıyordu. `ensureIdentity` kaldırıldı — çerez yazıp isteği 401 ile reddetmek en kafa karıştırıcı ara durumdu. İmzalı anon kimliğin OKUMA yolu, ileride eklenecek "tanışma bulmacası" için duruyor. |
+| Mobil klavye (§1) | Özel Türkçe ekran klavyesi | Kullanıcının **native** klavyesi | Oyuncu alıştığı klavyeyi kullanıyor; yerleşim `visualViewport`'a sabitlenip ipucu şeridi klavyenin üstünde tutuluyor (`usePlayViewport`). |
+| İpucu (§1) | Sınırsız, her biri +15 sn | +15 sn **ve oturum başına tavan** (beyaz hücrelerin %25'i) | Ceza tek başına fren değildi: ipucu ucu ardı ardına çağrılarak çözüm ızgarası hücre hücre boşaltılabiliyordu. |
+| `isRanked` (§4) | Oturum açılırken belirlenir | Bitişte **yeniden doğrulanır** | Oturum başladığı güne bağlı (§8); dün açılıp bugün bitirilen bir oturum 24 saati aşan bir süreyi sıralamaya yazıyordu. Bulmacanın oyun günü kapandıysa sonuç pratik sayılır. |
+| Kelime sayısı (§5) | Orta 11-14, Zor 16-20 | Orta 10-14, Zor 14-20 | Kelime sayısı ile uzunluk çeşitliliği beyaz hücre tavanı altında çatışıyor; ölçüm `npm run generator:stats`. |
+| Üreteç geçerliliği (§5) | Kesişim, bağlantılılık, min uzunluk, kazara kelime, doluluk | + **kelime başına kesişim tabanı** (`minCrossingsFor`) | Ölçüm: kelimelerin %26-40'ı tek harften kontrollüydü; ipucunu bilemeyen oyuncunun tek çıkışı cezalı harf açmaktı. Havuz tekrar penceresiyle daralıp eşik tutturulamazsa gevşetilmiş bir son tur devreye girer (siteyi boş bırakmamak önceliklidir). |
+| Bitiş ekranı (§1) | Süre, sıra, paylaş | + kapatılabilir diyalog, süre dağılımı yüzdeliği, kişisel rekor, **"Bugünün Kelimeleri"** dökümü | Bulmaca bitince bütün bilgi kayboluyordu; kare bulmacanın en doyurucu anı ("hangi kelimeler çıkmış") kapalıydı. Döküm yalnızca oyuncunun kendi **tamamlanmış** oturumuna açılır. |
+| İçerik (§5) | Kelime başına 2-3 ipucu | **Tamamı 3 varyant** | 60 günlük simülasyonda iki varyantla yerleşimlerin %21'i daha önce görülen ipucuyla dönüyordu; üç varyantla ölçüm %0. |
+| Üretim (§5) | v1'de manuel | **Vercel cron** (`/api/cron/generate`) | Havuz tükenen gün herkesin serisi kırılıyor ve bu geri alınamıyor. |
+

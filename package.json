@@ -15,7 +15,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "generate:puzzles": "tsx --env-file=.env.local scripts/generate-puzzles.ts",
-    "regenerate:future": "tsx --env-file=.env.local scripts/regenerate-future.ts"
+    "regenerate:future": "tsx --env-file=.env.local scripts/regenerate-future.ts",
+    "db:stats": "tsx --env-file=.env.local scripts/db-stats.ts",
+    "generator:stats": "tsx scripts/generator-stats.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.2",

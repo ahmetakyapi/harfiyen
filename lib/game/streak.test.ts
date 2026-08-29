@@ -31,3 +31,22 @@ describe('applyStreak', () => {
     expect(after.lastStreakDate).toBe('2026-07-22');
   });
 });
+
+describe('nextStreak — geriye gitme koruması', () => {
+  it('geçmiş tarihli tamamlama seriyi düşürmez', () => {
+    // Oturum başladığı güne bağlıdır (spec §8): dün açık bırakılan bir sekme
+    // bugün bitirilebiliyor. Seri o bulmacanın tarihiyle uygulandığı için
+    // eskiden 11 günlük seri 1'e düşüyordu.
+    const s = { currentStreak: 11, bestStreak: 20, lastStreakDate: '2026-08-28' };
+    expect(nextStreak(s, '2026-08-27')).toEqual(s);
+    expect(nextStreak(s, '2026-08-01')).toEqual(s);
+  });
+  it('aynı gün ikinci tamamlama seriyi değiştirmez', () => {
+    const s = { currentStreak: 3, bestStreak: 5, lastStreakDate: '2026-08-28' };
+    expect(nextStreak(s, '2026-08-28')).toEqual(s);
+  });
+  it('ilk tamamlamada (lastStreakDate null) seri 1 olur', () => {
+    expect(nextStreak({ currentStreak: 0, bestStreak: 0, lastStreakDate: null }, '2026-08-28'))
+      .toEqual({ currentStreak: 1, bestStreak: 1, lastStreakDate: '2026-08-28' });
+  });
+});

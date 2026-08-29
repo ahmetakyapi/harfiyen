@@ -24,15 +24,17 @@ export async function Header() {
               Burada yalnızca sm ve üstündeki metin linkleri kalır. */}
           <Link href="/leaderboard" className="hidden hover:text-[var(--accent)] sm:block">Sıralama</Link>
           <Link href="/archive" className="hidden hover:text-[var(--accent)] sm:block">Arşiv</Link>
+          <Link href="/how-to-play" className="hidden hover:text-[var(--accent)] sm:block">Nasıl Oynanır</Link>
           {session
             ? (
-              <Link href={`/profile/${session.user.name}`} aria-label="Profil"
+              <Link href={`/profile/${session.user.name}`}
                 className="flex items-center gap-2">
+                <span className="sr-only">Profilim: {session.user.name}</span>
                 {/* Profil, imza taş dilinde bir baş harf avatarı: gradyan
                     çerçeve + krem zemin — her ekran boyutunda görünür,
                     kullanıcı adı yalnızca geniş ekranda yanında yazar. */}
-                <span className="block h-10 w-10 rounded-full bg-gradient-to-br from-[#3f8fd9] to-[#0d5799] p-[2px] shadow-sm">
-                  <span className="flex h-full w-full items-center justify-center rounded-full bg-[#fdf8ec] font-display text-sm font-bold text-[#0d5799]">
+                <span className="block h-10 w-10 rounded-full bg-gradient-to-br from-[var(--ladder-2-from)] to-[var(--ladder-2-to)] p-[2px] shadow-sm">
+                  <span className="flex h-full w-full items-center justify-center rounded-full bg-[var(--tile-face)] font-display text-sm font-bold text-[var(--diff-medium)]">
                     {initial}
                   </span>
                 </span>

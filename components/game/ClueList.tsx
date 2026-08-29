@@ -12,9 +12,15 @@ const DIR_TITLE: Record<Direction, string> = {
 // ipucu şeridi 20 kelimelik bir 10×10'da oyuncuyu kör uçuşa mahkûm ediyordu —
 // çözücüler ipuçlarını tarayıp "bildiğim birinden" başlar. Masaüstünde grid'in
 // yanında sabit, mobilde başlıktaki liste düğmesinden açılan panelde aynı bileşen.
-function Column({ entries, dir, active, solvedKeys, onPick }: {
+// Masaüstünde girdi, grid'i kaplayan GİZLİ bir input'tan geliyor: bir ipucuna
+// tıklamak odağı o düğmeye taşırsa oyuncunun bastığı harfler hiçbir yere
+// yazılmıyor ("harfler çalışmıyor" hissinin masaüstündeki kök nedeni).
+// ClueBar'daki keepFocus deseni buraya da uygulanır.
+const keepFocus = (e: React.PointerEvent): void => e.preventDefault();
+
+function Column({ entries, dir, active, solvedKeys, onPick, keepFocusOnPick }: {
   entries: Entry[]; dir: Direction; active: Entry | null;
-  solvedKeys: Set<string>; onPick: (entry: Entry) => void;
+  solvedKeys: Set<string>; onPick: (entry: Entry) => void; keepFocusOnPick: boolean;
 }) {
   const list = entries.filter((e) => e.dir === dir).sort((a, b) => a.no - b.no);
   return (
@@ -32,6 +38,7 @@ function Column({ entries, dir, active, solvedKeys, onPick }: {
           return (
             <li key={hashKey(e.no, e.dir)}>
               <button type="button" onClick={() => onPick(e)}
+                onPointerDown={keepFocusOnPick ? keepFocus : undefined}
                 aria-current={isActive || undefined}
                 className={`flex w-full gap-2 rounded-lg px-2 py-1.5 text-left text-sm transition-colors xl:text-[0.9375rem] ${
                   isActive
@@ -54,14 +61,19 @@ function Column({ entries, dir, active, solvedKeys, onPick }: {
   );
 }
 
-export function ClueList({ entries, active, solvedKeys, onPick }: {
+export function ClueList({ entries, active, solvedKeys, onPick, keepFocus: keep = false }: {
   entries: Entry[]; active: Entry | null; solvedKeys: Set<string>;
   onPick: (entry: Entry) => void;
+  /** Masaüstü panelinde true: gizli grid input'unun odağı düşmesin. Mobil tam
+   *  ekran panelde false — orada panel kapanıyor ve odak zaten devrediliyor. */
+  keepFocus?: boolean;
 }) {
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto overscroll-contain">
-      <Column entries={entries} dir="across" active={active} solvedKeys={solvedKeys} onPick={onPick} />
-      <Column entries={entries} dir="down" active={active} solvedKeys={solvedKeys} onPick={onPick} />
+      <Column entries={entries} dir="across" active={active} solvedKeys={solvedKeys}
+        onPick={onPick} keepFocusOnPick={keep} />
+      <Column entries={entries} dir="down" active={active} solvedKeys={solvedKeys}
+        onPick={onPick} keepFocusOnPick={keep} />
     </div>
   );
 }

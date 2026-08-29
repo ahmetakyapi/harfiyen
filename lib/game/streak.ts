@@ -6,7 +6,10 @@ import { users } from '@/lib/schema';
 export type StreakState = { currentStreak: number; bestStreak: number; lastStreakDate: string | null };
 
 export function nextStreak(s: StreakState, date: string): StreakState {
-  if (s.lastStreakDate === date) return s;
+  // Seri ASLA geriye gitmez. Oturum başladığı güne bağlı olduğundan (spec §8)
+  // dün açılmış bir oturum bugün tamamlanabilir; seri o bulmacanın tarihiyle
+  // uygulandığı için eskiden bu, bugün kazanılmış seriyi 1'e düşürüyordu.
+  if (s.lastStreakDate !== null && date <= s.lastStreakDate) return s;
   const current = s.lastStreakDate === addDays(date, -1) ? s.currentStreak + 1 : 1;
   return { currentStreak: current, bestStreak: Math.max(s.bestStreak, current), lastStreakDate: date };
 }
