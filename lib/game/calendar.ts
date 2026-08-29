@@ -64,6 +64,36 @@ export async function getCalendarDays(db: Db, opts: {
 }
 
 /**
+ * Takvim hücresinin durumu. Sıra ÖNEMLİ: komşu ay en başta elenir, çünkü o
+ * hücreler yalnızca yön bulmak için oradadır — işaret taşımamalıdırlar.
+ * (Taşıdıklarında, gri alanın içinde yeşil "oynadın" kareleri beliriyor ve
+ * takvim "temmuzun son iki gününü oynadım, temmuzun geri kalanını değil" gibi
+ * yanlış bir şey söylüyordu.)
+ */
+export type CalendarCellState =
+  | 'ay-disi'
+  | 'yayinlanmadi'
+  | 'yok'
+  | 'oynanmamis'
+  | 'oynanmis';
+
+export function cellStateOf(opts: {
+  date: string;
+  /** Panelde görünen ay ('YYYY-MM'). */
+  month: string;
+  /** Oyun günü — bundan sonrası henüz yayınlanmadı. */
+  today: string;
+  day?: { puzzleCount: number; doneCount: number };
+}): CalendarCellState {
+  if (opts.date.slice(0, 7) !== opts.month) return 'ay-disi';
+  if (opts.date > opts.today) return 'yayinlanmadi';
+  if (opts.date < LAUNCH_DATE) return 'yok';
+  const day = opts.day;
+  if (!day || day.puzzleCount === 0) return 'yok';
+  return day.doneCount > 0 ? 'oynanmis' : 'oynanmamis';
+}
+
+/**
  * Arşivdeki sayfalama, günleri YENİDEN ESKİYE 12'şer diziyor. Bir günün hangi
  * sayfada olduğu, kendisinden daha yeni gün sayısından çıkar.
  */

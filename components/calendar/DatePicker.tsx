@@ -8,9 +8,9 @@ import {
   formatTrtMonth, monthGrid, monthOf, weekdayIndex,
 } from '@/lib/date';
 
-type CalendarDay = { date: string; puzzleCount: number; doneCount: number };
+import { type CalendarCellState, cellStateOf } from '@/lib/game/calendar';
 
-type CellState = 'yok' | 'yayinlanmadi' | 'oynanmamis' | 'oynanmis';
+type CalendarDay = { date: string; puzzleCount: number; doneCount: number };
 
 export function DatePicker({ selected, today, onSelect, label, maxSelectable }: {
   /** Seçili gün (YYYY-MM-DD). Panel bu ayda açılır. */
@@ -79,17 +79,18 @@ export function DatePicker({ selected, today, onSelect, label, maxSelectable }: 
     triggerRef.current?.focus();
   }, []);
 
-  const stateOf = useCallback((date: string): CellState => {
-    if (date > today) return 'yayinlanmadi';
-    if (date < LAUNCH_DATE) return 'yok';
-    const day = byDate.get(date);
-    if (!day || day.puzzleCount === 0) return 'yok';
-    return day.doneCount > 0 ? 'oynanmis' : 'oynanmamis';
-  }, [byDate, today]);
+  const stateOf = useCallback(
+    (date: string): CalendarCellState =>
+      cellStateOf({ date, month, today, day: byDate.get(date) }),
+    [byDate, month, today],
+  );
 
+  // Komşu ay hücreleri TIKLANAMAZ: yalnızca yön içindirler. Tıklanabilir
+  // olsalardı sessizce ay değiştirirlerdi.
   const selectable = useCallback(
-    (date: string): boolean => date >= LAUNCH_DATE && date <= ceiling,
-    [ceiling],
+    (date: string): boolean =>
+      date >= LAUNCH_DATE && date <= ceiling && monthOf(date) === month,
+    [ceiling, month],
   );
 
   const move = useCallback((from: string, delta: number) => {
@@ -135,7 +136,9 @@ export function DatePicker({ selected, today, onSelect, label, maxSelectable }: 
   }, [open, selected]);
 
   const monthDays = cells.filter((d) => monthOf(d) === month);
-  const published = monthDays.filter((d) => stateOf(d) !== 'yok' && stateOf(d) !== 'yayinlanmadi').length;
+  const published = monthDays.filter(
+    (d) => stateOf(d) === 'oynanmis' || stateOf(d) === 'oynanmamis',
+  ).length;
   const solved = monthDays.filter((d) => (byDate.get(d)?.doneCount ?? 0) > 0).length;
 
   return (
@@ -152,7 +155,9 @@ export function DatePicker({ selected, today, onSelect, label, maxSelectable }: 
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-[var(--overlay)] backdrop-blur-sm sm:items-center"
           onClick={(e) => { if (e.target === e.currentTarget) close(); }}>
           <div ref={panelRef} role="dialog" aria-modal="true" aria-label="Tarih Seç"
-            className="w-full max-w-[22rem] rounded-t-[1.6rem] border border-[var(--line)] bg-[var(--paper-raised)] px-0.5 pb-[env(safe-area-inset-bottom)] pt-2 shadow-2xl sm:rounded-[1.6rem] sm:pb-2">
+            // max-h + iç kaydırma: yatay telefonda ve kısa pencerede gösterge
+            // satırı ekranın altında kalmasın.
+            className="max-h-[92dvh] w-full max-w-[22rem] overflow-y-auto overscroll-contain rounded-t-[1.6rem] border border-[var(--line)] bg-[var(--paper-raised)] px-0.5 pb-[env(safe-area-inset-bottom)] pt-2 shadow-2xl sm:rounded-[1.6rem] sm:pb-2">
             {/* Ay başlığı: üç sütun sabit — sınırda ok GİZLENMEZ, disabled olur;
                 yerleşim zıplamaz ve kontrol keşfedilebilir kalır. */}
             <div className="flex items-center justify-between px-2">
@@ -197,7 +202,6 @@ export function DatePicker({ selected, today, onSelect, label, maxSelectable }: 
                 <div key={week} role="row" className="grid grid-cols-7 gap-px">
                   {cells.slice(week * 7, week * 7 + 7).map((date) => (
                     <Cell key={date} date={date} state={stateOf(date)}
-                      inMonth={monthOf(date) === month}
                       day={byDate.get(date)}
                       isToday={date === today}
                       isSelected={date === selected}
@@ -219,33 +223,49 @@ export function DatePicker({ selected, today, onSelect, label, maxSelectable }: 
 }
 
 function Cell({
-  date, state, inMonth, day, isToday, isSelected, tabIndex, disabled, onPick, onFocusCell,
+  date, state, day, isToday, isSelected, tabIndex, disabled, onPick, onFocusCell,
 }: {
-  date: string; state: CellState; inMonth: boolean; day?: { puzzleCount: number; doneCount: number };
+  date: string; state: CalendarCellState; day?: { puzzleCount: number; doneCount: number };
   isToday: boolean; isSelected: boolean; tabIndex: number; disabled: boolean;
   onPick: () => void; onFocusCell: () => void;
 }) {
   const dayNo = Number(date.slice(8));
+  // Komşu ay hücresi: yalnızca yön için. Ne işaret taşır ne odak alır —
+  // aksi hâlde gri alanın içinde yeşil "oynadın" kareleri beliriyordu.
+  if (state === 'ay-disi') {
+    return (
+      <div role="gridcell" aria-hidden
+        className="flex aspect-square min-h-11 items-center justify-center text-sm text-[var(--ink-soft)]/30">
+        {dayNo}
+      </div>
+    );
+  }
+
   const done = day?.doneCount ?? 0;
   const total = day?.puzzleCount ?? 3;
+  const complete = total > 0 && done >= total;
 
   // Her durum RENKTEN BAĞIMSIZ ikinci bir sinyal taşır:
   //  · yok           → çapraz tarama dokusu (oyundaki bloklu hücrenin dili)
-  //  · yayınlanmadı  → zemin yokluğu
-  //  · oynanmamış    → düz kâğıt, alt cetvel yok
+  //  · yayınlanmadı  → HİÇ döşeme yok (boşluk)
+  //  · oynanmamış    → kenarlı düz kâğıt döşeme, alt cetvel yok
   //  · oynanmış      → alt kenarda SAYILABİLİR segmentler (1/3, 2/3, 3/3)
+  //
+  // "oynanmamış"a kenar çizgisi ŞART: --paper döşemesi, panelin
+  // --paper-raised zemininde neredeyse görünmüyordu; "bulmaca var" ile
+  // "henüz yayınlanmadı" tonla ayrışmıyordu. Ayrım artık yapısal:
+  // döşeme VAR / döşeme YOK.
   const base = 'relative flex aspect-square min-h-11 flex-col items-center justify-center text-sm';
   const tone = isSelected
     ? 'bg-[var(--ink)] text-[var(--paper)] font-semibold'
     : state === 'yok'
       ? 'cell-void text-[var(--ink-soft)]/50'
       : state === 'yayinlanmadi'
-        ? 'text-[var(--ink-soft)]/35'
-        : done >= total && total > 0
-          ? 'bg-[var(--correct-soft)] text-[var(--ink)] font-semibold ring-1 ring-inset ring-[var(--correct)]/40'
-          : 'bg-[var(--paper)] text-[var(--ink)]';
-  const ring = isToday && !isSelected ? 'ring-1 ring-inset ring-[var(--accent)]' : '';
-  const dim = inMonth ? '' : 'opacity-45';
+        ? 'text-[var(--ink-soft)]/30'
+        : complete
+          ? 'bg-[var(--correct-soft)] text-[var(--ink)] font-semibold ring-1 ring-inset ring-[var(--correct)]/45'
+          : 'bg-[var(--paper)] text-[var(--ink)] ring-1 ring-inset ring-[var(--line)]';
+  const ring = isToday && !isSelected ? 'ring-2 ring-inset ring-[var(--accent)]' : '';
 
   const label = `${formatTrtDate(date)}, ${TR_WEEKDAY_LONG[weekdayIndex(date)]}.`
     + (isToday ? ' Bugün.' : '')
@@ -262,7 +282,7 @@ function Cell({
         aria-disabled={disabled || undefined}
         aria-current={isToday ? 'date' : undefined}
         aria-label={label}
-        className={`w-full ${base} ${tone} ${ring} ${dim} ${disabled ? 'cursor-default' : 'cursor-pointer'}`}>
+        className={`w-full ${base} ${tone} ${ring} ${disabled ? 'cursor-default' : 'cursor-pointer'}`}>
         <span aria-hidden>{dayNo}</span>
         {/* Üç segmentli alt cetvel: kolay → orta → zor. Misafirde ve
             oynanmamış günde HİÇ render edilmez (boş segment "0/3" yalanı olurdu). */}

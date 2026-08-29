@@ -7,7 +7,7 @@ import { generateWithRetries } from '@/lib/generator/generator';
 import { playSessions, puzzles, users } from '@/lib/schema';
 import { createTestDb } from '@/tests/helpers/testDb';
 import { DIFFICULTIES, type Difficulty } from '@/lib/types';
-import { archivePageOf, getCalendarDays } from './calendar';
+import { archivePageOf, cellStateOf, getCalendarDays } from './calendar';
 
 const bank = loadBank();
 const NOW = new Date('2026-08-25T09:00:00Z'); // TSİ 12:00
@@ -115,5 +115,41 @@ describe('archivePageOf', () => {
     // Sayfa başına 3: en yeni gün 1. sayfada, en eski 7 günün sonuncusu 3. sayfada.
     expect(await archivePageOf(db, { date: newest, pageSize: 3, now: NOW })).toBe(1);
     expect(await archivePageOf(db, { date: oldest, pageSize: 3, now: NOW })).toBe(3);
+  });
+});
+
+describe('cellStateOf', () => {
+  const month = '2026-08';
+  const today = '2026-08-29';
+  const played = { puzzleCount: 3, doneCount: 2 };
+
+  it('komşu ay günleri İŞARET TAŞIMAZ', () => {
+    // Ekran görüntüsündeki kusur buydu: 30-31 Temmuz gri alanın içinde yeşil
+    // "oynadın" kareleri olarak görünüyordu.
+    expect(cellStateOf({ date: '2026-07-31', month, today, day: played })).toBe('ay-disi');
+    expect(cellStateOf({ date: '2026-09-01', month, today, day: played })).toBe('ay-disi');
+  });
+
+  it('bugünden sonrası yayınlanmadı sayılır', () => {
+    expect(cellStateOf({ date: '2026-08-30', month, today })).toBe('yayinlanmadi');
+    // Veri gelmiş olsa bile gelecek gün asla "var" görünmez.
+    expect(cellStateOf({ date: '2026-08-31', month, today, day: played })).toBe('yayinlanmadi');
+  });
+
+  it('lansman öncesi ve havuz boşluğu "yok"tur', () => {
+    expect(cellStateOf({ date: '2026-07-10', month: '2026-07', today })).toBe('yok');
+    expect(cellStateOf({ date: '2026-08-05', month, today })).toBe('yok');
+    expect(cellStateOf({ date: '2026-08-05', month, today, day: { puzzleCount: 0, doneCount: 0 } }))
+      .toBe('yok');
+  });
+
+  it('oynanmış ve oynanmamış günleri ayırır', () => {
+    expect(cellStateOf({ date: '2026-08-05', month, today, day: { puzzleCount: 3, doneCount: 0 } }))
+      .toBe('oynanmamis');
+    expect(cellStateOf({ date: '2026-08-05', month, today, day: played })).toBe('oynanmis');
+  });
+
+  it('bugün seçilebilir bir gündür (yayınlanmadı değil)', () => {
+    expect(cellStateOf({ date: today, month, today, day: played })).toBe('oynanmis');
   });
 });
