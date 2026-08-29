@@ -3,6 +3,7 @@ import { Check } from 'lucide-react';
 import { LetterTile } from '@/components/ui/LetterTile';
 import { DIFFICULTY_LABELS } from '@/lib/difficulty';
 import { formatDuration } from '@/lib/share';
+import { trUpper } from '@/lib/tr';
 import { DIFFICULTIES, type Difficulty } from '@/lib/types';
 
 // Arşiv kartı = bir gazete nüshası. Büyük display rakamı gün, üstünde ay adı
@@ -37,8 +38,9 @@ export function ArchiveDayCard({ date, dayNumber, weekday, monthName, puzzleNo, 
         </span>
         <span className="min-w-0 flex-1">
           <span className="block truncate font-display text-sm text-[var(--ink)]">{monthName}</span>
-          <span className="block text-[0.7rem] uppercase tracking-[0.14em] text-[var(--ink-soft)]">
-            {weekday}
+          {/* trUpper: CSS uppercase Safari'de "Pazartesi" → "PAZARTESI" yapar. */}
+          <span className="block text-[0.7rem] tracking-[0.14em] text-[var(--ink-soft)]">
+            {trUpper(weekday)}
           </span>
         </span>
         {/* Künye sütunu: baskı numarası, altında (gün tamamlandıysa) mühür.
@@ -55,8 +57,8 @@ export function ArchiveDayCard({ date, dayNumber, weekday, monthName, puzzleNo, 
           {allDone && (
             // Dekoratif: "3/3 çözüldü" bilgisi zaten aşağıdaki satırlardan geliyor.
             <span aria-hidden
-              className="-rotate-[7deg] select-none rounded-md border-2 border-[var(--correct)]/40 px-1.5 py-0.5 font-display text-[0.55rem] font-bold uppercase tracking-[0.16em] text-[var(--correct)]/60">
-              Tamamlandı
+              className="-rotate-[7deg] select-none rounded-md border-2 border-[var(--correct)]/40 px-1.5 py-0.5 font-display text-[0.55rem] font-bold tracking-[0.16em] text-[var(--correct)]/60">
+              {trUpper('Tamamlandı')}
             </span>
           )}
         </span>

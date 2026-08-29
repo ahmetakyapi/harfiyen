@@ -50,8 +50,11 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="tr" suppressHydrationWarning>
-      <body className={`${inter.variable} ${fraunces.variable} ${plexMono.variable} min-h-dvh bg-[var(--paper)] font-sans text-[var(--ink)] antialiased`}>
+    // Zemin rengi <html> üzerinde: atmosfer katmanı (body::after, z-index -1)
+    // kök yığın bağlamında kökün arka planından SONRA, içerikten ÖNCE boyanır.
+    // Renk <body>de kalsaydı katman onun altında kalıp görünmezdi.
+    <html lang="tr" className="bg-[var(--paper)]" suppressHydrationWarning>
+      <body className={`${inter.variable} ${fraunces.variable} ${plexMono.variable} min-h-dvh font-sans text-[var(--ink)] antialiased`}>
         <ThemeProvider>
           <HeaderSlot><Header /></HeaderSlot>
           {children}

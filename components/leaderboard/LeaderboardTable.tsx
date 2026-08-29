@@ -21,9 +21,16 @@ export function LeaderboardTable({ rows, myUsername, isToday = true }: {
 }) {
   if (rows.length === 0) {
     return (
-      <p className="py-12 text-center text-[var(--ink-soft)]">
-        {isToday ? 'Bugün henüz kimse bitirmedi — ilk sen ol!' : 'O gün kimse sıralamaya girmedi.'}
-      </p>
+      <div className="rounded-2xl border border-dashed border-[var(--line)] px-5 py-12 text-center">
+        <p className="font-display text-xl">
+          {isToday ? 'Bugün Henüz Kimse Bitirmedi' : 'O Gün Sıralama Boş Kaldı'}
+        </p>
+        <p className="mt-2 text-sm text-[var(--ink-soft)]">
+          {isToday
+            ? 'İlk sen ol — adın listenin en üstünde kalır.'
+            : 'O günün oyunu artık pratik; süren sıralamaya girmez.'}
+        </p>
+      </div>
     );
   }
   return (
@@ -48,9 +55,16 @@ export function LeaderboardTable({ rows, myUsername, isToday = true }: {
             {/* Kullanıcı adı profile bağlanır: profiller herkese açık ama
                 sıralamadan başka keşif yolu yoktu. */}
             <Link href={`/profile/${r.username}`}
-              className={`flex-1 truncate rounded px-1 py-0.5 hover:underline ${podium ? 'font-semibold' : ''}`}>
+              className={`min-w-0 flex-1 truncate rounded px-1 py-0.5 hover:underline ${podium ? 'font-semibold' : ''}`}>
               {r.username}
             </Link>
+            {/* Kendi satırını renk farkıyla bulmak, uzun listede tarama
+                gerektiriyordu; rozet onu tek bakışta veriyor. */}
+            {isMe && (
+              <span className="shrink-0 rounded-full bg-[var(--accent)] px-2 py-0.5 text-[0.65rem] font-bold text-[var(--paper)]">
+                Sen
+              </span>
+            )}
             {r.hintCount > 0 && (
               <span className="flex items-center gap-0.5 text-xs text-[var(--ink-soft)]" title={`${r.hintCount} harf açıldı`}>
                 <Lightbulb className="h-3.5 w-3.5 text-[var(--flame)]" />

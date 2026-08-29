@@ -2,6 +2,7 @@
 
 import { Check } from 'lucide-react';
 import { hashKey, type Direction, type Entry } from '@/lib/types';
+import { trUpper } from '@/lib/tr';
 
 const DIR_TITLE: Record<Direction, string> = {
   across: 'Soldan Sağa',
@@ -28,8 +29,8 @@ function Column({ entries, dir, active, solvedKeys, onPick, keepFocusOnPick }: {
     // aralarında kocaman bir boşluk bırakıyordu — gruplar içeriğe göre akar,
     // taşarsa kapsayıcı kaydırır.
     <div className="min-w-0">
-      <p className="sticky top-0 z-10 bg-[var(--paper)] pb-1.5 pt-0.5 text-[0.7rem] font-bold uppercase tracking-wider text-[var(--ink-soft)]">
-        {DIR_TITLE[dir]}
+      <p className="sticky top-0 z-10 bg-[var(--paper)] pb-1.5 pt-0.5 text-[0.7rem] font-bold tracking-wider text-[var(--ink-soft)]">
+        {trUpper(DIR_TITLE[dir])}
       </p>
       <ul className="flex flex-col">
         {list.map((e) => {
