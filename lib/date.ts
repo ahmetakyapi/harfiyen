@@ -32,6 +32,45 @@ export function addDays(date: string, n: number): string {
   return new Date(t).toISOString().slice(0, 10);
 }
 
+// Haftanın günü, PAZARTESİ = 0. Takvimlerin tamamı pazartesiden başlar.
+// (Kopya app/profile/[username]/page.tsx içinde gömülüydü; tek kaynak burası.)
+export function weekdayIndex(date: string): number {
+  return (new Date(`${date}T00:00:00Z`).getUTCDay() + 6) % 7;
+}
+
+export const TR_WEEKDAY_SHORT = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'] as const;
+export const TR_WEEKDAY_LONG = [
+  'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar',
+] as const;
+
+/** 'YYYY-MM-DD' → 'YYYY-MM' */
+export function monthOf(date: string): string {
+  return date.slice(0, 7);
+}
+
+/** 'YYYY-MM' ± n ay → 'YYYY-MM' */
+export function addMonths(month: string, n: number): string {
+  const [y, m] = month.split('-').map(Number);
+  const total = y * 12 + (m - 1) + n;
+  const year = Math.floor(total / 12);
+  const mon = total % 12 + 1;
+  return `${String(year).padStart(4, '0')}-${String(mon).padStart(2, '0')}`;
+}
+
+/**
+ * Bir ayın takvim ızgarası: SABİT 42 hücre (6 hafta), pazartesiden başlar.
+ * Sabit olması şart — ay değişince panelin boyu zıplamamalı.
+ * Dönen dizide komşu ayların taşan günleri de vardır; çağıran hangisinin
+ * ay dışı olduğunu `monthOf` ile ayırt eder.
+ */
+export const CALENDAR_GRID_CELLS = 42;
+
+export function monthGrid(month: string): string[] {
+  const first = `${month}-01`;
+  const start = addDays(first, -weekdayIndex(first));
+  return Array.from({ length: CALENDAR_GRID_CELLS }, (_, i) => addDays(start, i));
+}
+
 export function puzzleNumber(date: string): number {
   const diff = (Date.parse(`${date}T00:00:00Z`) - Date.parse(`${LAUNCH_DATE}T00:00:00Z`)) / DAY_MS;
   return Math.round(diff) + 1;

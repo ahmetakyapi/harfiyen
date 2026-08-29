@@ -11,19 +11,26 @@ import { DIFFICULTIES, type Difficulty } from '@/lib/types';
 // da çözülmüşse köşeye hafif eğik bir "TAMAMLANDI" mührü basılır — temanın
 // mühür/vermilyon diliyle, arşive göz gezdirirken tamamlananları bir bakışta
 // ayırt ettiren sessiz bir ödül.
-export function ArchiveDayCard({ date, dayNumber, weekday, monthName, puzzleNo, doneMs }: {
+export function ArchiveDayCard({
+  date, dayNumber, weekday, monthName, puzzleNo, doneMs, highlighted = false,
+}: {
   date: string; dayNumber: string; weekday: string; monthName: string;
   puzzleNo: number; doneMs: Map<string, number | null>;
+  /** Takvimden seçilerek gelinen gün: halka ile işaretlenir ve #gun-… ile
+   *  tarayıcı buraya kaydırır (JS kapalıyken de çalışır). */
+  highlighted?: boolean;
 }) {
   const solved = DIFFICULTIES.filter((d) => doneMs.has(`${date}:${d}`));
   const allDone = solved.length === DIFFICULTIES.length;
 
   return (
-    <section
-      className={`relative overflow-hidden rounded-[1.4rem] border bg-[var(--paper-raised)] transition-[transform,box-shadow,border-color] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-0.5 ${
-        allDone
-          ? 'border-[var(--correct)]/35 shadow-[0_14px_40px_-30px_var(--correct)]'
-          : 'border-[var(--line)] shadow-[0_14px_40px_-32px_var(--ink)] hover:shadow-[0_20px_50px_-28px_var(--ink)]'
+    <section id={`gun-${date}`}
+      className={`relative scroll-mt-20 overflow-hidden rounded-[1.4rem] border bg-[var(--paper-raised)] transition-[transform,box-shadow,border-color] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-0.5 ${
+        highlighted
+          ? 'border-[var(--accent)] ring-2 ring-[var(--accent)] ring-offset-2 ring-offset-[var(--paper)]'
+          : allDone
+            ? 'border-[var(--correct)]/35 shadow-[0_14px_40px_-30px_var(--correct)]'
+            : 'border-[var(--line)] shadow-[0_14px_40px_-32px_var(--ink)] hover:shadow-[0_20px_50px_-28px_var(--ink)]'
       }`}>
       {/* Kâğıt kenarı hissi: üstte zorluk merdivenini taşıyan çok ince bir cetvel */}
       <div aria-hidden className="flex h-[3px] w-full">

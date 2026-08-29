@@ -2,8 +2,9 @@ import { and, desc, eq, inArray, lt, sql } from 'drizzle-orm';
 import { auth } from '@/lib/auth';
 import { AutoRefresh } from '@/components/layout/AutoRefresh';
 import { ArchiveGallery } from '@/components/archive/ArchiveGallery';
-import { gameDay } from '@/lib/date';
+import { LAUNCH_DATE, addDays, gameDay, isValidGameDate } from '@/lib/date';
 import { getDb } from '@/lib/db';
+import { archivePageOf } from '@/lib/game/calendar';
 import { playSessions, puzzles } from '@/lib/schema';
 
 export const metadata = {
@@ -16,11 +17,20 @@ export const dynamic = 'force-dynamic';
 const PAGE_SIZE = 12;
 
 export default async function ArchivePage({ searchParams }: {
-  searchParams: { sayfa?: string };
+  searchParams: { sayfa?: string; gun?: string };
 }) {
   const db = getDb();
   const today = gameDay();
-  const page = Math.max(1, Number.parseInt(searchParams.sayfa ?? '1', 10) || 1);
+  // `gun` verilmişse `sayfa`yı EZER: takvimden bir gün seçmek, o günün
+  // bulunduğu sayfaya gitmek demektir. Bağlantı paylaşılabilir ve kendini
+  // anlatır ("arşivde 12 Ağustos'un olduğu sayfa").
+  const jumpTo = searchParams.gun && isValidGameDate(searchParams.gun)
+    && searchParams.gun >= LAUNCH_DATE && searchParams.gun < today
+    ? searchParams.gun : null;
+  const requested = Math.max(1, Number.parseInt(searchParams.sayfa ?? '1', 10) || 1);
+  const page = jumpTo
+    ? await archivePageOf(db, { date: jumpTo, pageSize: PAGE_SIZE })
+    : requested;
 
   // Sayfalama SQL'de: eskiden tüm geçmiş günler tek seferde çekiliyordu; arşiv
   // her gün bir satır büyüdüğünden hem sorgu hem DOM sınırsız şişerdi.
@@ -78,7 +88,8 @@ export default async function ArchivePage({ searchParams }: {
     <main className="page-enter mx-auto max-w-5xl px-4 py-10">
       <AutoRefresh />
       <ArchiveGallery dates={dates} doneMs={doneMs}
-        page={safePage} pageCount={pageCount} totalDays={totalDays} />
+        page={safePage} pageCount={pageCount} totalDays={totalDays}
+        today={today} highlight={jumpTo} latest={dates[0] ?? addDays(today, -1)} />
     </main>
   );
 }

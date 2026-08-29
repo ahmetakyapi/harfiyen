@@ -10,7 +10,7 @@ import { DIFFICULTY_LABELS } from '@/lib/difficulty';
 import { getDb } from '@/lib/db';
 import { CALENDAR_DAYS, getProfileStats } from '@/lib/game/stats';
 import { formatDuration } from '@/lib/share';
-import { addDays, formatTrtDate, gameDay } from '@/lib/date';
+import { TR_WEEKDAY_SHORT, addDays, formatTrtDate, gameDay, weekdayIndex } from '@/lib/date';
 import { normalizeUsername, trUpper } from '@/lib/tr';
 import { DIFFICULTIES } from '@/lib/types';
 
@@ -26,13 +26,6 @@ export async function generateMetadata({ params }: { params: { username: string 
     title: stats.username,
     description: `${stats.username} · ${stats.totalSolved} bulmaca · ${stats.currentStreak} günlük seri`,
   };
-}
-
-const WEEKDAYS = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'] as const;
-
-/** Pazartesi = 0 olacak biçimde haftanın günü. */
-function weekdayIndex(date: string): number {
-  return (new Date(`${date}T00:00:00Z`).getUTCDay() + 6) % 7;
 }
 
 /**
@@ -60,7 +53,7 @@ function StreakCalendar({ calendar }: { calendar: Record<string, number> }) {
     <div className="rounded-2xl border border-[var(--line)] bg-[var(--paper-raised)] p-4">
       <div className="flex gap-2">
         <div aria-hidden className="flex flex-col gap-1 pt-px">
-          {WEEKDAYS.map((d) => (
+          {TR_WEEKDAY_SHORT.map((d) => (
             <span key={d} className="flex h-4 items-center font-mono text-[0.6rem] leading-none text-[var(--ink-soft)]">
               {d}
             </span>
