@@ -396,6 +396,12 @@ body::before {
   to { opacity: 1; transform: none; }
 }
 
+/* DİKKAT: bu animasyon `transform` içerdiği ve `both` ile doldurulduğu için
+   öğe, `position: fixed` alt öğeleri için İÇEREN BLOK olur — animasyon bittikten
+   sonra bile. Yani bu <main>'in içine konan tam ekran bir örtü viewport'a değil
+   main'in kutusuna çıpalanır ve ekranın tuhaf bir yerinde açılır (tarih seçici
+   bir kez bu tuzağa düştü). Sayfa içine diyalog koyacaksan onu portal ile
+   doğrudan body'ye taşı — bkz. components/calendar/DatePicker.tsx. */
 .page-enter {
   animation: page-enter 0.24s cubic-bezier(0.22, 1, 0.36, 1) both;
 }

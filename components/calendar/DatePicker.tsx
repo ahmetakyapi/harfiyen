@@ -2,6 +2,7 @@
 
 import { CalendarDays, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
 import {
   LAUNCH_DATE, TR_WEEKDAY_LONG, TR_WEEKDAY_SHORT, addDays, addMonths, formatTrtDate,
@@ -32,6 +33,9 @@ export function DatePicker({ selected, today, onSelect, label, maxSelectable }: 
   // aynı aya dönüldüğünde ikinci bir tur atılmaz.
   const [cache, setCache] = useState<Record<string, CalendarDay[]>>({});
   const [loading, setLoading] = useState(false);
+  // Portal yalnızca istemcide kurulabilir.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
   const gridRef = useRef<HTMLDivElement | null>(null);
@@ -151,13 +155,19 @@ export function DatePicker({ selected, today, onSelect, label, maxSelectable }: 
         <CalendarDays aria-hidden className="h-4 w-4 shrink-0 text-[var(--ink-soft)]" />
       </button>
 
-      {open && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-[var(--overlay)] backdrop-blur-sm sm:items-center"
+      {open && mounted && createPortal(
+        // PORTAL ŞART: panel `position: fixed` ile viewport'a çıpalanıyor, ama
+        // bir üst öğede transform/filter/contain varsa fixed O ÖĞEYE çıpalanır
+        // ve panel ekranın tuhaf bir yerinde açılır. Sayfaların <main>'i
+        // `page-enter` animasyonu (transform) taşıyor. Paneli doğrudan body'ye
+        // taşımak bu sınıf hatayı kökten kaldırır — hangi sayfaya konursa
+        // konsun aynı yerde açılır.
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--overlay)] p-4 backdrop-blur-sm"
           onClick={(e) => { if (e.target === e.currentTarget) close(); }}>
           <div ref={panelRef} role="dialog" aria-modal="true" aria-label="Tarih Seç"
             // max-h + iç kaydırma: yatay telefonda ve kısa pencerede gösterge
             // satırı ekranın altında kalmasın.
-            className="max-h-[92dvh] w-full max-w-[22rem] overflow-y-auto overscroll-contain rounded-t-[1.6rem] border border-[var(--line)] bg-[var(--paper-raised)] px-0.5 pb-[env(safe-area-inset-bottom)] pt-2 shadow-2xl sm:rounded-[1.6rem] sm:pb-2">
+            className="max-h-[92dvh] w-full max-w-[22rem] overflow-y-auto overscroll-contain rounded-[1.6rem] border border-[var(--line)] bg-[var(--paper-raised)] px-0.5 pb-2 pt-2 shadow-2xl">
             {/* Ay başlığı: üç sütun sabit — sınırda ok GİZLENMEZ, disabled olur;
                 yerleşim zıplamaz ve kontrol keşfedilebilir kalır. */}
             <div className="flex items-center justify-between px-2">
@@ -176,7 +186,7 @@ export function DatePicker({ selected, today, onSelect, label, maxSelectable }: 
                   <ChevronRight aria-hidden className="h-5 w-5" />
                 </button>
                 <button type="button" onClick={close} aria-label="Kapat"
-                  className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--ink-soft)] transition-colors hover:bg-[var(--paper)] sm:hidden">
+                  className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--ink-soft)] transition-colors hover:bg-[var(--paper)]">
                   <X aria-hidden className="h-5 w-5" />
                 </button>
               </div>
@@ -216,7 +226,8 @@ export function DatePicker({ selected, today, onSelect, label, maxSelectable }: 
 
             <Legend />
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </>
   );
