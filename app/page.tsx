@@ -1,6 +1,5 @@
 import Link from 'next/link';
 import { and, eq, inArray, sql } from 'drizzle-orm';
-import { Lock } from 'lucide-react';
 import { AutoRefresh } from '@/components/layout/AutoRefresh';
 import { Countdown } from '@/components/home/Countdown';
 import { DailyCard } from '@/components/home/DailyCard';
@@ -8,6 +7,7 @@ import { StreakBadge } from '@/components/home/StreakBadge';
 import { auth } from '@/lib/auth';
 import { formatTrtDate, gameDay, puzzleNumber } from '@/lib/date';
 import { getDb } from '@/lib/db';
+import { trUpper } from '@/lib/tr';
 import { playSessions, puzzles, users } from '@/lib/schema';
 import { DIFFICULTIES } from '@/lib/types';
 
@@ -59,8 +59,11 @@ export default async function HomePage() {
   return (
     <main className="page-enter mx-auto max-w-lg px-4 py-8 sm:py-12">
       <AutoRefresh />
-      <p className="mx-auto w-fit rounded-full bg-[var(--accent-soft)] px-4 py-1 text-center text-xs font-semibold uppercase tracking-widest text-[var(--accent)]">
-        {formatTrtDate(today)} · #{puzzleNumber(today)}
+      {/* CSS `text-transform: uppercase` Safari'de dile duyarlı DEĞİL:
+          "Nisan" → "NISAN", "Ekim" → "EKIM" üretiyor. Büyük harf her zaman
+          trUpper ile (proje kuralı). */}
+      <p className="mx-auto w-fit rounded-full bg-[var(--accent-soft)] px-4 py-1 text-center text-xs font-semibold tracking-widest text-[var(--accent)]">
+        {trUpper(formatTrtDate(today))} · #{puzzleNumber(today)}
       </p>
       <h1 className="font-display-flourish mt-4 bg-gradient-to-r from-[var(--title-from)] to-[var(--title-to)] bg-clip-text text-center font-display text-4xl text-transparent sm:text-5xl">
         Günün Bulmacaları
@@ -107,11 +110,16 @@ export default async function HomePage() {
           <p className="mt-1 font-mono text-sm tabular-nums text-[var(--ink-soft)]">
             3/3 · toplam {Math.floor(totalMs / 60000)} dk {Math.round((totalMs % 60000) / 1000)} sn
           </p>
-          <p className="mt-2 text-sm">
-            <Link href="/leaderboard" className="underline">Sıralamaya bak</Link>
-            {' · '}
-            <Link href="/archive" className="underline">arşivde devam et</Link>
-          </p>
+          <div className="mt-3 flex gap-2">
+            <Link href="/leaderboard"
+              className="flex min-h-11 flex-1 items-center justify-center rounded-xl border border-[var(--correct)]/35 bg-[var(--paper-raised)] text-sm font-medium transition-colors hover:bg-[var(--row-hover)]">
+              Sıralamayı Gör
+            </Link>
+            <Link href="/archive"
+              className="flex min-h-11 flex-1 items-center justify-center rounded-xl border border-[var(--correct)]/35 bg-[var(--paper-raised)] text-sm font-medium transition-colors hover:bg-[var(--row-hover)]">
+              Arşivde Devam Et
+            </Link>
+          </div>
         </div>
       )}
       {!allDone && doneCount > 0 && (
@@ -120,17 +128,22 @@ export default async function HomePage() {
         </p>
       )}
 
-      <p className="mt-8 text-center text-sm text-[var(--ink-soft)]">
-        {userId === null && (
-          <span className="mb-2 flex items-center justify-center gap-1.5">
-            <Lock aria-hidden className="h-3.5 w-3.5" /> Bulmacalar üyelere açık
-          </span>
-        )}
-        Yeni bulmacalara <Countdown /> kaldı
-      </p>
-      <p className="mt-2 text-center text-sm">
-        <Link href="/how-to-play" className="underline">Nasıl Oynanır?</Link>
-      </p>
+      {/* Sonraki baskıya geri sayım: gazete künyesi gibi ince bir şerit.
+          "Üyelere açık" notu kaldırıldı — kartların üstündeki kilit rozeti ve
+          başlıktaki çağrı aynı şeyi zaten iki kez söylüyordu. */}
+      <div className="mt-9 flex flex-col items-center gap-3">
+        <div className="flex w-full items-center gap-3">
+          <span aria-hidden className="h-px flex-1 bg-[var(--line)]" />
+          <p className="shrink-0 text-center text-sm text-[var(--ink-soft)]">
+            Yeni bulmacalara <Countdown /> kaldı
+          </p>
+          <span aria-hidden className="h-px flex-1 bg-[var(--line)]" />
+        </div>
+        <Link href="/how-to-play"
+          className="flex min-h-11 items-center rounded-full border border-[var(--line)] px-4 text-sm font-medium transition-colors hover:bg-[var(--paper-raised)]">
+          Nasıl Oynanır?
+        </Link>
+      </div>
     </main>
   );
 }

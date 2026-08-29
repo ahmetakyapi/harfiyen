@@ -14,7 +14,7 @@ export default function GlobalError({ error, reset }: {
         fontFamily: 'system-ui, sans-serif', textAlign: 'center', padding: '1.5rem',
       }}>
         <div>
-          <h1 style={{ fontSize: '1.5rem', margin: 0 }}>Harfiyen açılamadı</h1>
+          <h1 style={{ fontSize: '1.5rem', margin: 0 }}>Harfiyen Açılamadı</h1>
           <p style={{ marginTop: '0.75rem', fontSize: '0.9rem', opacity: 0.75 }}>
             Beklenmedik bir hata oldu. Sayfayı yenilemeyi dene.
           </p>

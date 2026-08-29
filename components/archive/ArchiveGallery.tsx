@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { ArchiveDayCard } from '@/components/archive/ArchiveDayCard';
 import { formatTrtDayNumber, formatTrtMonth, formatTrtWeekday, puzzleNumber } from '@/lib/date';
 import { DIFFICULTIES } from '@/lib/types';
+import { trUpper } from '@/lib/tr';
 
 // Arşivin görsel katmanı, veri katmanından ayrı: sayfa yalnızca sorgu atar,
 // yerleşim/tipografi burada. Böylece tasarım gerçek veriye ihtiyaç duymadan
@@ -22,8 +23,8 @@ export function ArchiveGallery({ dates, doneMs, page, pageCount, totalDays }: {
       <header className="text-center">
         <div className="flex items-center justify-center gap-3">
           <span aria-hidden className="h-px w-10 bg-[var(--line)] sm:w-20" />
-          <p className="text-[0.65rem] font-semibold uppercase tracking-[0.3em] text-[var(--ink-soft)]">
-            Geçmiş Nüshalar
+          <p className="text-[0.65rem] font-semibold tracking-[0.3em] text-[var(--ink-soft)]">
+            {trUpper('Geçmiş Nüshalar')}
           </p>
           <span aria-hidden className="h-px w-10 bg-[var(--line)] sm:w-20" />
         </div>
