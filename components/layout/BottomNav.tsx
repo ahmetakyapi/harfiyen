@@ -17,7 +17,7 @@ const SIDE = [
   { href: '/archive', label: 'Arşiv', Icon: Archive },
 ] as const;
 
-const LABEL = 'text-[0.6875rem] font-medium leading-none';
+const LABEL = 'text-xs font-medium leading-none';
 
 export function BottomNav() {
   const pathname = usePathname() ?? '/';

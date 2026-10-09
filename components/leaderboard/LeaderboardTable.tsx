@@ -63,7 +63,7 @@ export function LeaderboardTable({ rows, myUsername, isToday = true }: {
             {/* Kendi satırını renk farkıyla bulmak, uzun listede tarama
                 gerektiriyordu; rozet onu tek bakışta veriyor. */}
             {isMe && (
-              <span className="shrink-0 rounded-full bg-[var(--accent)] px-2 py-0.5 text-[0.65rem] font-bold text-[var(--paper)]">
+              <span className="shrink-0 rounded-full bg-[var(--accent)] px-2 py-0.5 text-xs font-semibold text-[var(--paper)]">
                 Sen
               </span>
             )}

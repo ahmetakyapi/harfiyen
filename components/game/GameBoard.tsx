@@ -883,13 +883,13 @@ export function GameBoard({
               <div className="mb-3 shrink-0 rounded-2xl border border-[var(--line)] bg-[var(--paper-raised)] p-4 shadow-[0_18px_40px_-34px_var(--ink)]">
                 <div className="flex items-center justify-between gap-4">
                   <div>
-                    <p className="text-[0.65rem] font-bold tracking-wider text-[var(--ink-soft)]">{trUpper('Süre')}</p>
+                    <p className="text-xs font-medium text-[var(--ink-soft)]">Süre</p>
                     <Timer startedAt={session.startedAt} serverNow={session.serverNow}
                       penaltyMs={penaltyMs} finalMs={result?.durationMs ?? null}
                       className="text-[1.75rem] leading-tight" />
                   </div>
                   <div className="text-right">
-                    <p className="text-[0.65rem] font-bold tracking-wider text-[var(--ink-soft)]">{trUpper('Çözülen')}</p>
+                    <p className="text-xs font-medium text-[var(--ink-soft)]">Çözülen</p>
                     <p className="font-mono text-[1.75rem] font-semibold leading-tight tabular-nums text-[var(--ink)]">
                       {solvedCount}
                       <span className="text-base font-medium text-[var(--ink-soft)]">/{totalCount}</span>

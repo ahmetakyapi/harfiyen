@@ -45,9 +45,8 @@ export function ArchiveDayCard({
         </span>
         <span className="min-w-0 flex-1">
           <span className="block truncate font-display text-sm text-[var(--ink)]">{monthName}</span>
-          {/* trUpper: CSS uppercase Safari'de "Pazartesi" → "PAZARTESI" yapar. */}
-          <span className="block text-[0.7rem] tracking-[0.14em] text-[var(--ink-soft)]">
-            {trUpper(weekday)}
+          <span className="block text-xs font-medium text-[var(--ink-soft)]">
+            {weekday}
           </span>
         </span>
         {/* Künye sütunu: baskı numarası, altında (gün tamamlandıysa) mühür.
@@ -58,13 +57,13 @@ export function ArchiveDayCard({
               oraya götürüyor. */}
           <Link href={`/leaderboard?date=${date}&difficulty=easy`}
             aria-label={`${dayNumber} ${monthName} sıralaması`}
-            className="font-mono text-[0.7rem] text-[var(--ink-soft)] underline-offset-2 hover:underline">
+            className="font-mono text-xs text-[var(--ink-soft)] underline-offset-2 hover:underline">
             #{puzzleNo}
           </Link>
           {allDone && (
             // Dekoratif: "3/3 çözüldü" bilgisi zaten aşağıdaki satırlardan geliyor.
             <span aria-hidden
-              className="stamp -rotate-[7deg] select-none rounded-md border-2 border-[color:color-mix(in_srgb,var(--correct)_40%,transparent)] px-1.5 py-0.5 font-display text-[0.55rem] font-bold tracking-[0.16em] text-[color:color-mix(in_srgb,var(--correct)_60%,transparent)]">
+              className="stamp -rotate-[7deg] select-none rounded-md border-2 border-[color:color-mix(in_srgb,var(--correct)_40%,transparent)] px-1.5 py-0.5 font-display text-xs font-bold tracking-[0.04em] text-[color:color-mix(in_srgb,var(--correct)_80%,transparent)]">
               {trUpper('Tamamlandı')}
             </span>
           )}
@@ -87,7 +86,7 @@ export function ArchiveDayCard({
               </span>
               <span className="flex-1 text-sm font-medium">{DIFFICULTY_LABELS[d]}</span>
               {isDone
-                ? <span className="flex items-center gap-1 rounded-full bg-[var(--correct-soft)] px-2 py-1 text-[0.7rem] font-semibold text-[var(--correct)]">
+                ? <span className="flex items-center gap-1 rounded-full bg-[var(--correct-soft)] px-2 py-1 text-xs font-semibold text-[var(--correct)]">
                     <Check aria-hidden className="h-3 w-3" strokeWidth={3} />
                     {ms !== null && <span className="font-mono tabular-nums">{formatDuration(ms)}</span>}
                   </span>

@@ -8,7 +8,6 @@ import { KineticTitle } from '@/components/motion/KineticTitle';
 import { auth } from '@/lib/auth';
 import { formatTrtDate, gameDay, puzzleNumber } from '@/lib/date';
 import { getDb } from '@/lib/db';
-import { trUpper } from '@/lib/tr';
 import { playSessions, puzzles, users } from '@/lib/schema';
 import { DIFFICULTIES } from '@/lib/types';
 
@@ -64,18 +63,13 @@ export default async function HomePage() {
           bulmaca ızgarası: sayfanın kâğıdı, oyunun kâğıdı. */}
       <header className="relative">
         <span aria-hidden className="hero-grid" />
-        {/* CSS `text-transform: uppercase` Safari'de dile duyarlı DEĞİL:
-            "Nisan" → "NISAN", "Ekim" → "EKIM" üretiyor. Büyük harf her zaman
-            trUpper ile (proje kuralı). */}
-        <div className="rise relative flex items-center gap-3" style={{ '--i': 0 } as React.CSSProperties}>
-          <span aria-hidden className="h-px flex-1 bg-[var(--line)]" />
-          <p className="shrink-0 rounded-full bg-[var(--accent-soft)] px-4 py-1 text-center text-xs font-semibold tracking-widest text-[var(--accent)]">
-            {trUpper(formatTrtDate(today))} · #{puzzleNumber(today)}
-          </p>
-          <span aria-hidden className="h-px flex-1 bg-[var(--line)]" />
-        </div>
         <KineticTitle text="Günün Bulmacaları"
-          className="font-display-flourish relative mt-5 text-center font-display text-[2.75rem] leading-[1.02] tracking-tight text-[var(--ink)] sm:text-[4.25rem]" />
+          className="font-display-flourish relative text-center font-display text-[2.75rem] leading-[1.02] tracking-tight text-[var(--ink)] sm:text-[4.25rem]" />
+        {/* Künye bilgisi (tarih + sayı) başlığın ALTINDA, okunur boyda; üstteki
+            harflenmiş hap etiket kaldırıldı. */}
+        <p className="rise relative mt-3 text-center text-sm font-medium text-[var(--ink-soft)]" style={{ '--i': 2 } as React.CSSProperties}>
+          {formatTrtDate(today)} · <span className="font-mono tabular-nums">#{puzzleNumber(today)}</span>
+        </p>
         <div className="rise relative mt-5 flex justify-center" style={{ '--i': 3 } as React.CSSProperties}>
           {streak
             ? <StreakBadge current={streak.currentStreak} best={streak.bestStreak} />

@@ -33,7 +33,7 @@ export default function ErrorBoundary({ error, reset }: {
         </Link>
       </div>
       {error.digest && (
-        <p className="mt-6 font-mono text-[0.7rem] text-[var(--ink-soft)]">hata kodu: {error.digest}</p>
+        <p className="mt-6 font-mono text-xs text-[var(--ink-soft)]">hata kodu: {error.digest}</p>
       )}
     </main>
   );

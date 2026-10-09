@@ -1,10 +1,9 @@
 'use client';
 
 import { Check, ChevronLeft, ChevronRight, Eraser } from 'lucide-react';
-import { trUpper } from '@/lib/tr';
 import type { Entry } from '@/lib/types';
 
-const DIR_LABEL = { across: 'Soldan sağa', down: 'Yukarıdan aşağıya' } as const;
+const DIR_LABEL = { across: 'Soldan Sağa', down: 'Yukarıdan Aşağıya' } as const;
 
 const ARROW_BTN =
   'flex min-w-11 items-center justify-center rounded-lg px-2 opacity-70 transition-opacity hover:opacity-100';
@@ -34,8 +33,8 @@ export function ClueBar({ entry, solved, onPrev, onNext, onToggleDir, onClearWor
           {solved ? <Check className="h-4 w-4" strokeWidth={3} /> : entry.no}
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block text-[0.65rem] font-semibold tracking-wider text-[color:color-mix(in_srgb,var(--paper)_60%,transparent)] lg:text-[0.7rem]">
-            {trUpper(`${DIR_LABEL[entry.dir]} · ${entry.len} harf`)}
+          <span className="block text-xs font-medium text-[color:color-mix(in_srgb,var(--paper)_78%,transparent)]">
+            {`${DIR_LABEL[entry.dir]} · ${entry.len} Harf`}
           </span>
           {/* İpuçları uzun olabiliyor; iki satıra izin verilir, fazlası kırpılır
               (tam metin her zaman ipucu listesinde görünür). `block` KOYMA:

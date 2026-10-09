@@ -11,7 +11,7 @@ import { getDb } from '@/lib/db';
 import { CALENDAR_DAYS, getProfileStats } from '@/lib/game/stats';
 import { formatDuration } from '@/lib/share';
 import { TR_WEEKDAY_SHORT, addDays, formatTrtDate, gameDay, weekdayIndex } from '@/lib/date';
-import { normalizeUsername, trUpper } from '@/lib/tr';
+import { normalizeUsername } from '@/lib/tr';
 import { DIFFICULTIES } from '@/lib/types';
 import { CountUp } from '@/components/motion/CountUp';
 import { KineticTitle } from '@/components/motion/KineticTitle';
@@ -56,7 +56,7 @@ function StreakCalendar({ calendar }: { calendar: Record<string, number> }) {
       <div className="flex gap-2">
         <div aria-hidden className="flex flex-col gap-1 pt-px">
           {TR_WEEKDAY_SHORT.map((d) => (
-            <span key={d} className="flex h-4 items-center font-mono text-[0.6rem] leading-none text-[var(--ink-soft)]">
+            <span key={d} className="flex h-4 items-center text-xs font-medium leading-none text-[var(--ink-soft)]">
               {d}
             </span>
           ))}
@@ -80,7 +80,7 @@ function StreakCalendar({ calendar }: { calendar: Record<string, number> }) {
           })}
         </div>
       </div>
-      <div className="mt-3 flex items-center justify-end gap-1.5 text-[0.7rem] text-[var(--ink-soft)]">
+      <div className="mt-3 flex items-center justify-end gap-1.5 text-xs text-[var(--ink-soft)]">
         <span>Az</span>
         {[0, 1, 2, 3].map((n) => (
           <span key={n} aria-hidden className={`h-3 w-3 rounded-[3px] ${tone(n)}`} />
@@ -162,7 +162,7 @@ export default async function ProfilePage({ params }: { params: { username: stri
                   <span className="block font-mono text-sm font-semibold tabular-nums">
                     {p.bestMs !== null ? formatDuration(p.bestMs) : '—'}
                   </span>
-                  <span className="block font-mono text-[0.7rem] tabular-nums text-[var(--ink-soft)]">
+                  <span className="block font-mono text-xs tabular-nums text-[var(--ink-soft)]">
                     ort. {p.avgMs !== null ? formatDuration(p.avgMs) : '—'}
                   </span>
                 </span>

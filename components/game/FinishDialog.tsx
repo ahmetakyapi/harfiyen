@@ -201,7 +201,7 @@ export function FinishDialog({
                       initial={{ scaleX: 0 }} animate={{ scaleX: 1 }}
                       transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1], delay: 0.45 }} />
                   </div>
-                  <p className="mt-1.5 font-mono text-[0.7rem] tabular-nums text-[var(--ink-soft)]">
+                  <p className="mt-1.5 font-mono text-xs tabular-nums text-[var(--ink-soft)]">
                     medyan {formatDuration(stats.medianMs)} · {stats.solverCount} çözücü
                   </p>
                 </div>
@@ -253,7 +253,7 @@ export function FinishDialog({
                               </span>
                               <span className="min-w-0 flex-1">
                                 <span className="font-semibold tracking-wide">{w.word}</span>
-                                <span className="ml-1.5 text-[0.7rem] text-[var(--ink-soft)]">
+                                <span className="ml-1.5 text-xs text-[var(--ink-soft)]">
                                   {DIR_LABEL[w.dir]}
                                 </span>
                                 <span className="block text-xs leading-snug text-[var(--ink-soft)]">{w.clue}</span>

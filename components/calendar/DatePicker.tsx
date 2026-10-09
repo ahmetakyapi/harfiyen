@@ -202,7 +202,7 @@ export function DatePicker({ selected, today, onSelect, label, maxSelectable }: 
               <div role="row" className="grid grid-cols-7 gap-px">
                 {TR_WEEKDAY_SHORT.map((d, i) => (
                   <span key={d} role="columnheader" aria-label={TR_WEEKDAY_LONG[i]}
-                    className="flex h-7 items-center justify-center font-mono text-[0.65rem] text-[var(--ink-soft)]">
+                    className="flex h-7 items-center justify-center text-xs font-medium text-[var(--ink-soft)]">
                     {d}
                   </span>
                 ))}
@@ -316,7 +316,7 @@ function Cell({
 function Legend() {
   const item = 'flex items-center gap-1.5';
   return (
-    <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 border-t border-[var(--line)] px-3 py-2 text-[0.7rem] text-[var(--ink-soft)]">
+    <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 border-t border-[var(--line)] px-3 py-2 text-xs text-[var(--ink-soft)]">
       <span className={item}>
         <span aria-hidden className="h-3.5 w-3.5 rounded-[3px] bg-[var(--paper)] ring-1 ring-inset ring-[var(--line)]" />
         Bulmaca Var

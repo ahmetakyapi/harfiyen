@@ -43,7 +43,7 @@ export function DailyCard({ difficulty, size, wordCount, date, status, durationM
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <p className="font-display text-2xl">{meta.label}</p>
-          <span className={`rounded-full px-2 py-0.5 text-[0.65rem] font-semibold tracking-wide ${DIFFICULTY_BADGE_CLASS[difficulty]}`}>
+          <span className={`rounded-full px-2 py-0.5 font-mono text-xs font-semibold tabular-nums ${DIFFICULTY_BADGE_CLASS[difficulty]}`}>
             {size}×{size}
           </span>
         </div>

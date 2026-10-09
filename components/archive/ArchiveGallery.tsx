@@ -6,7 +6,6 @@ import {
   formatTrtDayMonth, formatTrtDayNumber, formatTrtMonth, formatTrtWeekday, puzzleNumber,
 } from '@/lib/date';
 import { DIFFICULTIES } from '@/lib/types';
-import { trUpper } from '@/lib/tr';
 import { KineticTitle } from '@/components/motion/KineticTitle';
 
 // Arşivin görsel katmanı, veri katmanından ayrı: sayfa yalnızca sorgu atar,
@@ -30,18 +29,9 @@ export function ArchiveGallery({
 
   return (
     <>
-      {/* Editoryal künye: ince kurallar arasında harflenmiş bir üst başlık —
-          gazete arşivi kapağı hissi. */}
       <header className="text-center">
-        <div className="rise flex items-center justify-center gap-3">
-          <span aria-hidden className="h-px w-10 bg-[var(--line)] sm:w-20" />
-          <p className="text-[0.65rem] font-semibold tracking-[0.3em] text-[var(--ink-soft)]">
-            {trUpper('Geçmiş Nüshalar')}
-          </p>
-          <span aria-hidden className="h-px w-10 bg-[var(--line)] sm:w-20" />
-        </div>
         <KineticTitle text="Arşiv"
-          className="font-display-flourish mt-3 font-display text-[2.75rem] leading-tight tracking-tight sm:text-6xl" />
+          className="font-display-flourish font-display text-[2.75rem] leading-tight tracking-tight sm:text-6xl" />
         <p className="rise mt-2 text-sm text-[var(--ink-soft)]" style={{ '--i': 2 } as React.CSSProperties}>
           Geçmiş bulmacalar pratik içindir; süren sıralamaya girmez.
         </p>
