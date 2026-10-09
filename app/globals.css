@@ -481,14 +481,14 @@ html.intro-playing .intro {
   position: relative;
   display: grid;
   place-items: center;
-  width: clamp(2.3rem, 9.5vw, 4.25rem);
+  width: clamp(2rem, 9vw, 4.25rem);
   aspect-ratio: 1;
   border-radius: 6px;
   background: var(--cell);
   box-shadow: inset 0 0 0 1.5px var(--line);
   font-family: var(--font-fraunces), Georgia, serif;
   font-weight: 600;
-  font-size: clamp(1.25rem, 5vw, 2.3rem);
+  font-size: clamp(1.1rem, 5vw, 2.3rem);
   color: var(--ink);
   animation:
     intro-cell-in 0.42s var(--ease-expo) calc(var(--i) * 45ms) both,

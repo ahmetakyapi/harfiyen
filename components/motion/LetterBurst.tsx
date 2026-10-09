@@ -7,20 +7,20 @@ import { useMemo } from 'react';
 // dönerek düşer. Konfeti değil harf — oyunun malzemesi. Rastgelelik
 // bileşen bağlanırken bir kez üretilir; yeniden render'da taşlar zıplamaz.
 const ALPHABET = 'ABCÇDEFGĞHIİJKLMNOÖPRSŞTUÜVYZ';
-const COUNT = 26;
+const COUNT = 32;
 const TONES = ['var(--diff-easy)', 'var(--diff-medium)', 'var(--correct)', 'var(--flame)', 'var(--ink)'];
 
 export function LetterBurst() {
   const reduce = useReducedMotion();
   const pieces = useMemo(() => Array.from({ length: COUNT }, (_, i) => {
     const angle = (i / COUNT) * Math.PI * 2 + (Math.random() - 0.5) * 0.5;
-    const dist = 140 + Math.random() * 180;
+    const dist = 230 + Math.random() * 200;
     return {
       ch: ALPHABET[Math.floor(Math.random() * ALPHABET.length)],
       x: Math.cos(angle) * dist,
       y: Math.sin(angle) * dist * 0.75 - 60,
       rot: (Math.random() - 0.5) * 540,
-      size: 22 + Math.random() * 16,
+      size: 26 + Math.random() * 18,
       delay: Math.random() * 0.12,
       tone: TONES[i % TONES.length],
     };
