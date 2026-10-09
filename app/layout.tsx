@@ -4,6 +4,9 @@ import { BottomNav } from '@/components/layout/BottomNav';
 import { Header } from '@/components/layout/Header';
 import { HeaderSlot } from '@/components/layout/HeaderSlot';
 import { ThemeProvider } from '@/components/layout/ThemeProvider';
+import { CellCursor } from '@/components/motion/CellCursor';
+import { INTRO_SCRIPT, Intro } from '@/components/motion/Intro';
+import { RouteCurtain } from '@/components/motion/RouteCurtain';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin', 'latin-ext'], variable: '--font-inter' });
@@ -54,11 +57,19 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     // kök yığın bağlamında kökün arka planından SONRA, içerikten ÖNCE boyanır.
     // Renk <body>de kalsaydı katman onun altında kalıp görünmezdi.
     <html lang="tr" className="bg-[var(--paper)]" suppressHydrationWarning>
+      <head>
+        {/* Açılış perdesine ilk boyamadan ÖNCE karar verilmeli: hidrasyonu
+            beklese sayfa bir an görünür, sonra perde üstüne kapanırdı. */}
+        <script dangerouslySetInnerHTML={{ __html: INTRO_SCRIPT }} />
+      </head>
       <body className={`${inter.variable} ${fraunces.variable} ${plexMono.variable} min-h-dvh font-sans text-[var(--ink)] antialiased`}>
+        <Intro />
         <ThemeProvider>
           <HeaderSlot><Header /></HeaderSlot>
           {children}
           <BottomNav />
+          <RouteCurtain />
+          <CellCursor />
         </ThemeProvider>
       </body>
     </html>

@@ -7,6 +7,7 @@ import {
 } from '@/lib/date';
 import { DIFFICULTIES } from '@/lib/types';
 import { trUpper } from '@/lib/tr';
+import { KineticTitle } from '@/components/motion/KineticTitle';
 
 // Arşivin görsel katmanı, veri katmanından ayrı: sayfa yalnızca sorgu atar,
 // yerleşim/tipografi burada. Böylece tasarım gerçek veriye ihtiyaç duymadan
@@ -32,28 +33,27 @@ export function ArchiveGallery({
       {/* Editoryal künye: ince kurallar arasında harflenmiş bir üst başlık —
           gazete arşivi kapağı hissi. */}
       <header className="text-center">
-        <div className="flex items-center justify-center gap-3">
+        <div className="rise flex items-center justify-center gap-3">
           <span aria-hidden className="h-px w-10 bg-[var(--line)] sm:w-20" />
           <p className="text-[0.65rem] font-semibold tracking-[0.3em] text-[var(--ink-soft)]">
             {trUpper('Geçmiş Nüshalar')}
           </p>
           <span aria-hidden className="h-px w-10 bg-[var(--line)] sm:w-20" />
         </div>
-        <h1 className="font-display-flourish mt-3 bg-gradient-to-r from-[var(--title-from)] to-[var(--title-to)] bg-clip-text font-display text-4xl text-transparent sm:text-5xl">
-          Arşiv
-        </h1>
-        <p className="mt-2 text-sm text-[var(--ink-soft)]">
+        <KineticTitle text="Arşiv"
+          className="font-display-flourish mt-3 font-display text-[2.75rem] leading-tight tracking-tight sm:text-6xl" />
+        <p className="rise mt-2 text-sm text-[var(--ink-soft)]" style={{ '--i': 2 } as React.CSSProperties}>
           Geçmiş bulmacalar pratik içindir; süren sıralamaya girmez.
         </p>
         {totalDays > 0 && (
-          <p className="mt-1 font-mono text-xs text-[var(--ink-soft)]">
+          <p className="rise mt-1 font-mono text-xs text-[var(--ink-soft)]" style={{ '--i': 3 } as React.CSSProperties}>
             {totalDays} gün · {totalDays * 3} bulmaca
             {solvedOnPage > 0 && ` · bu sayfada ${solvedOnPage} gün tamamlandı`}
           </p>
         )}
         {/* 12'şer sayfalarda ay öncesine gitmek onlarca tık ediyordu. */}
         {totalDays > 0 && (
-          <div className="mt-4 flex justify-center">
+          <div className="rise mt-4 flex justify-center" style={{ '--i': 4 } as React.CSSProperties}>
             <DateJump selected={highlight ?? latest} today={today} maxSelectable={latest}
               hrefPattern="/archive?gun={date}#gun-{date}"
               label={<span className="font-medium">Güne Git</span>} />
@@ -75,13 +75,20 @@ export function ArchiveGallery({
       )}
 
       <div className="mt-9 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {dates.map((date) => (
-          <ArchiveDayCard key={date} date={date} highlighted={date === highlight}
-            dayNumber={formatTrtDayNumber(date)}
-            weekday={formatTrtWeekday(date)}
-            monthName={formatTrtMonth(date)}
-            puzzleNo={puzzleNumber(date)}
-            doneMs={doneMs} />
+        {/* İlk sıra sayfa açılırken dağıtılır; sonrakiler kaydırdıkça gazete
+            sayfası gibi üst kenarından katlanarak açılır (saf CSS, bkz.
+            .reveal-fold). Animasyon sarmalayıcıda: kartın kendi hover
+            transform'u ile çakışmasın. */}
+        {dates.map((date, i) => (
+          <div key={date} className={i < 3 ? 'deal' : 'reveal-fold'}
+            style={{ '--i': i, '--tilt': (i % 3) - 1 } as React.CSSProperties}>
+            <ArchiveDayCard date={date} highlighted={date === highlight}
+              dayNumber={formatTrtDayNumber(date)}
+              weekday={formatTrtWeekday(date)}
+              monthName={formatTrtMonth(date)}
+              puzzleNo={puzzleNumber(date)}
+              doneMs={doneMs} />
+          </div>
         ))}
       </div>
 

@@ -11,6 +11,9 @@ function safeNext(next: string | undefined): string {
   return next && next.startsWith('/') && !next.startsWith('//') ? next : '/';
 }
 
+// Odakta çerçeve vurgu rengine döner ve hafifçe "kalkar".
+const INPUT = 'min-h-11 rounded-lg border border-[var(--line)] bg-transparent px-3 py-2 transition-[border-color,box-shadow] duration-300 focus:border-[var(--accent)] focus:shadow-[0_8px_24px_-16px_var(--accent)]';
+
 export function AuthForm({ mode, next }: { mode: 'login' | 'register'; next?: string }) {
   const router = useRouter();
   const [username, setUsername] = useState('');
@@ -46,14 +49,15 @@ export function AuthForm({ mode, next }: { mode: 'login' | 'register'; next?: st
 
   return (
     <form onSubmit={submit}
-      className="mx-auto flex w-full max-w-sm flex-col gap-4 rounded-2xl border border-[var(--line)] bg-[var(--paper-raised)] p-6 shadow-sm">
+      className="deal mx-auto flex w-full max-w-sm flex-col gap-4 rounded-2xl border border-[var(--line)] bg-[var(--paper-raised)] p-6 shadow-[0_28px_70px_-48px_var(--ink)]"
+      style={{ '--i': 1 } as React.CSSProperties}>
       <label className="flex flex-col gap-1 text-sm">
         Kullanıcı Adı
         <input
           value={username}
           onChange={(e) => setUsername(normalizeUsername(e.target.value))}
           autoComplete="username" autoCapitalize="none" autoCorrect="off" spellCheck={false}
-          className="min-h-11 rounded-lg border border-[var(--line)] bg-transparent px-3 py-2"
+          className={INPUT}
           required minLength={3} maxLength={20}
         />
       </label>
@@ -62,7 +66,7 @@ export function AuthForm({ mode, next }: { mode: 'login' | 'register'; next?: st
         <input
           type="password" value={password} onChange={(e) => setPassword(e.target.value)}
           autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
-          className="min-h-11 rounded-lg border border-[var(--line)] bg-transparent px-3 py-2"
+          className={INPUT}
           required minLength={8}
         />
       </label>
@@ -71,9 +75,11 @@ export function AuthForm({ mode, next }: { mode: 'login' | 'register'; next?: st
           E-posta istemiyoruz; bu yüzden şifreni unutursan kurtaramayız. Güvenli bir yere not et.
         </p>
       )}
-      {error && <p role="alert" className="text-sm text-[var(--wrong)]">{error}</p>}
+      {/* Hata, yanlış kelime gibi kısa bir sarsıntıyla gelir. */}
+      {error && <p role="alert" key={error} className="form-error text-sm text-[var(--wrong)]">{error}</p>}
       <button type="submit" disabled={busy}
-        className="min-h-11 rounded-lg bg-[var(--ink)] py-2 font-medium text-[var(--paper)] disabled:opacity-50">
+        className="btn-wipe flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[var(--ink)] py-2 font-medium text-[var(--paper)] disabled:opacity-50">
+        {busy && <span aria-hidden className="spinner" />}
         {mode === 'register' ? 'Üye Ol' : 'Giriş Yap'}
       </button>
     </form>

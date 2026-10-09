@@ -18,14 +18,6 @@ export const DIFFICULTY_STRIPE_CLASS: Record<Difficulty, string> = {
   hard: 'bg-[var(--diff-hard)]',
 };
 
-// Sıralama sayfasındaki aktif zorluk sekmesi — yumuşak zemin + zorluk
-// renginde halka; her iki temada da metin --ink olduğundan kontrast güvenli.
-export const DIFFICULTY_TAB_CLASS: Record<Difficulty, string> = {
-  easy: 'bg-[var(--diff-easy-soft)] text-[var(--ink)] ring-1 ring-[var(--diff-easy)]',
-  medium: 'bg-[var(--diff-medium-soft)] text-[var(--ink)] ring-1 ring-[var(--diff-medium)]',
-  hard: 'bg-[var(--diff-hard-soft)] text-[var(--ink)] ring-1 ring-[var(--diff-hard)]',
-};
-
 // İmza öğe: zorluk işaretleri, köşesinde numarası olan birer çengel bulmaca
 // hücresi görünümünde "taşlar". Taşın zemini her iki temada da SABİT krem
 // (fiziksel bir taş gibi), içindeki glif de sabit derin renklerde: krem

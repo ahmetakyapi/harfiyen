@@ -4,6 +4,8 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { BarChart3, Check, ChevronDown, Flame, Share2, Sparkles, Trophy, X } from 'lucide-react';
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { LetterBurst } from '@/components/motion/LetterBurst';
+import { useCountUp } from '@/components/motion/useCountUp';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
 import { DIFFICULTY_BADGE_CLASS, DIFFICULTY_LABELS, DIFFICULTY_STRIPE_CLASS } from '@/lib/difficulty';
 import { buildShareText, formatDuration } from '@/lib/share';
@@ -22,7 +24,7 @@ const DIR_LABEL: Record<'across' | 'down', string> = {
 
 export function FinishDialog({
   open, onClose, durationMs, rank, isRanked, hintCount, puzzleNumber, difficulty, date,
-  streak, stats, sessionId, siblings, gridLines,
+  streak, stats, sessionId, siblings, gridLines, celebrate = false,
 }: {
   open: boolean;
   /** Verilmezse diyalog kapatılamaz (arşiv "revisit" akışında kapatılacak bir
@@ -38,12 +40,17 @@ export function FinishDialog({
   siblings?: Partial<Record<Difficulty, number | null>>;
   /** Spoiler'sız paylaşım ızgarası. */
   gridLines?: string[];
+  /** Bulmaca ŞİMDİ bitti: harf yağmuru oynar. Sonradan geri dönülen sonuç
+   *  ekranında (revisit) kutlama yapılmaz — o an çoktan geçti. */
+  celebrate?: boolean;
 }) {
   const [copied, setCopied] = useState(false);
   const [words, setWords] = useState<SolvedEntry[] | null>(null);
   const [wordsOpen, setWordsOpen] = useState(false);
   const [wordsError, setWordsError] = useState(false);
   const shareRef = useRef<HTMLButtonElement | null>(null);
+  // Süre sıfırdan sayarak gelir: bitirme anının "skor tabelası" hissi.
+  const shownMs = useCountUp(open ? durationMs : 0);
   const panelRef = useRef<HTMLDivElement | null>(null);
 
   // Açılışta odak diyaloğa girer ve Tab içeride döner; kapanışta odak geri
@@ -122,14 +129,15 @@ export function FinishDialog({
           style={{ backgroundColor: 'var(--overlay)' }}
           onClick={onClose ? (e) => { if (e.target === e.currentTarget) onClose(); } : undefined}
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+          {celebrate && <LetterBurst />}
           <motion.div
             ref={panelRef}
-            initial={{ opacity: 0, scale: 0.9, y: 12 }} animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+            initial={{ opacity: 0, scale: 0.86, y: 40, rotate: -2 }} animate={{ opacity: 1, scale: 1, y: 0, rotate: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 16 }}
+            transition={{ type: 'spring', stiffness: 260, damping: 24 }}
             // my-auto + max-h: kısa ekranda (yatay telefon) kart taşarsa
             // kendi içinde kaydırılır, düğmeler erişilemez kalmaz.
-            className="relative my-auto w-full max-w-sm overflow-hidden rounded-3xl bg-[var(--paper-raised)] text-center shadow-2xl">
+            className="relative z-10 my-auto w-full max-w-sm overflow-hidden rounded-3xl bg-[var(--paper-raised)] text-center shadow-2xl">
             {/* Zorlukla eşleşen ince üst şerit — kartın kime ait olduğunu (hangi
                 zorluk) tek bakışta, ikinci bir metin okumadan verir. */}
             <div className={`h-1.5 w-full ${DIFFICULTY_STRIPE_CLASS[difficulty]}`} />
@@ -143,9 +151,11 @@ export function FinishDialog({
               </button>
             )}
             <div className="finish-card px-6 pb-6 pt-5">
-              <div className="finish-icon mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[var(--correct-soft)]">
+              <motion.div className="finish-icon mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[var(--correct-soft)]"
+                initial={{ scale: 0, rotate: -90 }} animate={{ scale: 1, rotate: 0 }}
+                transition={{ type: 'spring', stiffness: 320, damping: 14, delay: 0.12 }}>
                 <Sparkles aria-hidden className="h-6 w-6 text-[var(--correct)]" />
-              </div>
+              </motion.div>
               <p className="finish-title font-display-flourish mt-3 font-display text-4xl">Bitirdin!</p>
               <p className="mt-1 flex items-center justify-center gap-2 text-sm text-[var(--ink-soft)]">
                 <span>Harfiyen #{puzzleNumber}</span>
@@ -156,7 +166,11 @@ export function FinishDialog({
               <motion.p
                 initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
                 transition={{ type: 'spring', stiffness: 300, damping: 20, delay: 0.15 }}
-                className="finish-time mt-5 font-mono text-5xl font-semibold tabular-nums">{formatDuration(durationMs)}</motion.p>
+                className="finish-time mt-5 font-mono text-5xl font-semibold tabular-nums">
+                {/* Ekran okuyucu sayan ara değerleri değil, gerçek süreyi okur. */}
+                <span className="sr-only">{formatDuration(durationMs)}</span>
+                <span aria-hidden>{formatDuration(shownMs)}</span>
+              </motion.p>
 
               {/* Kişisel rekor: günlük oyunda asıl rakip dünkü kendindir.
                   214. sıra hiçbir şey hissettirmez, 3:12 → 2:47 hissettirir. */}
@@ -182,8 +196,10 @@ export function FinishDialog({
                   {/* Kendi süren ile medyanın göreli konumu: çubuk soldan
                       sağa "hızlıdan yavaşa" okunur. */}
                   <div className="relative mt-2 h-1.5 overflow-hidden rounded-full bg-[var(--line)]">
-                    <div className="h-full rounded-full bg-[var(--correct)]"
-                      style={{ width: `${Math.max(4, stats.fasterThanPct)}%` }} />
+                    <motion.div className="h-full origin-left rounded-full bg-[var(--correct)]"
+                      style={{ width: `${Math.max(4, stats.fasterThanPct)}%` }}
+                      initial={{ scaleX: 0 }} animate={{ scaleX: 1 }}
+                      transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1], delay: 0.45 }} />
                   </div>
                   <p className="mt-1.5 font-mono text-[0.7rem] tabular-nums text-[var(--ink-soft)]">
                     medyan {formatDuration(stats.medianMs)} · {stats.solverCount} çözücü
@@ -253,7 +269,7 @@ export function FinishDialog({
 
               <div className="finish-actions mt-6 flex flex-col gap-2">
                 <button type="button" onClick={share} ref={shareRef}
-                  className="flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[var(--accent)] font-medium text-[var(--paper)] transition-transform active:scale-[0.98]">
+                  className="btn-wipe flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[var(--accent)] font-medium text-[var(--paper)] transition-transform active:scale-[0.98] [--wipe:var(--ink)]">
                   {copied ? <Check aria-hidden className="h-4 w-4" /> : <Share2 aria-hidden className="h-4 w-4" />}
                   {copied ? 'Kopyalandı' : 'Sonucu Paylaş'}
                 </button>

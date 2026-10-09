@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect } from 'react';
 import { RotateCcw } from 'lucide-react';
+import { KineticTitle } from '@/components/motion/KineticTitle';
 
 // Sayfalar force-dynamic ve her istekte Neon'a gidiyor; veritabanı uyanırken
 // ya da env eksikken atılan hata eskiden Next'in çıplak İngilizce ekranına
@@ -16,15 +17,14 @@ export default function ErrorBoundary({ error, reset }: {
 
   return (
     <main className="mx-auto flex min-h-[60vh] max-w-md flex-col items-center justify-center px-4 text-center">
-      <p className="font-display-flourish bg-gradient-to-r from-[var(--title-from)] to-[var(--title-to)] bg-clip-text font-display text-4xl text-transparent">
-        Bir Şeyler Ters Gitti
-      </p>
+      <KineticTitle as="h1" text="Bir Şeyler Ters Gitti"
+        className="font-display-flourish font-display text-4xl leading-tight tracking-tight" />
       <p className="mt-3 text-sm text-[var(--ink-soft)]">
         Baskı makinesi takıldı. Süren sunucuda güvende — oyuna kaldığın yerden dönebilirsin.
       </p>
       <div className="mt-6 flex w-full flex-col gap-2">
         <button type="button" onClick={reset}
-          className="flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-[var(--ink)] font-semibold text-[var(--paper)] transition-transform active:scale-[0.98]">
+          className="btn-wipe flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-[var(--ink)] font-semibold text-[var(--paper)] transition-transform active:scale-[0.98]">
           <RotateCcw aria-hidden className="h-4 w-4" /> Tekrar Dene
         </button>
         <Link href="/"

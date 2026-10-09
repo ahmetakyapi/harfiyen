@@ -21,6 +21,7 @@ import { FinishDialog } from './FinishDialog';
 import { GRID_GAP, GRID_PAD, Grid, cellSizeOf } from './Grid';
 import { HowToModal } from './HowToModal';
 import { Timer } from './Timer';
+import { KineticTitle } from '@/components/motion/KineticTitle';
 
 type SessionInfo = {
   sessionId: number; startedAt: string; serverNow: string; existing: boolean;
@@ -669,11 +670,10 @@ export function GameBoard({
             <ChevronLeft aria-hidden className="h-5 w-5" /> Harfiyen
           </Link>
         </div>
-        <div className="rounded-[1.8rem] border border-[var(--line)] bg-[var(--paper-raised)] p-6 text-center shadow-[0_28px_70px_-45px_var(--diff-hard)] sm:p-8">
-          <div className="flex justify-center"><LetterTile difficulty={puzzle.difficulty} /></div>
-          <p className="mt-4 bg-gradient-to-r from-[var(--title-from)] to-[var(--title-to)] bg-clip-text font-display text-4xl text-transparent">
-            Harfiyen #{puzzleNumber}
-          </p>
+        <div className="deal rounded-[1.8rem] border border-[var(--line)] bg-[var(--paper-raised)] p-6 text-center shadow-[0_28px_70px_-45px_var(--diff-hard)] sm:p-8">
+          <div className="avatar-pop flex justify-center"><LetterTile difficulty={puzzle.difficulty} /></div>
+          <KineticTitle as="h1" text={`Harfiyen #${puzzleNumber}`}
+            className="font-display-flourish mt-4 font-display text-[2.5rem] leading-tight tracking-tight" />
           <p className="mt-1 text-sm text-[var(--ink-soft)]">{formatTrtDate(puzzle.date)}</p>
           <div className="mt-4 flex flex-wrap justify-center gap-2 text-xs font-semibold">
             <span className={`rounded-full px-3 py-1 ${DIFFICULTY_BADGE_CLASS[puzzle.difficulty]}`}>
@@ -711,7 +711,7 @@ export function GameBoard({
             // çalışan bir sayacın içinde buluyordu kendini.
             <div className="mt-6 flex flex-col gap-2">
               <button type="button" onClick={() => void start(false)} disabled={phase === 'starting'}
-                className="w-full rounded-2xl bg-[var(--ink)] py-3.5 text-lg font-semibold text-[var(--paper)] shadow-lg transition-transform duration-150 ease-[cubic-bezier(0.22,1,0.36,1)] active:scale-[0.98] disabled:opacity-50">
+                className="btn-wipe w-full rounded-2xl bg-[var(--ink)] py-3.5 text-lg font-semibold text-[var(--paper)] shadow-lg transition-transform duration-150 ease-[cubic-bezier(0.22,1,0.36,1)] active:scale-[0.98] disabled:opacity-50">
                 {phase === 'starting' ? 'Yükleniyor…' : 'Sonucumu Gör'}
               </button>
               <button type="button" onClick={() => void start(true)} disabled={phase === 'starting'}
@@ -721,7 +721,7 @@ export function GameBoard({
             </div>
           ) : (
             <button type="button" onClick={() => void start(false)} disabled={phase === 'starting'}
-              className="mt-6 w-full rounded-2xl bg-[var(--ink)] py-3.5 text-lg font-semibold text-[var(--paper)] shadow-lg transition-transform duration-150 ease-[cubic-bezier(0.22,1,0.36,1)] active:scale-[0.98] disabled:opacity-50">
+              className="btn-wipe mt-6 w-full rounded-2xl bg-[var(--ink)] py-3.5 text-lg font-semibold text-[var(--paper)] shadow-lg transition-transform duration-150 ease-[cubic-bezier(0.22,1,0.36,1)] active:scale-[0.98] disabled:opacity-50">
               {phase === 'starting' ? 'Hazırlanıyor…' : activeStartedAt !== null ? 'Devam Et' : 'Başla'}
             </button>
           )}
@@ -974,6 +974,7 @@ export function GameBoard({
         streak={result?.streak ?? null} stats={result?.stats}
         sessionId={session?.sessionId ?? null} siblings={siblings}
         gridLines={buildShareGrid(puzzle.black, hintCells)}
+        celebrate
         hintCount={hintCount} puzzleNumber={puzzleNumber} difficulty={puzzle.difficulty}
         date={puzzle.date} />
 

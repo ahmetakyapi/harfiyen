@@ -16,3 +16,13 @@ Günlük Türkçe kare bulmaca oyunu. Tasarım spec'i: `docs/superpowers/specs/2
   `toLocaleLowerCase('tr-TR')` KULLANMA (I→ı üretip girişi kilitliyor).
 - Üreteç ayarı değiştirilecekse önce `npm run generator:stats` ile ölç.
 - Mimari adlar İngilizce (rota/API/enum: easy|medium|hard); UI metinleri Türkçe. Rotalar: /play, /leaderboard, /profile, /archive, /login, /register, /how-to-play.
+- Hareket sistemi `app/globals.css` sonundaki "HAREKET SİSTEMİ" bölümünde;
+  bileşenler `components/motion/` (açılış perdesi, sayfa geçiş perdesi, hücre
+  imleci, KineticTitle, Tilt, CountUp). Yalnızca opacity/transform/clip-path
+  canlandır. Sayfa girişleri `.rise`/`.deal` (`--i` sırası), kaydırmaya bağlı
+  açılışlar `.reveal`/`.reveal-fold` (saf CSS, `animation-timeline: view()`).
+- Transform animasyonlu bir kabın içine `position: fixed` öğe koyma (o kap
+  içeren blok olur) — diyalogları portal ile body'ye taşı.
+- Tailwind'de `bg-[var(--x)]/50` ÇALIŞMAZ (sınıf üretilmez). Saydamlık için
+  `bg-[color:color-mix(in_srgb,var(--x)_50%,transparent)]` kullan.
+

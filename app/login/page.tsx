@@ -1,15 +1,15 @@
 import Link from 'next/link';
 import { AuthForm } from '@/components/auth/AuthForm';
+import { KineticTitle } from '@/components/motion/KineticTitle';
 
 export const metadata = { title: 'Giriş Yap' };
 
 export default function LoginPage({ searchParams }: { searchParams: { next?: string } }) {
   const { next } = searchParams;
   return (
-    <main className="px-4 py-12">
-      <h1 className="mb-8 bg-gradient-to-r from-[var(--title-from)] to-[var(--title-to)] bg-clip-text text-center font-display text-3xl text-transparent">
-        Giriş Yap
-      </h1>
+    <main className="page-enter px-4 py-12">
+      <KineticTitle text="Giriş Yap"
+        className="font-display-flourish mb-8 text-center font-display text-[2.5rem] leading-tight tracking-tight" />
       {next?.startsWith('/play/') && (
         // Oyuncu buraya kendi isteğiyle gelmedi: bir bulmacaya dokundu ve
         // duvara çarptı. Neden burada olduğunu söylemek en azından bir

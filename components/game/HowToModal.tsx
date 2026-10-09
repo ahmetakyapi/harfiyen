@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
 import { readFlag, writeFlag } from '@/lib/storage';
+import { KineticTitle } from '@/components/motion/KineticTitle';
 
 const SEEN_KEY = 'harfiyen:howto-seen';
 
@@ -48,9 +49,8 @@ export function HowToModal({ forceOpen = false, onClose }: {
     <div role="dialog" aria-modal="true" aria-label="Harfiyen'e hoş geldin"
       className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-[var(--overlay)] p-4 backdrop-blur-sm">
       <div ref={panelRef} className="my-auto w-full max-w-sm rounded-[1.6rem] border border-[var(--line)] bg-[var(--paper-raised)] p-6 shadow-2xl">
-        <p className="bg-gradient-to-r from-[var(--title-from)] to-[var(--title-to)] bg-clip-text font-display text-2xl text-transparent">
-          Harfiyen&apos;e Hoş Geldin
-        </p>
+        <KineticTitle as="p" text="Harfiyen'e Hoş Geldin"
+          className="font-display-flourish font-display text-[1.75rem] leading-tight tracking-tight" />
         <ul className="mt-3 space-y-2 text-sm text-[var(--ink-soft)]">
           <li>İpuçlarından kelimeleri bul, kesişimleri kullan. Doğru biten kelime yeşil yanar.</li>
           <li>Hücreye dokununca kelime seçilir; aynı hücreye ikinci dokunuş yönü değiştirir.</li>
