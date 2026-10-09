@@ -1,16 +1,16 @@
 import Link from 'next/link';
 import { AuthForm } from '@/components/auth/AuthForm';
+import { KineticTitle } from '@/components/motion/KineticTitle';
 
 export const metadata = { title: 'Üye Ol' };
 
 export default function RegisterPage({ searchParams }: { searchParams: { next?: string } }) {
   const { next } = searchParams;
   return (
-    <main className="px-4 py-12">
-      <h1 className="mb-2 bg-gradient-to-r from-[var(--title-from)] to-[var(--title-to)] bg-clip-text text-center font-display text-3xl text-transparent">
-        Üye Ol
-      </h1>
-      <p className="mb-8 text-center text-sm text-[var(--ink-soft)]">
+    <main className="page-enter px-4 py-12">
+      <KineticTitle text="Üye Ol"
+        className="font-display-flourish mb-2 text-center font-display text-[2.5rem] leading-tight tracking-tight" />
+      <p className="rise mb-8 text-center text-sm text-[var(--ink-soft)]" style={{ '--i': 2 } as React.CSSProperties}>
         Sıralamaya gir, serini başlat — 10 saniye sürer.
       </p>
       {next?.startsWith('/play/') && (

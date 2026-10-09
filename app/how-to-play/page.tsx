@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { KineticTitle } from '@/components/motion/KineticTitle';
 
 export const metadata = {
   title: 'Nasıl Oynanır',
@@ -16,29 +17,35 @@ const STEPS = [
 
 export default function HowToPlayPage() {
   return (
-    <main className="mx-auto max-w-lg px-4 py-10">
-      <h1 className="bg-gradient-to-r from-[var(--title-from)] to-[var(--title-to)] bg-clip-text text-center font-display text-3xl text-transparent">
-        Nasıl Oynanır?
-      </h1>
-      <ol className="mt-8 space-y-3">
+    <main className="page-enter mx-auto max-w-lg px-4 py-10">
+      <KineticTitle text="Nasıl Oynanır?"
+        className="font-display-flourish text-center font-display text-[2.5rem] leading-tight tracking-tight sm:text-5xl" />
+      <p className="rise mt-3 text-center text-sm text-[var(--ink-soft)]" style={{ '--i': 2 } as React.CSSProperties}>
+        Altı adımda bir kare bulmaca.
+      </p>
+      {/* Adımlar gerçek bir sıra: numaralı hücreleri tek bir mürekkep ipliği
+          bağlar ve iplik sayfayı kaydırdıkça aşağı doğru çizilir (saf CSS,
+          kaydırma zaman çizelgesi; destek yoksa iplik tam boyda durur). */}
+      <ol className="relative mt-10">
+        <span aria-hidden className="absolute bottom-6 left-[1.125rem] top-6 w-px bg-[var(--line)]" />
+        <span aria-hidden className="ink-thread absolute bottom-6 left-[1.125rem] top-6 w-px origin-top bg-[var(--accent)]" />
         {STEPS.map(([title, body], i) => (
-          <li key={title}
-            className="flex gap-4 rounded-2xl border border-[var(--line)] bg-[var(--paper-raised)] p-4">
+          <li key={title} className="reveal relative flex gap-5 pb-8 last:pb-0">
             {/* Adım numaraları oyunun hücre numaralandırma dilinde — köşeli taş */}
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[0.7rem] bg-[var(--accent)] font-display font-semibold text-[var(--paper)]">
+            <span className="relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-[0.7rem] bg-[var(--accent)] font-display font-semibold text-[var(--paper)] shadow-[0_0_0_6px_var(--paper)]">
               {i + 1}
             </span>
-            <div>
-              <p className="font-medium">{title}</p>
-              <p className="mt-1 text-sm text-[var(--ink-soft)]">{body}</p>
+            <div className="min-w-0 flex-1 rounded-2xl border border-[var(--line)] bg-[var(--paper-raised)] p-4 transition-[transform,box-shadow] duration-500 ease-[var(--ease-expo)] hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-30px_var(--ink)]">
+              <p className="font-display text-lg leading-snug">{title}</p>
+              <p className="mt-1 text-sm leading-relaxed text-[var(--ink-soft)]">{body}</p>
             </div>
           </li>
         ))}
       </ol>
       {/* Sayfa ölü uçtu: altı adımı okuyup bitiyordu, hiçbir çıkışı yoktu. */}
-      <div className="mt-8 flex flex-col gap-2">
+      <div className="reveal mt-10 flex flex-col gap-2">
         <Link href="/"
-          className="flex min-h-12 items-center justify-center rounded-2xl bg-[var(--ink)] font-semibold text-[var(--paper)] transition-transform active:scale-[0.98]">
+          className="btn-wipe flex min-h-12 items-center justify-center rounded-2xl bg-[var(--ink)] font-semibold text-[var(--paper)] transition-transform active:scale-[0.98]">
           Bugünün Bulmacalarına Git
         </Link>
         <Link href="/archive"

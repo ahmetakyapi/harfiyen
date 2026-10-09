@@ -13,6 +13,8 @@ import { formatDuration } from '@/lib/share';
 import { TR_WEEKDAY_SHORT, addDays, formatTrtDate, gameDay, weekdayIndex } from '@/lib/date';
 import { normalizeUsername, trUpper } from '@/lib/tr';
 import { DIFFICULTIES } from '@/lib/types';
+import { CountUp } from '@/components/motion/CountUp';
+import { KineticTitle } from '@/components/motion/KineticTitle';
 
 export const dynamic = 'force-dynamic';
 
@@ -45,9 +47,9 @@ function StreakCalendar({ calendar }: { calendar: Record<string, number> }) {
 
   const tone = (n: number): string =>
     n >= 3 ? 'bg-[var(--correct)]'
-      : n === 2 ? 'bg-[var(--correct)]/65'
-        : n === 1 ? 'bg-[var(--correct)]/35'
-          : 'bg-[var(--line)]/70';
+      : n === 2 ? 'bg-[color:color-mix(in_srgb,var(--correct)_65%,transparent)]'
+        : n === 1 ? 'bg-[color:color-mix(in_srgb,var(--correct)_35%,transparent)]'
+          : 'bg-[color:color-mix(in_srgb,var(--line)_70%,transparent)]';
 
   return (
     <div className="rounded-2xl border border-[var(--line)] bg-[var(--paper-raised)] p-4">
@@ -67,9 +69,11 @@ function StreakCalendar({ calendar }: { calendar: Record<string, number> }) {
               return <span key={date} aria-hidden className="h-4 rounded-[3px]" />;
             }
             const n = calendar[date] ?? 0;
+            // Takvim soldan sağa, haftadan haftaya dalga halinde dolar.
             return (
               <span key={date} title={`${formatTrtDate(date)} · ${n}/3`}
-                className={`h-4 rounded-[3px] ${tone(n)}`}>
+                style={{ '--d': Math.floor(i / 7) * 45 + (i % 7) * 12 } as React.CSSProperties}
+                className={`cal-cell h-4 rounded-[3px] ${tone(n)}`}>
                 <span className="sr-only">{formatTrtDate(date)}: {n} bulmaca</span>
               </span>
             );
@@ -100,27 +104,27 @@ export default async function ProfilePage({ params }: { params: { username: stri
 
       {/* Künye: baş harf taşı, başlıktaki avatarla aynı dil. */}
       <header className="flex flex-col items-center text-center">
-        <span className="block h-16 w-16 rounded-full bg-gradient-to-br from-[var(--ladder-2-from)] to-[var(--ladder-2-to)] p-[3px] shadow-md">
+        <span className="avatar-pop block h-16 w-16 rounded-full bg-gradient-to-br from-[var(--ladder-2-from)] to-[var(--ladder-2-to)] p-[3px] shadow-md">
           <span className="flex h-full w-full items-center justify-center rounded-full bg-[var(--tile-face)] font-display text-2xl font-bold text-[var(--ladder-2-ink)]">
             {initial}
           </span>
         </span>
-        <h1 className="mt-3 bg-gradient-to-r from-[var(--title-from)] to-[var(--title-to)] bg-clip-text font-display text-3xl text-transparent">
-          {stats.username}
-        </h1>
-        <p className="mt-1 text-sm text-[var(--ink-soft)]">
+        <KineticTitle text={stats.username}
+          className="font-display-flourish mt-3 font-display text-[2.5rem] leading-tight tracking-tight" />
+        <p className="rise mt-1 text-sm text-[var(--ink-soft)]" style={{ '--i': 2 } as React.CSSProperties}>
           {formatTrtDate(stats.memberSince)} tarihinden beri üye
         </p>
       </header>
 
       <div className="mt-6 grid grid-cols-3 gap-3 text-center">
         {[
-          { label: 'Çözülen', value: String(stats.totalSolved) },
-          { label: 'Seri', value: String(stats.currentStreak) },
-          { label: 'En İyi Seri', value: String(stats.bestStreak) },
-        ].map((s) => (
-          <div key={s.label} className="rounded-2xl border border-[var(--line)] bg-[var(--paper-raised)] p-3 shadow-sm sm:p-4">
-            <p className="font-display text-2xl sm:text-3xl">{s.value}</p>
+          { label: 'Çözülen', value: stats.totalSolved },
+          { label: 'Seri', value: stats.currentStreak },
+          { label: 'En İyi Seri', value: stats.bestStreak },
+        ].map((s, i) => (
+          <div key={s.label} className="deal rounded-2xl border border-[var(--line)] bg-[var(--paper-raised)] p-3 shadow-sm sm:p-4"
+            style={{ '--i': i, '--tilt': (i - 1) * 2 } as React.CSSProperties}>
+            <p className="font-display text-2xl sm:text-3xl"><CountUp value={s.value} /></p>
             <p className="mt-1 text-xs text-[var(--ink-soft)]">{s.label}</p>
           </div>
         ))}
@@ -133,39 +137,43 @@ export default async function ProfilePage({ params }: { params: { username: stri
         </p>
       )}
 
-      <SectionTitle>Son 8 Hafta</SectionTitle>
-      <StreakCalendar calendar={stats.calendar} />
+      <div className="reveal">
+        <SectionTitle>Son 8 Hafta</SectionTitle>
+        <StreakCalendar calendar={stats.calendar} />
+      </div>
 
-      <SectionTitle>Zorluğa Göre</SectionTitle>
-      {/* Tablo yerine liste: dört sütunlu tablo 320 px'te yatay kaydırma
-          kutusuna sıkışıyordu ve o kutu dikey kaydırmayı da yutuyordu. */}
-      <ul className="divide-y divide-[var(--line)] overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--paper-raised)]">
-        {DIFFICULTIES.map((d) => {
-          const p = stats.perDifficulty[d];
-          return (
-            <li key={d} className="flex items-center gap-3 px-4 py-3">
-              <LetterTile difficulty={d} size="sm" />
-              <span className="min-w-0 flex-1">
-                <span className="block font-medium">{DIFFICULTY_LABELS[d]}</span>
-                <span className="block text-xs text-[var(--ink-soft)]">
-                  {p.solved > 0 ? `${p.solved} bulmaca` : 'Henüz çözülmedi'}
+      <div className="reveal">
+        <SectionTitle>Zorluğa Göre</SectionTitle>
+        {/* Tablo yerine liste: dört sütunlu tablo 320 px'te yatay kaydırma
+            kutusuna sıkışıyordu ve o kutu dikey kaydırmayı da yutuyordu. */}
+        <ul className="divide-y divide-[var(--line)] overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--paper-raised)]">
+          {DIFFICULTIES.map((d) => {
+            const p = stats.perDifficulty[d];
+            return (
+              <li key={d} className="flex items-center gap-3 px-4 py-3">
+                <LetterTile difficulty={d} size="sm" />
+                <span className="min-w-0 flex-1">
+                  <span className="block font-medium">{DIFFICULTY_LABELS[d]}</span>
+                  <span className="block text-xs text-[var(--ink-soft)]">
+                    {p.solved > 0 ? `${p.solved} bulmaca` : 'Henüz çözülmedi'}
+                  </span>
                 </span>
-              </span>
-              <span className="shrink-0 text-right">
-                <span className="block font-mono text-sm font-semibold tabular-nums">
-                  {p.bestMs !== null ? formatDuration(p.bestMs) : '—'}
+                <span className="shrink-0 text-right">
+                  <span className="block font-mono text-sm font-semibold tabular-nums">
+                    {p.bestMs !== null ? formatDuration(p.bestMs) : '—'}
+                  </span>
+                  <span className="block font-mono text-[0.7rem] tabular-nums text-[var(--ink-soft)]">
+                    ort. {p.avgMs !== null ? formatDuration(p.avgMs) : '—'}
+                  </span>
                 </span>
-                <span className="block font-mono text-[0.7rem] tabular-nums text-[var(--ink-soft)]">
-                  ort. {p.avgMs !== null ? formatDuration(p.avgMs) : '—'}
-                </span>
-              </span>
-            </li>
-          );
-        })}
-      </ul>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
 
       {stats.recent.length > 0 && (
-        <>
+        <div className="reveal">
           <SectionTitle>Son Oyunlar</SectionTitle>
           <ul className="divide-y divide-[var(--line)] overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--paper-raised)]">
             {stats.recent.map((r) => (
@@ -186,11 +194,11 @@ export default async function ProfilePage({ params }: { params: { username: stri
               </li>
             ))}
           </ul>
-        </>
+        </div>
       )}
 
       <Link href="/"
-        className="mt-8 flex min-h-12 items-center justify-center rounded-2xl bg-[var(--ink)] font-semibold text-[var(--paper)] transition-transform duration-150 ease-[cubic-bezier(0.22,1,0.36,1)] active:scale-[0.98]">
+        className="btn-wipe mt-8 flex min-h-12 items-center justify-center rounded-2xl bg-[var(--ink)] font-semibold text-[var(--paper)] transition-transform duration-150 ease-[cubic-bezier(0.22,1,0.36,1)] active:scale-[0.98]">
         Bugünün Bulmacaları
       </Link>
 

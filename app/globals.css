@@ -432,6 +432,527 @@ body::before {
     /* iteration-count olmadan sonsuz animasyonlar (iskelet parıltısı) 0.01 ms'de
        saniyede binlerce kez tekrarlıyor — hareket azaltma isteğinin tam tersi. */
     animation-iteration-count: 1 !important;
+    /* Kademeli girişler (harf harf başlık, kart dağıtımı) gecikmeleri boyunca
+       `backwards` dolgusuyla GİZLİ kalır; süre sıfırlansa da gecikme
+       sıfırlanmazsa içerik saniyelerce görünmezdi. */
+    animation-delay: 0s !important;
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   HAREKET SİSTEMİ
+   Tek bir fikirden türer: BULMACA HÜCRESİ. Açılış perdesi bir kelimenin
+   hücrelere yazılıp "doğru" yanması, sayfa geçişi ekranı kaplayıp açılan bir
+   hücre ızgarası, imleç üstüne gelinen öğeyi seçili hücre gibi çerçeveleyen
+   bir halka, yükleyici dalga dalga dolan bir ızgara. Her animasyon yalnızca
+   opacity/transform/clip-path oynatır — layout ve paint tetiklemez.
+   ═══════════════════════════════════════════════════════════════════════ */
+:root {
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.76, 0, 0.24, 1);
+  /* Açılış perdesi oynarken sayfa içi girişler perdenin kalkışını bekler;
+     perde yoksa (aynı oturumda ikinci sayfa, /play, hareket azaltma) sıfır. */
+  --intro-delay: 0s;
+}
+html.intro-playing { --intro-delay: 1.55s; }
+
+/* ——— Açılış perdesi (oturum başına bir kez) ———
+   Varsayılan GİZLİ: yalnızca <head>deki satır içi betik `intro-playing`
+   sınıfını eklerse görünür. JS kapalıysa ya da betik hata verirse perde hiç
+   çıkmaz — içerik asla bir animasyonun arkasında mahsur kalmaz. */
+.intro { display: none; }
+html.intro-playing .intro {
+  display: flex;
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 1.1rem;
+  background: var(--paper);
+  pointer-events: none;
+  animation: intro-lift 0.75s var(--ease-in-out) 1.45s both;
+}
+.intro-word { display: flex; gap: clamp(3px, 0.8vw, 6px); }
+.intro-cell {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: clamp(2.3rem, 9.5vw, 4.25rem);
+  aspect-ratio: 1;
+  border-radius: 6px;
+  background: var(--cell);
+  box-shadow: inset 0 0 0 1.5px var(--line);
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-weight: 600;
+  font-size: clamp(1.25rem, 5vw, 2.3rem);
+  color: var(--ink);
+  animation:
+    intro-cell-in 0.42s var(--ease-expo) calc(var(--i) * 45ms) both,
+    intro-cell-solve 0.5s var(--ease-out) calc(1.02s + var(--i) * 40ms) both;
+}
+.intro-cell > span {
+  animation: intro-type 0.22s var(--ease-out) calc(0.32s + var(--i) * 70ms) both;
+}
+/* Köşedeki ipucu numarası — perdenin bir bulmaca kelimesi olduğunu söyler. */
+.intro-cell[data-no]::before {
+  content: attr(data-no);
+  position: absolute;
+  left: 0.32em; top: 0.18em;
+  font-family: var(--font-inter), system-ui, sans-serif;
+  font-size: 0.32em;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+.intro-clue {
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+  animation: intro-type 0.5s var(--ease-out) 0.2s both;
+}
+@keyframes intro-cell-in {
+  from { opacity: 0; transform: translateY(40%) scale(0.6); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes intro-type {
+  from { opacity: 0; transform: scale(0.4); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes intro-cell-solve {
+  0% { background: var(--cell); }
+  40% { background: var(--correct-soft); transform: translateY(-14%); }
+  100% { background: var(--correct-soft); transform: none; box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--correct) 45%, transparent); }
+}
+@keyframes intro-lift {
+  from { clip-path: inset(0 0 0 0); }
+  to { clip-path: inset(0 0 100% 0); }
+}
+
+/* ——— Sayfa geçiş perdesi (RouteCurtain) ———
+   Hücreler köşegen sırayla (r + c) büyüyüp ekranı kaplar, yeni sayfa hazır
+   olunca aynı yönde süpürülerek kalkar. Süreler RouteCurtain.tsx'teki
+   sabitlerle eşleşmeli. */
+.curtain {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  pointer-events: auto;
+  overflow: hidden;
+}
+.curtain[data-phase='out'] { pointer-events: none; }
+.curtain-cell {
+  background: var(--ink);
+  /* Komşu hücrelerin kenarında saç teli boşluk kalmasın diye hafif taşırılır. */
+  margin: -0.5px;
+  transform: scale(0);
+  border-radius: 18%;
+}
+.curtain[data-phase='in'] .curtain-cell {
+  animation: curtain-cell-in 0.26s var(--ease-out) var(--d) both;
+}
+.curtain[data-phase='hold'] .curtain-cell { transform: none; border-radius: 0; }
+.curtain[data-phase='out'] .curtain-cell {
+  animation: curtain-cell-out 0.3s var(--ease-in-out) var(--d) both;
+}
+@keyframes curtain-cell-in {
+  from { transform: scale(0); border-radius: 50%; }
+  to { transform: none; border-radius: 0; }
+}
+@keyframes curtain-cell-out {
+  from { transform: none; border-radius: 0; }
+  to { transform: scale(0) rotate(45deg); border-radius: 50%; }
+}
+.curtain-label {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  color: var(--paper);
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-variation-settings: 'SOFT' 60, 'WONK' 1;
+  font-size: clamp(2.6rem, 11vw, 7rem);
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+.curtain-label > span { display: inline-flex; overflow: hidden; padding: 0.1em 0.04em 0.16em; }
+.curtain-label > span > span { display: inline-block; white-space: pre; }
+.curtain[data-phase='in'] .curtain-label > span > span,
+.curtain[data-phase='hold'] .curtain-label > span > span {
+  animation: char-rise 0.5s var(--ease-expo) calc(0.12s + var(--i) * 28ms) both;
+}
+.curtain[data-phase='out'] .curtain-label > span > span {
+  animation: char-leave 0.24s var(--ease-in-out) calc(var(--i) * 14ms) both;
+}
+@keyframes char-leave {
+  from { transform: none; }
+  to { transform: translateY(-110%); }
+}
+
+/* ——— Kinetik başlık (KineticTitle) ———
+   Her harf kendi kelimesinin maskesinin altından yükselir. Kelime kutusundaki
+   iç boşluk, Türkçe harflerin noktasını/çengelini (İ, Ş, Ç, Ğ) maskeye
+   kırptırmamak için; negatif dış boşluk da bunu yerleşime yansıtmaz. */
+.kt-word {
+  display: inline-block;
+  overflow: hidden;
+  white-space: nowrap;
+  vertical-align: top;
+  padding: 0.12em 0.03em 0.16em;
+  margin: -0.12em -0.03em -0.16em;
+}
+.kt-char {
+  display: inline-block;
+  animation: char-rise 0.9s var(--ease-expo) calc(var(--intro-delay) + 0.05s + var(--i) * 32ms) both;
+}
+@keyframes char-rise {
+  from { transform: translateY(112%) rotate(6deg); }
+  to { transform: none; }
+}
+
+/* ——— Sahne girişleri ———
+   `.rise`: sayfa açılışında sırayla yerine oturan bloklar (--i = sıra).
+   `backwards` dolgusu BİLEREK: animasyon bitince transform stili serbest
+   kalır, hover/tilt gibi kendi transform'unu kullanan öğeler bozulmaz. */
+.rise {
+  animation: rise 0.85s var(--ease-expo) calc(var(--intro-delay) + 0.18s + var(--i, 0) * 70ms) backwards;
+}
+@keyframes rise {
+  from { opacity: 0; transform: translateY(22px); }
+}
+/* `.deal`: kartlar masaya dağıtılır gibi — hafif eğik, alttan. */
+.deal {
+  animation: deal 0.95s var(--ease-expo) calc(var(--intro-delay) + 0.3s + var(--i, 0) * 90ms) backwards;
+  transform-origin: 50% 120%;
+}
+@keyframes deal {
+  from { opacity: 0; transform: translateY(46px) rotate(calc(var(--tilt, -2) * 1deg)) scale(0.96); }
+}
+
+/* ——— Kaydırmaya bağlı açılışlar ———
+   Saf CSS kaydırma zaman çizelgesi: JS yok, hidrasyon uyuşmazlığı yok,
+   destek yoksa öğe olduğu gibi durur. Hareket azaltma isteyen kullanıcıya
+   hiç uygulanmaz (süre sıfırlaması kaydırma zaman çizelgesini durdurmaz). */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .reveal {
+      animation: reveal linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 70%;
+    }
+    .reveal-fold {
+      animation: reveal-fold linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 80%;
+      transform-origin: 50% 0%;
+    }
+    /* Başlığın altındaki kaydırma ilerleme çizgisi. */
+    .scroll-progress {
+      animation: scroll-progress linear both;
+      animation-timeline: scroll(root block);
+    }
+    /* Nasıl oynanır: adımları bağlayan mürekkep çizgisi kaydırdıkça çizilir. */
+    .ink-thread {
+      animation: ink-thread linear both;
+      animation-timeline: view();
+      animation-range: entry 40% exit 60%;
+    }
+  }
+}
+@keyframes reveal {
+  from { opacity: 0; transform: translateY(38px) scale(0.97); }
+}
+@keyframes reveal-fold {
+  from { opacity: 0; transform: perspective(900px) rotateX(-22deg) translateY(30px); }
+}
+@keyframes scroll-progress {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+@keyframes ink-thread {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
+}
+.scroll-progress {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 2px;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  pointer-events: none;
+}
+
+/* ——— Mürekkep alt çizgisi ———
+   Üstüne gelince soldan çizilir, ayrılınca SAĞA doğru çekilir (iki yönlü
+   hareket: background-position hover'da sola, çıkışta sağa yaslanır). */
+.ink-link {
+  background-image: linear-gradient(currentColor, currentColor);
+  background-repeat: no-repeat;
+  background-size: 0% 1.5px;
+  background-position: 100% 100%;
+  padding-bottom: 2px;
+  transition: background-size 0.45s var(--ease-expo), color 0.2s;
+}
+.ink-link:hover, .ink-link[aria-current='page'] {
+  background-size: 100% 1.5px;
+  background-position: 0% 100%;
+}
+
+/* ——— Silme dolgulu düğme ———
+   Birincil (mürekkep) düğmelerde üstüne gelince vurgu rengi alttan dolar.
+   `isolation` dolgu katmanını düğmenin içine hapseder; metin üstte kalır. */
+.btn-wipe {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+.btn-wipe::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--wipe, var(--accent));
+  border-radius: inherit;
+  transform: translateY(101%);
+  transition: transform 0.5s var(--ease-expo);
+}
+.dark .btn-wipe::before { background: var(--wipe, var(--diff-medium)); }
+@media (hover: hover) {
+  .btn-wipe:hover::before { transform: none; }
+}
+
+/* ——— Eğim kartı (Tilt) ———
+   İşaretçinin konumu --rx/--ry/--mx/--my değişkenlerine yazılır; kart
+   perspektifte eğilir, üstünden imleci izleyen yumuşak bir ışık geçer. */
+.tilt {
+  transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateY(var(--lift, 0px));
+  transition: transform 0.6s var(--ease-expo), box-shadow 0.3s var(--ease-out);
+  transform-style: preserve-3d;
+}
+.tilt[data-active] { transition: transform 0.12s linear, box-shadow 0.3s var(--ease-out); --lift: -4px; }
+.tilt-sheen {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.4s var(--ease-out);
+  background: radial-gradient(420px circle at var(--mx, 50%) var(--my, 50%), color-mix(in srgb, var(--paper-raised) 70%, transparent), transparent 45%);
+  mix-blend-mode: soft-light;
+}
+.dark .tilt-sheen { mix-blend-mode: screen; background: radial-gradient(380px circle at var(--mx, 50%) var(--my, 50%), rgba(255, 255, 255, 0.07), transparent 45%); }
+.tilt[data-active] .tilt-sheen { opacity: 1; }
+
+/* Zorluk taşı, kartın üstüne gelinince hafifçe döner — taşı eline almak gibi. */
+.tile-wobble { transition: transform 0.6s var(--ease-expo); }
+.group:hover .tile-wobble { transform: rotate(-8deg) scale(1.07); }
+
+/* Logo: üstüne gelince yatay çubuk kayarak uzar, kollar içe eğilir. */
+.logo-mark .logo-bar { transform-box: fill-box; transform-origin: center; transition: transform 0.55s var(--ease-expo); }
+.logo-mark .logo-arm { transform-box: fill-box; transform-origin: 50% 100%; transition: transform 0.55s var(--ease-expo); }
+a:hover > .logo-mark .logo-bar { transform: scaleX(1.18); }
+a:hover > .logo-mark .logo-arm-l { transform: rotate(-5deg); }
+a:hover > .logo-mark .logo-arm-r { transform: rotate(5deg); }
+
+/* ——— Hücre imleci (CellCursor) ———
+   Yalnızca ince işaretçili cihazlarda; dokunmatikte hiç bağlanmaz. Kendi
+   imlecimizi GİZLEMİYORUZ: halka yerli imlecin etrafında bir "seçim"
+   katmanıdır, erişilebilirlik ve isabet yerli imlecin kalır. */
+.cell-cursor {
+  position: fixed;
+  left: 0; top: 0;
+  z-index: 95;
+  pointer-events: none;
+  box-shadow: inset 0 0 0 1.5px var(--ink);
+  transition: opacity 0.25s var(--ease-out), background-color 0.25s var(--ease-out), box-shadow 0.25s var(--ease-out);
+}
+.cell-cursor[data-hover] {
+  background: color-mix(in srgb, var(--accent) 9%, transparent);
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+.cell-cursor-no {
+  position: absolute;
+  left: 3px; top: 1px;
+  font-size: 8px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--ink);
+  transition: opacity 0.2s;
+}
+.cell-cursor[data-hover] .cell-cursor-no { opacity: 0; }
+
+/* ——— Kayan rakam (geri sayım, sayaçlar) ———
+   Her rakam kendi anahtarıyla yeniden bağlanır; yeni rakam yukarıdan düşer.
+   Kutunun sabit genişliği (tabular-nums) yerleşimi oynatmaz. */
+.roll { display: inline-flex; overflow: hidden; vertical-align: bottom; }
+.roll > span { display: inline-block; animation: roll-in 0.42s var(--ease-expo) both; }
+@keyframes roll-in {
+  from { transform: translateY(-85%); opacity: 0; }
+}
+
+/* ——— Sayan rakam (CountUp) ———
+   @property ile tamsayı olarak tanımlanan değişken 0'dan hedefe akar, CSS
+   sayacı onu yazar. @property desteklemeyen tarayıcıda değişken ayrık
+   davranır ve doğrudan son değere atlar — sayı yine doğru görünür. */
+@property --num {
+  syntax: '<integer>';
+  initial-value: 0;
+  inherits: false;
+}
+.count-up {
+  --num: var(--to);
+  counter-reset: num var(--num);
+  animation: count-up 1.4s var(--ease-expo) calc(var(--intro-delay) + 0.35s) backwards;
+}
+.count-up::after { content: counter(num); }
+@keyframes count-up {
+  from { --num: 0; }
+}
+
+/* ——— Yükleyici ızgarası ———
+   İskeletin bulmaca hali: hücreler köşegen dalgalar halinde dolup boşalır. */
+.loader-cell {
+  border-radius: 4px;
+  background: var(--paper-raised);
+  box-shadow: inset 0 0 0 1px var(--line);
+  animation: loader-wave 1.5s var(--ease-in-out) calc(var(--d) * 1ms) infinite;
+}
+@keyframes loader-wave {
+  0%, 100% { transform: scale(0.82); background: var(--paper-raised); }
+  35% { transform: none; background: var(--cell-word); }
+  60% { transform: scale(0.94); background: var(--paper-raised); }
+}
+
+/* ——— Oyun ızgarası girişi ———
+   Bulmaca açılınca hücreler köşegen bir dalgayla yerine oturur. Sınıf
+   yalnızca giriş süresince takılı kalır (Grid.tsx): kalıcı olsaydı yanlış
+   kelime sarsıntısı (`cell-wrong`) bittikten sonra bu animasyon yeniden
+   başlardı. */
+.cell-enter { animation: cell-enter 0.5s var(--ease-expo) calc(var(--d) * 1ms) backwards; }
+@keyframes cell-enter {
+  from { opacity: 0; transform: scale(0.4) rotate(-10deg); }
+}
+
+/* ——— 404: kaybolan sayfa, düşen taşlar ——— */
+.drop-tile {
+  animation: drop-tile 1s var(--ease-expo) calc(0.1s + var(--i) * 110ms) backwards;
+}
+@keyframes drop-tile {
+  from { opacity: 0; transform: translateY(-120px) rotate(calc(var(--r, 0) * 1deg)); }
+}
+.drop-tile-shake { animation: drop-tile 1s var(--ease-expo) 0.32s backwards, cell-shake 0.6s var(--ease-out) 1.25s; font-size: 5rem; }
+
+/* ——— Tema geçişi ———
+   ThemeToggle, View Transitions API ile yeni temayı düğmeden yayılan bir
+   daire olarak açar. Varsayılan çapraz geçiş kapatılır ki daire net olsun. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+.curtain-wait {
+  position: absolute;
+  left: 50%; top: calc(50% + clamp(2.4rem, 8vw, 5rem));
+  width: 3.5rem; height: 2px;
+  margin-left: -1.75rem;
+  overflow: hidden;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--paper) 25%, transparent);
+  opacity: 0;
+}
+.curtain-wait::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--paper);
+  transform: translateX(-100%);
+  animation: wait-slide 0.9s var(--ease-in-out) infinite;
+}
+/* Yalnızca bekleme uzarsa görünür — hızlı geçişte hiç belirmez. */
+.curtain[data-phase='hold'] .curtain-wait { animation: wait-in 0.4s var(--ease-out) 0.35s forwards; }
+@keyframes wait-in { to { opacity: 1; } }
+@keyframes wait-slide { to { transform: translateX(100%); } }
+@keyframes icon-spin {
+  from { transform: rotate(-120deg) scale(0.4); opacity: 0; }
+}
+
+/* Ana sayfa başlığının arkasındaki bulmaca kâğıdı: merkezden dışa silinen
+   ince bir ızgara. Statik; yalnızca girişte bir kez belirir. */
+.hero-grid {
+  position: absolute;
+  inset: -3rem -1rem -1.5rem;
+  pointer-events: none;
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 36px 36px;
+  background-position: center center;
+  -webkit-mask-image: radial-gradient(ellipse 58% 62% at 50% 52%, #000 0%, transparent 78%);
+  mask-image: radial-gradient(ellipse 58% 62% at 50% 52%, #000 0%, transparent 78%);
+  opacity: 0.5;
+  animation: hero-grid-in 1.8s var(--ease-expo) var(--intro-delay) backwards;
+}
+@keyframes hero-grid-in {
+  from { opacity: 0; transform: scale(1.12); }
+}
+
+/* Arşivde "Tamamlandı" mührü: kart açılırken kâğıda vurulur. */
+.stamp { animation: stamp 0.7s var(--ease-expo) calc(var(--intro-delay) + 0.9s) backwards; }
+@keyframes stamp {
+  0% { opacity: 0; transform: rotate(-24deg) scale(2.4); }
+  60% { opacity: 1; transform: rotate(-5deg) scale(0.92); }
+  100% { transform: rotate(-7deg) scale(1); }
+}
+
+/* Sıralama satırları: soldan, kısa aralıklarla. */
+.row-in { animation: row-in 0.7s var(--ease-expo) calc(var(--intro-delay) + 0.35s + var(--i) * 45ms) backwards; }
+@keyframes row-in {
+  from { opacity: 0; transform: translateX(-18px); }
+}
+/* Podyum taşları yerine yaylanarak oturur, üstlerinden bir kez ışık geçer. */
+.podium {
+  position: relative;
+  overflow: hidden;
+  animation: podium-pop 0.8s var(--ease-expo) calc(var(--intro-delay) + 0.45s + var(--i) * 45ms) backwards;
+}
+.podium::after {
+  content: '';
+  position: absolute;
+  inset: -50%;
+  background: linear-gradient(115deg, transparent 40%, rgba(255, 255, 255, 0.75) 50%, transparent 60%);
+  transform: translateX(-100%);
+  animation: glint 1.1s var(--ease-in-out) calc(var(--intro-delay) + 1s + var(--i) * 120ms) both;
+  pointer-events: none;
+}
+@keyframes podium-pop {
+  from { transform: scale(0.3) rotate(-25deg); opacity: 0; }
+}
+@keyframes glint { to { transform: translateX(100%); } }
+
+/* Profil: baş harf taşı yaylanarak gelir, ısı takvimi dalga halinde dolar. */
+.avatar-pop { animation: podium-pop 0.9s var(--ease-expo) var(--intro-delay) backwards; }
+.cal-cell { animation: cal-cell 0.5s var(--ease-expo) calc(var(--intro-delay) + 0.5s + var(--d) * 1ms) backwards; }
+@keyframes cal-cell {
+  from { opacity: 0; transform: scale(0.2); }
+}
+
+.form-error { animation: nudge 0.5s var(--ease-out); }
+@keyframes nudge {
+  15% { transform: translateX(-6px); }
+  30% { transform: translateX(6px); }
+  45% { transform: translateX(-4px); }
+  60% { transform: translateX(4px); }
+  75% { transform: translateX(-2px); }
+}
+.spinner {
+  width: 1em; height: 1em;
+  border-radius: 999px;
+  border: 2px solid color-mix(in srgb, currentColor 30%, transparent);
+  border-top-color: currentColor;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }

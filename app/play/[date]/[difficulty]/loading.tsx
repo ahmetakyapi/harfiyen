@@ -28,8 +28,22 @@ export default function Loading() {
       <div className="flex min-h-0 flex-1 flex-col gap-2 px-1.5 pb-1 sm:px-3">
         {/* İpucu şeridi — gerçek yerleşimde olduğu gibi ÜSTTE */}
         <Skeleton className="h-[3.25rem] shrink-0 rounded-2xl" />
+        {/* Grid yerine boş bir bulmaca: hücreler köşegen dalgalar halinde
+            dolup boşalır (globals.css → .loader-cell). Kare, gerçek grid'in
+            kapladığı alanı aynen kaplar; yükleme bitince yerleşim oynamaz. */}
         <div className="flex min-h-0 flex-1 items-center justify-center">
-          <Skeleton className="aspect-square w-full max-w-[min(100%,60vh)] rounded-2xl" />
+          <div aria-hidden
+            className="grid aspect-square w-full max-w-[min(100%,60vh)] grid-cols-7 gap-[3px] rounded-2xl border border-[var(--line)] p-[3px]">
+            {Array.from({ length: 49 }, (_, i) => {
+              const r = Math.floor(i / 7);
+              const c = i % 7;
+              // Gerçek bulmacalardaki gibi birkaç kapalı hücre (simetrik).
+              const black = [8, 12, 24, 36, 40].includes(i);
+              return black
+                ? <span key={i} className="cell-void rounded-[4px]" />
+                : <span key={i} className="loader-cell" style={{ '--d': (r + c) * 70 } as React.CSSProperties} />;
+            })}
+          </div>
         </div>
       </div>
     </div>

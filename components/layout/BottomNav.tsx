@@ -1,5 +1,6 @@
 'use client';
 
+import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Archive, Play, Trophy } from 'lucide-react';
@@ -36,10 +37,16 @@ export function BottomNav() {
           // turu kadar bir boşluk var; basıldığı AN geri bildirim olmazsa bu
           // boşluk "tıklama gitmedi" gibi okunuyordu. Ortadaki Oyna düğmesinde
           // zaten vardı, yan sekmelerde yoktu.
-          className={`flex min-h-[3.5rem] flex-col items-center justify-center gap-1 transition-[color,transform] duration-150 ease-[cubic-bezier(0.22,1,0.36,1)] active:scale-95 ${
+          className={`relative flex min-h-[3.5rem] flex-col items-center justify-center gap-1 transition-[color,transform] duration-150 ease-[cubic-bezier(0.22,1,0.36,1)] active:scale-95 ${
             active ? 'text-[var(--accent)]' : 'text-[var(--ink-soft)]'
           }`}>
-          <Icon aria-hidden className="h-5 w-5" />
+          {/* Etkin sekmenin üst kenar işareti sekmeler arasında kayar. */}
+          {active && (
+            <motion.span layoutId="bottom-nav-mark" aria-hidden
+              className="absolute inset-x-0 top-0 mx-auto h-[3px] w-8 rounded-b-full bg-[var(--accent)]"
+              transition={{ type: 'spring', stiffness: 420, damping: 34 }} />
+          )}
+          <Icon aria-hidden className={`h-5 w-5 transition-transform duration-500 ease-[var(--ease-expo)] ${active ? '-translate-y-0.5 scale-110' : ''}`} />
           <span className={LABEL}>{label}</span>
         </Link>
       </li>

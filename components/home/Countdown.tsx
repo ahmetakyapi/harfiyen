@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
+import { RollingText } from '@/components/motion/RollingText';
 import { gameDay, msUntilNextReset } from '@/lib/date';
 
 export function Countdown() {
@@ -31,8 +32,14 @@ export function Countdown() {
   const total = Math.floor(ms / 1000);
   const pad = (n: number): string => String(n).padStart(2, '0');
   return (
+    // Her hane değiştiğinde yukarıdan düşer — istasyon tabelası gibi. Ekran
+    // okuyucu her saniye okumasın diye görsel sayaç aria-hidden; erişilebilir
+    // metin yalnızca dakika çözünürlüğünde.
     <span className="font-mono tabular-nums">
-      {pad(Math.floor(total / 3600))}:{pad(Math.floor((total % 3600) / 60))}:{pad(total % 60)}
+      <span className="sr-only">{Math.floor(total / 3600)} saat {Math.floor((total % 3600) / 60)} dakika</span>
+      <span aria-hidden>
+        <RollingText text={pad(Math.floor(total / 3600))} />:<RollingText text={pad(Math.floor((total % 3600) / 60))} />:<RollingText text={pad(total % 60)} />
+      </span>
     </span>
   );
 }

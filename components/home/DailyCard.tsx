@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { Lock } from 'lucide-react';
+import { Tilt } from '@/components/motion/Tilt';
 import { LetterTile } from '@/components/ui/LetterTile';
 import { DIFFICULTY_BADGE_CLASS } from '@/lib/difficulty';
 import { formatDuration } from '@/lib/share';
@@ -33,9 +34,12 @@ export function DailyCard({ difficulty, size, wordCount, date, status, durationM
 }) {
   const meta = META[difficulty];
   return (
+    // Eğim fareyle çalışır; dokunmatikte basılı tutma geri bildirimi
+    // active:scale ile gelir.
+    <Tilt>
     <Link href={locked ? `/login?next=/play/${date}/${difficulty}` : `/play/${date}/${difficulty}`}
-      className={`group flex items-center gap-4 rounded-[1.6rem] border border-[var(--line)] bg-gradient-to-r ${WASH_CLASS[difficulty]} via-[var(--paper-raised)] to-[var(--paper-raised)] p-4 transition-[transform,box-shadow] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-1 ${GLOW_CLASS[difficulty]}`}>
-      <LetterTile difficulty={difficulty} />
+      className={`group flex items-center gap-4 rounded-[1.6rem] border border-[var(--line)] bg-gradient-to-r ${WASH_CLASS[difficulty]} via-[var(--paper-raised)] to-[var(--paper-raised)] p-4 transition-[transform,box-shadow] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] active:scale-[0.985] ${GLOW_CLASS[difficulty]}`}>
+      <span className="tile-wobble"><LetterTile difficulty={difficulty} /></span>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <p className="font-display text-2xl">{meta.label}</p>
@@ -60,11 +64,14 @@ export function DailyCard({ difficulty, size, wordCount, date, status, durationM
           </span>
         )}
         {!locked && status === 'yeni' && (
-          <span className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--line)] bg-[var(--paper-raised)] text-[var(--ink-soft)] transition-colors duration-200 group-hover:border-transparent group-hover:bg-[var(--ink)] group-hover:text-[var(--paper)]">
-            →
+          // Ok, düğmenin içinde sağa kayıp çıkar ve soldan yeniden girer.
+          <span className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-[var(--line)] bg-[var(--paper-raised)] text-[var(--ink-soft)] transition-colors duration-300 group-hover:border-transparent group-hover:bg-[var(--ink)] group-hover:text-[var(--paper)]">
+            <span className="transition-transform duration-500 ease-[var(--ease-expo)] group-hover:translate-x-[180%]">→</span>
+            <span aria-hidden className="absolute -translate-x-[180%] transition-transform duration-500 ease-[var(--ease-expo)] group-hover:translate-x-0">→</span>
           </span>
         )}
       </div>
     </Link>
+    </Tilt>
   );
 }

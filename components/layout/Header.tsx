@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { auth } from '@/lib/auth';
+import { HeaderNav } from '@/components/layout/HeaderNav';
 import { Logo } from '@/components/layout/Logo';
 import { ThemeToggle } from '@/components/layout/ThemeToggle';
 
@@ -22,9 +23,7 @@ export async function Header() {
           {/* Mobilde Sıralama/Arşiv artık alt çubukta (bkz. BottomNav):
               etiketli, başparmak menzilinde ve başlığı 320 px'te sıkıştırmıyor.
               Burada yalnızca sm ve üstündeki metin linkleri kalır. */}
-          <Link href="/leaderboard" className="hidden hover:text-[var(--accent)] sm:block">Sıralama</Link>
-          <Link href="/archive" className="hidden hover:text-[var(--accent)] sm:block">Arşiv</Link>
-          <Link href="/how-to-play" className="hidden hover:text-[var(--accent)] sm:block">Nasıl Oynanır</Link>
+          <HeaderNav />
           {session
             ? (
               <Link href={`/profile/${session.user.name}`}
@@ -33,7 +32,7 @@ export async function Header() {
                 {/* Profil, imza taş dilinde bir baş harf avatarı: gradyan
                     çerçeve + krem zemin — her ekran boyutunda görünür,
                     kullanıcı adı yalnızca geniş ekranda yanında yazar. */}
-                <span className="block h-10 w-10 rounded-full bg-gradient-to-br from-[var(--ladder-2-from)] to-[var(--ladder-2-to)] p-[2px] shadow-sm">
+                <span className="block h-10 w-10 rounded-full transition-transform duration-500 ease-[var(--ease-expo)] hover:rotate-[-10deg] hover:scale-105 bg-gradient-to-br from-[var(--ladder-2-from)] to-[var(--ladder-2-to)] p-[2px] shadow-sm">
                   <span className="flex h-full w-full items-center justify-center rounded-full bg-[var(--tile-face)] font-display text-sm font-bold text-[var(--diff-medium)]">
                     {initial}
                   </span>
@@ -41,10 +40,12 @@ export async function Header() {
                 <span className="hidden max-w-[7rem] truncate font-medium sm:block">{session.user.name}</span>
               </Link>
             )
-            : <Link href="/login" className="flex min-h-10 shrink-0 items-center rounded-full border border-[var(--line)] px-3 font-medium sm:px-4">Giriş</Link>}
+            : <Link href="/login" className="btn-wipe flex min-h-10 shrink-0 items-center rounded-full border border-[var(--line)] px-3 font-medium transition-colors hover:border-transparent hover:text-[var(--paper)] sm:px-4">Giriş</Link>}
           <ThemeToggle />
         </nav>
       </div>
+      {/* Sayfanın ne kadarının okunduğu: kaydırmaya bağlı, saf CSS. */}
+      <span aria-hidden className="scroll-progress" />
     </header>
   );
 }

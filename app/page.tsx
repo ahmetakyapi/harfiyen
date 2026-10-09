@@ -4,6 +4,7 @@ import { AutoRefresh } from '@/components/layout/AutoRefresh';
 import { Countdown } from '@/components/home/Countdown';
 import { DailyCard } from '@/components/home/DailyCard';
 import { StreakBadge } from '@/components/home/StreakBadge';
+import { KineticTitle } from '@/components/motion/KineticTitle';
 import { auth } from '@/lib/auth';
 import { formatTrtDate, gameDay, puzzleNumber } from '@/lib/date';
 import { getDb } from '@/lib/db';
@@ -59,26 +60,34 @@ export default async function HomePage() {
   return (
     <main className="page-enter mx-auto max-w-lg px-4 py-8 sm:py-12">
       <AutoRefresh />
-      {/* CSS `text-transform: uppercase` Safari'de dile duyarlı DEĞİL:
-          "Nisan" → "NISAN", "Ekim" → "EKIM" üretiyor. Büyük harf her zaman
-          trUpper ile (proje kuralı). */}
-      <p className="mx-auto w-fit rounded-full bg-[var(--accent-soft)] px-4 py-1 text-center text-xs font-semibold tracking-widest text-[var(--accent)]">
-        {trUpper(formatTrtDate(today))} · #{puzzleNumber(today)}
-      </p>
-      <h1 className="font-display-flourish mt-4 bg-gradient-to-r from-[var(--title-from)] to-[var(--title-to)] bg-clip-text text-center font-display text-4xl text-transparent sm:text-5xl">
-        Günün Bulmacaları
-      </h1>
-      <div className="mt-5 flex justify-center">
-        {streak
-          ? <StreakBadge current={streak.currentStreak} best={streak.bestStreak} />
-          : (
-            // Eski metin "oynayabilirsin, üyelik sadece sıralama için" vaadi
-            // kuruyordu; oysa /play üyeliğe kapalı. Kapı ne ise onu söylüyoruz.
-            <p className="text-center text-sm text-[var(--ink-soft)]">
-              Oynamak için <Link href="/register" className="underline">üye ol</Link> — 10 saniye sürer.
-            </p>
-          )}
-      </div>
+      {/* Künye + kinetik başlık. Arkada, merkezden dışa doğru silinen soluk bir
+          bulmaca ızgarası: sayfanın kâğıdı, oyunun kâğıdı. */}
+      <header className="relative">
+        <span aria-hidden className="hero-grid" />
+        {/* CSS `text-transform: uppercase` Safari'de dile duyarlı DEĞİL:
+            "Nisan" → "NISAN", "Ekim" → "EKIM" üretiyor. Büyük harf her zaman
+            trUpper ile (proje kuralı). */}
+        <div className="rise relative flex items-center gap-3" style={{ '--i': 0 } as React.CSSProperties}>
+          <span aria-hidden className="h-px flex-1 bg-[var(--line)]" />
+          <p className="shrink-0 rounded-full bg-[var(--accent-soft)] px-4 py-1 text-center text-xs font-semibold tracking-widest text-[var(--accent)]">
+            {trUpper(formatTrtDate(today))} · #{puzzleNumber(today)}
+          </p>
+          <span aria-hidden className="h-px flex-1 bg-[var(--line)]" />
+        </div>
+        <KineticTitle text="Günün Bulmacaları"
+          className="font-display-flourish relative mt-5 text-center font-display text-[2.75rem] leading-[1.02] tracking-tight text-[var(--ink)] sm:text-[4.25rem]" />
+        <div className="rise relative mt-5 flex justify-center" style={{ '--i': 3 } as React.CSSProperties}>
+          {streak
+            ? <StreakBadge current={streak.currentStreak} best={streak.bestStreak} />
+            : (
+              // Eski metin "oynayabilirsin, üyelik sadece sıralama için" vaadi
+              // kuruyordu; oysa /play üyeliğe kapalı. Kapı ne ise onu söylüyoruz.
+              <p className="text-center text-sm text-[var(--ink-soft)]">
+                Oynamak için <Link href="/register" className="ink-link font-medium text-[var(--ink)]">üye ol</Link> — 10 saniye sürer.
+              </p>
+            )}
+        </div>
+      </header>
       <div className="mt-8 flex flex-col gap-3">
         {rows.length === 0 && (
           <div className="rounded-2xl border border-[var(--line)] bg-[var(--paper-raised)] px-5 py-10 text-center">
@@ -89,15 +98,18 @@ export default async function HomePage() {
             </p>
           </div>
         )}
-        {DIFFICULTIES.map((d) => {
+        {DIFFICULTIES.map((d, i) => {
           const row = rows.find((r) => r.difficulty === d);
           if (!row) return null;
           const s = sessionByPuzzle.get(row.id);
           return (
-            <DailyCard key={d} difficulty={d} size={row.size}
-              wordCount={Number(row.wordCount)} date={today}
-              status={s?.status === 'completed' ? 'bitti' : s ? 'devam' : 'yeni'}
-              durationMs={s?.durationMs ?? null} locked={userId === null} />
+            // Kartlar masaya dağıtılır gibi gelir: her biri biraz farklı açıyla.
+            <div key={d} className="deal" style={{ '--i': i, '--tilt': (i - 1) * 2 } as React.CSSProperties}>
+              <DailyCard difficulty={d} size={row.size}
+                wordCount={Number(row.wordCount)} date={today}
+                status={s?.status === 'completed' ? 'bitti' : s ? 'devam' : 'yeni'}
+                durationMs={s?.durationMs ?? null} locked={userId === null} />
+            </div>
           );
         })}
       </div>
@@ -105,25 +117,25 @@ export default async function HomePage() {
       {/* Ürün her gün üç bulmaca vaat ediyor; üçünü bitirmenin görsel bir
           karşılığı yoktu. Günün kapanışı burada. */}
       {allDone && (
-        <div className="mt-6 rounded-2xl border border-[var(--correct)]/40 bg-[var(--correct-soft)] px-5 py-4 text-center">
+        <div className="rise mt-6 rounded-2xl border border-[color:color-mix(in_srgb,var(--correct)_40%,transparent)] bg-[var(--correct-soft)] px-5 py-4 text-center" style={{ '--i': 7 } as React.CSSProperties}>
           <p className="font-display text-2xl text-[var(--correct)]">Günün Üçlüsü Tamam</p>
           <p className="mt-1 font-mono text-sm tabular-nums text-[var(--ink-soft)]">
             3/3 · toplam {Math.floor(totalMs / 60000)} dk {Math.round((totalMs % 60000) / 1000)} sn
           </p>
           <div className="mt-3 flex gap-2">
             <Link href="/leaderboard"
-              className="flex min-h-11 flex-1 items-center justify-center rounded-xl border border-[var(--correct)]/35 bg-[var(--paper-raised)] text-sm font-medium transition-colors hover:bg-[var(--row-hover)]">
+              className="flex min-h-11 flex-1 items-center justify-center rounded-xl border border-[color:color-mix(in_srgb,var(--correct)_35%,transparent)] bg-[var(--paper-raised)] text-sm font-medium transition-colors hover:bg-[var(--row-hover)]">
               Sıralamayı Gör
             </Link>
             <Link href="/archive"
-              className="flex min-h-11 flex-1 items-center justify-center rounded-xl border border-[var(--correct)]/35 bg-[var(--paper-raised)] text-sm font-medium transition-colors hover:bg-[var(--row-hover)]">
+              className="flex min-h-11 flex-1 items-center justify-center rounded-xl border border-[color:color-mix(in_srgb,var(--correct)_35%,transparent)] bg-[var(--paper-raised)] text-sm font-medium transition-colors hover:bg-[var(--row-hover)]">
               Arşivde Devam Et
             </Link>
           </div>
         </div>
       )}
       {!allDone && doneCount > 0 && (
-        <p className="mt-6 text-center text-sm text-[var(--ink-soft)]">
+        <p className="rise mt-6 text-center text-sm text-[var(--ink-soft)]" style={{ '--i': 7 } as React.CSSProperties}>
           Bugün <strong className="text-[var(--ink)]">{doneCount}/{rows.length}</strong> bitti.
         </p>
       )}
@@ -131,7 +143,7 @@ export default async function HomePage() {
       {/* Sonraki baskıya geri sayım: gazete künyesi gibi ince bir şerit.
           "Üyelere açık" notu kaldırıldı — kartların üstündeki kilit rozeti ve
           başlıktaki çağrı aynı şeyi zaten iki kez söylüyordu. */}
-      <div className="mt-9 flex flex-col items-center gap-3">
+      <div className="rise mt-9 flex flex-col items-center gap-3" style={{ '--i': 8 } as React.CSSProperties}>
         <div className="flex w-full items-center gap-3">
           <span aria-hidden className="h-px flex-1 bg-[var(--line)]" />
           <p className="shrink-0 text-center text-sm text-[var(--ink-soft)]">
@@ -140,7 +152,7 @@ export default async function HomePage() {
           <span aria-hidden className="h-px flex-1 bg-[var(--line)]" />
         </div>
         <Link href="/how-to-play"
-          className="flex min-h-11 items-center rounded-full border border-[var(--line)] px-4 text-sm font-medium transition-colors hover:bg-[var(--paper-raised)]">
+          className="btn-wipe flex min-h-11 items-center rounded-full border border-[var(--line)] px-4 text-sm font-medium transition-colors hover:border-transparent hover:text-[var(--paper)]">
           Nasıl Oynanır?
         </Link>
       </div>

@@ -1,11 +1,16 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { useEffect, useState } from 'react';
 import { cellsOf } from '@/hooks/useGameState';
 import type { ClientPuzzle, Letters } from '@/lib/types';
 import type { Selection } from '@/hooks/useGameState';
 
 export const GRID_PAD = 3;
+// Giriş dalgasında köşegen başına gecikme; dalganın toplam süresi bundan ve
+// grid boyutundan türetilir (10×10'da ~0.95 sn).
+const ENTER_STEP_MS = 24;
+const ENTER_MS = 500;
 export const GRID_GAP = 2;
 
 /** Kenar boşlukları/aralıklar çıkarıldıktan sonra tek bir hücrenin px kenarı. */
@@ -36,6 +41,18 @@ export function Grid({
   flashCell?: string | null;  // ipucuyla az önce açılan hücre — kısa parıltı
   cellPx: number | null;      // ölçülen hücre kenarı; null → oransal yedek
 }) {
+  // Bulmaca açılınca hücreler köşegen bir dalgayla yerine oturur. Sınıf
+  // yalnızca dalga süresince takılı: kalıcı olsaydı yanlış kelimenin sarsıntı
+  // sınıfı (cell-wrong) kalkınca giriş animasyonu yeniden oynardı.
+  const [entering, setEntering] = useState(true);
+  useEffect(() => {
+    const id = window.setTimeout(() => setEntering(false), ENTER_MS + (puzzle.size * 2 - 2) * ENTER_STEP_MS + 50);
+    return () => window.clearTimeout(id);
+  }, [puzzle.size]);
+  const enterStyle = (r: number, c: number): React.CSSProperties | undefined =>
+    entering ? ({ '--d': (r + c) * ENTER_STEP_MS } as React.CSSProperties) : undefined;
+  const enterClass = entering ? 'cell-enter' : '';
+
   const numberAt = new Map<string, number>();
   for (const e of puzzle.entries) {
     const key = `${e.row}:${e.col}`;
@@ -70,7 +87,7 @@ export function Grid({
           {rowArr.map((isBlack, c) => {
             const key = `${r}:${c}`;
             if (isBlack) {
-              return <div key={key} role="gridcell" aria-hidden className="cell-void rounded-[3px]" />;
+              return <div key={key} role="gridcell" aria-hidden className={`cell-void rounded-[3px] ${enterClass}`} style={enterStyle(r, c)} />;
             }
             const isSel = sel.row === r && sel.col === c;
             const isCorrect = correctCells.has(key);
@@ -99,7 +116,8 @@ export function Grid({
                   (isWrong ? ', yanlış — temizleniyor' : '') +
                   (hintCells.has(key) ? ', ipucuyla açıldı' : '')
                 }
-                className={`relative aspect-square rounded-[3px] ${bg} ${ring} ${isWrong ? 'cell-wrong' : ''} transition-[background-color,transform] duration-100`}>
+                style={enterStyle(r, c)}
+                className={`relative aspect-square rounded-[3px] ${bg} ${ring} ${isWrong ? 'cell-wrong' : enterClass} transition-[background-color,transform] duration-100`}>
                 {isWrong && (
                   // Sarsıntıya renk de eşlik eder: hangi harflerin gideceği
                   // (kilitli olanlar bu kümede yok) tek bakışta belli olsun.

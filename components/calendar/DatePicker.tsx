@@ -246,7 +246,7 @@ function Cell({
   if (state === 'ay-disi') {
     return (
       <div role="gridcell" aria-hidden
-        className="flex aspect-square min-h-11 items-center justify-center text-sm text-[var(--ink-soft)]/30">
+        className="flex aspect-square min-h-11 items-center justify-center text-sm text-[color:color-mix(in_srgb,var(--ink-soft)_30%,transparent)]">
         {dayNo}
       </div>
     );
@@ -270,11 +270,11 @@ function Cell({
   const tone = isSelected
     ? 'bg-[var(--ink)] text-[var(--paper)] font-semibold'
     : state === 'yok'
-      ? 'cell-void text-[var(--ink-soft)]/50'
+      ? 'cell-void text-[color:color-mix(in_srgb,var(--ink-soft)_50%,transparent)]'
       : state === 'yayinlanmadi'
-        ? 'text-[var(--ink-soft)]/30'
+        ? 'text-[color:color-mix(in_srgb,var(--ink-soft)_30%,transparent)]'
         : complete
-          ? 'bg-[var(--correct-soft)] text-[var(--ink)] font-semibold ring-1 ring-inset ring-[var(--correct)]/45'
+          ? 'bg-[var(--correct-soft)] text-[var(--ink)] font-semibold ring-1 ring-inset ring-[color:color-mix(in_srgb,var(--correct)_45%,transparent)]'
           : 'bg-[var(--paper)] text-[var(--ink)] ring-1 ring-inset ring-[var(--line)]';
   const ring = isToday && !isSelected ? 'ring-2 ring-inset ring-[var(--accent)]' : '';
 
@@ -303,7 +303,7 @@ function Cell({
               <span key={i} className={`h-[3px] rounded-full ${
                 i < done
                   ? (isSelected ? 'bg-[var(--paper)]' : 'bg-[var(--correct)]')
-                  : (isSelected ? 'bg-[var(--paper)]/30' : 'bg-[var(--line)]')
+                  : (isSelected ? 'bg-[color:color-mix(in_srgb,var(--paper)_30%,transparent)]' : 'bg-[var(--line)]')
               }`} />
             ))}
           </span>

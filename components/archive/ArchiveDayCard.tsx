@@ -29,14 +29,14 @@ export function ArchiveDayCard({
         highlighted
           ? 'border-[var(--accent)] ring-2 ring-[var(--accent)] ring-offset-2 ring-offset-[var(--paper)]'
           : allDone
-            ? 'border-[var(--correct)]/35 shadow-[0_14px_40px_-30px_var(--correct)]'
+            ? 'border-[color:color-mix(in_srgb,var(--correct)_35%,transparent)] shadow-[0_14px_40px_-30px_var(--correct)]'
             : 'border-[var(--line)] shadow-[0_14px_40px_-32px_var(--ink)] hover:shadow-[0_20px_50px_-28px_var(--ink)]'
       }`}>
       {/* Kâğıt kenarı hissi: üstte zorluk merdivenini taşıyan çok ince bir cetvel */}
       <div aria-hidden className="flex h-[3px] w-full">
-        <span className="flex-1 bg-[var(--diff-easy)]/50" />
-        <span className="flex-1 bg-[var(--diff-medium)]/50" />
-        <span className="flex-1 bg-[var(--diff-hard)]/50" />
+        <span className="flex-1 bg-[color:color-mix(in_srgb,var(--diff-easy)_50%,transparent)]" />
+        <span className="flex-1 bg-[color:color-mix(in_srgb,var(--diff-medium)_50%,transparent)]" />
+        <span className="flex-1 bg-[color:color-mix(in_srgb,var(--diff-hard)_50%,transparent)]" />
       </div>
 
       <header className="flex items-baseline gap-2.5 px-4 pb-2 pt-3.5">
@@ -64,7 +64,7 @@ export function ArchiveDayCard({
           {allDone && (
             // Dekoratif: "3/3 çözüldü" bilgisi zaten aşağıdaki satırlardan geliyor.
             <span aria-hidden
-              className="-rotate-[7deg] select-none rounded-md border-2 border-[var(--correct)]/40 px-1.5 py-0.5 font-display text-[0.55rem] font-bold tracking-[0.16em] text-[var(--correct)]/60">
+              className="stamp -rotate-[7deg] select-none rounded-md border-2 border-[color:color-mix(in_srgb,var(--correct)_40%,transparent)] px-1.5 py-0.5 font-display text-[0.55rem] font-bold tracking-[0.16em] text-[color:color-mix(in_srgb,var(--correct)_60%,transparent)]">
               {trUpper('Tamamlandı')}
             </span>
           )}
@@ -73,7 +73,7 @@ export function ArchiveDayCard({
 
       <div className="mx-4 border-t border-dashed border-[var(--line)]" />
 
-      <div className="divide-y divide-[var(--line)]/60">
+      <div className="divide-y divide-[color:color-mix(in_srgb,var(--line)_60%,transparent)]">
         {DIFFICULTIES.map((d) => {
           const key = `${date}:${d}`;
           const isDone = doneMs.has(key);
@@ -82,14 +82,16 @@ export function ArchiveDayCard({
             <Link key={d} href={`/play/${date}/${d}`}
               className="group/row flex min-h-11 items-center gap-2.5 px-4 py-2 transition-colors hover:bg-[var(--paper)]"
               aria-label={`${dayNumber} ${monthName} ${DIFFICULTY_LABELS[d]}${isDone ? ' — çözüldü' : ''}`}>
-              <LetterTile difficulty={d} size="sm" />
+              <span className="transition-transform duration-500 ease-[var(--ease-expo)] group-hover/row:-rotate-[8deg] group-hover/row:scale-110">
+                <LetterTile difficulty={d} size="sm" />
+              </span>
               <span className="flex-1 text-sm font-medium">{DIFFICULTY_LABELS[d]}</span>
               {isDone
                 ? <span className="flex items-center gap-1 rounded-full bg-[var(--correct-soft)] px-2 py-1 text-[0.7rem] font-semibold text-[var(--correct)]">
                     <Check aria-hidden className="h-3 w-3" strokeWidth={3} />
                     {ms !== null && <span className="font-mono tabular-nums">{formatDuration(ms)}</span>}
                   </span>
-                : <span className="text-xs text-[var(--ink-soft)] transition-colors group-hover/row:text-[var(--accent)]">
+                : <span className="text-xs text-[var(--ink-soft)] transition-[color,transform] duration-500 ease-[var(--ease-expo)] group-hover/row:translate-x-1 group-hover/row:text-[var(--accent)]">
                     Oyna →
                   </span>}
             </Link>
