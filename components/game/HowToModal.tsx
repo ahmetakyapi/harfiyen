@@ -46,22 +46,29 @@ export function HowToModal({ forceOpen = false, onClose }: {
 
   if (!open) return null;
   return (
-    <div role="dialog" aria-modal="true" aria-label="Harfiyen'e hoş geldin"
+    // Oyun ortasında "?" ile açılınca karşılama dili yersiz: oyuncu zaten
+    // oynuyor, kuralları hatırlamak istiyor.
+    <div role="dialog" aria-modal="true" aria-label={forceOpen ? 'Nasıl oynanır' : "Harfiyen'e hoş geldin"}
       className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-[var(--overlay)] p-4 backdrop-blur-sm">
       <div ref={panelRef} className="my-auto w-full max-w-sm rounded-[1.6rem] border border-[var(--line)] bg-[var(--paper-raised)] p-6 shadow-2xl">
-        <KineticTitle as="p" text="Harfiyen'e Hoş Geldin"
+        <KineticTitle as="p" text={forceOpen ? 'Nasıl Oynanır?' : "Harfiyen'e Hoş Geldin"}
           className="font-display-flourish font-display text-[1.75rem] leading-tight tracking-tight" />
         <ul className="mt-3 space-y-2 text-sm text-[var(--ink-soft)]">
           <li>İpuçlarından kelimeleri bul, kesişimleri kullan. Doğru biten kelime yeşil yanar.</li>
           <li>Hücreye dokununca kelime seçilir; aynı hücreye ikinci dokunuş yönü değiştirir.</li>
           <li>Takılırsan harf aç (+15 sn) — açılan harf köşesinde turuncu işaretle kilitlenir.</li>
+          {/* Yalnızca fareli cihazlarda: dokunmatikte bu tuşlar yok. */}
+          <li className="hidden [@media(hover:hover)_and_(pointer:fine)]:list-item">
+            Klavyede oklar hücre değiştirir, <kbd className="kbd">Boşluk</kbd> yönü çevirir,{' '}
+            <kbd className="kbd">Enter</kbd> sonraki kelimeye geçer.
+          </li>
         </ul>
         <p className="mt-3 text-sm">
           <Link href="/how-to-play" className="underline" onClick={close}>Ayrıntılı Anlatım</Link>
         </p>
         <button type="button" onClick={close} ref={closeRef}
           className="mt-5 min-h-12 w-full rounded-xl bg-[var(--ink)] font-medium text-[var(--paper)] transition-transform duration-150 active:scale-[0.98]">
-          Anladım, Başlayalım
+          {forceOpen ? 'Oyuna Dön' : 'Anladım, Başlayalım'}
         </button>
       </div>
     </div>

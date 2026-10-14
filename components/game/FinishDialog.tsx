@@ -1,7 +1,7 @@
 'use client';
 
 import { AnimatePresence, motion } from 'framer-motion';
-import { BarChart3, Check, ChevronDown, Flame, Share2, Sparkles, Trophy, X } from 'lucide-react';
+import { BarChart3, Check, ChevronDown, Flame, Lightbulb, Share2, Sparkles, Trophy, X } from 'lucide-react';
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { LetterBurst } from '@/components/motion/LetterBurst';
@@ -24,7 +24,7 @@ const DIR_LABEL: Record<'across' | 'down', string> = {
 
 export function FinishDialog({
   open, onClose, durationMs, rank, isRanked, hintCount, puzzleNumber, difficulty, date,
-  streak, stats, sessionId, siblings, gridLines, celebrate = false,
+  streak, stats, sessionId, siblings, gridLines, celebrate = false, isArchive = false,
 }: {
   open: boolean;
   /** Verilmezse diyalog kapatılamaz (arşiv "revisit" akışında kapatılacak bir
@@ -43,6 +43,9 @@ export function FinishDialog({
   /** Bulmaca ŞİMDİ bitti: harf yağmuru oynar. Sonradan geri dönülen sonuç
    *  ekranında (revisit) kutlama yapılmaz — o an çoktan geçti. */
   celebrate?: boolean;
+  /** Geçmiş günün bulmacası: "Bugün çözenlerin…" ve "Bugünün Kelimeleri"
+   *  arşivde yanlıştı — o gün çoktan kapandı. */
+  isArchive?: boolean;
 }) {
   const [copied, setCopied] = useState(false);
   const [words, setWords] = useState<SolvedEntry[] | null>(null);
@@ -181,7 +184,9 @@ export function FinishDialog({
                 </p>
               )}
               {hintCount > 0 && (
-                <p className="mt-1 text-xs text-[var(--ink-soft)]">💡 {hintCount} harf açıldı</p>
+                <p className="mt-1.5 flex items-center justify-center gap-1 text-xs text-[var(--ink-soft)]">
+                  <Lightbulb aria-hidden className="h-3.5 w-3.5 text-[var(--flame)]" /> {hintCount} harf açıldı
+                </p>
               )}
 
               {/* Süre dağılımı: ham süreyi anlama çeviren tek satır. */}
@@ -190,7 +195,7 @@ export function FinishDialog({
                   <p className="flex items-center gap-1.5 text-sm">
                     <BarChart3 aria-hidden className="h-4 w-4 shrink-0 text-[var(--accent)]" />
                     <span>
-                      Bugün çözenlerin <strong>%{stats.fasterThanPct}</strong>&apos;inden hızlısın
+                      {isArchive ? 'O gün' : 'Bugün'} çözenlerin <strong>%{stats.fasterThanPct}</strong>&apos;inden hızlısın
                     </span>
                   </p>
                   {/* Kendi süren ile medyanın göreli konumu: çubuk soldan
@@ -201,8 +206,8 @@ export function FinishDialog({
                       initial={{ scaleX: 0 }} animate={{ scaleX: 1 }}
                       transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1], delay: 0.45 }} />
                   </div>
-                  <p className="mt-1.5 font-mono text-xs tabular-nums text-[var(--ink-soft)]">
-                    medyan {formatDuration(stats.medianMs)} · {stats.solverCount} çözücü
+                  <p className="mt-1.5 text-xs tabular-nums text-[var(--ink-soft)]">
+                    Medyan süre <span className="font-mono">{formatDuration(stats.medianMs)}</span> · {stats.solverCount} kişi çözdü
                   </p>
                 </div>
               )}
@@ -234,7 +239,7 @@ export function FinishDialog({
                 <div className="mt-4 overflow-hidden rounded-2xl border border-[var(--line)] text-left">
                   <button type="button" onClick={loadWords} aria-expanded={wordsOpen}
                     className="flex min-h-11 w-full items-center justify-between gap-2 bg-[var(--paper)] px-3 text-sm font-medium">
-                    Bugünün Kelimeleri
+                    {isArchive ? 'Bulmacanın Kelimeleri' : 'Bugünün Kelimeleri'}
                     <ChevronDown aria-hidden
                       className={`h-4 w-4 shrink-0 transition-transform ${wordsOpen ? 'rotate-180' : ''}`} />
                   </button>

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { ChevronLeft, HelpCircle, Lightbulb, List, Sparkles, Trash2, X } from 'lucide-react';
+import { Check, ChevronLeft, HelpCircle, Lightbulb, List, Sparkles, Trash2, X } from 'lucide-react';
 import { activeEntry, allCellsFilled, cellsOf, entryString, useGameState } from '@/hooks/useGameState';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
 import { usePlayViewport } from '@/hooks/usePlayHeight';
@@ -69,6 +69,10 @@ const WRONG_CLEAR_MS = 620;
 const PAD_CHAR = ' ';
 const INPUT_PAD = PAD_CHAR.repeat(16);
 
+// Bitişte grid'de seçili hücre gösterilmez: şeftali dolgu + halka, oyun
+// bittikten sonra "hâlâ buraya yazıyorsun" der gibi duruyordu.
+const NO_SELECTION = { row: -1, col: -1, dir: 'across' } as const;
+
 async function post<T>(url: string, body: unknown): Promise<T> {
   const res = await fetch(url, {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
@@ -111,7 +115,8 @@ export function GameBoard({
   const [hintBusy, setHintBusy] = useState(false);
   const [listOpen, setListOpen] = useState(false); // mobil ipucu listesi paneli
   // Bitiş kartı kapatılabilir: kapatınca altta ÇÖZÜLMÜŞ grid kalır (kare
-  // bulmacanın en doyurucu anı) ve "Sonucu Yeniden Gör" ile geri açılır.
+  // bulmacanın en doyurucu anı) ve ipucu şeridinin yerine gelen "çözüldü"
+  // şeridindeki "Sonucu Gör" ile geri açılır.
   const [finishOpen, setFinishOpen] = useState(true);
   // Ekran okuyucu duyuruları: oyunun bütün geri bildirimi görseldi.
   const [liveMessage, setLiveMessage] = useState('');
@@ -410,9 +415,12 @@ export function GameBoard({
   const gridAreaRef = useRef<HTMLDivElement | null>(null);
   const [gridPx, setGridPx] = useState<number | null>(null);
   const { height: playHeight, offsetTop, keyboardOpen } = usePlayViewport();
+  // Bitişte de ölçülür: diyalog kapanınca altta kalan ÇÖZÜLMÜŞ grid pencere
+  // boyutu değişirse yeniden sığmalı.
+  const showGrid = inGame || phase === 'done';
   useEffect(() => {
     const el = gridAreaRef.current;
-    if (!inGame || !el) return;
+    if (!showGrid || !el) return;
     const measure = (): void => {
       const rect = el.getBoundingClientRect();
       const px = Math.floor(Math.min(rect.width, rect.height, MAX_GRID_PX));
@@ -422,7 +430,7 @@ export function GameBoard({
     const ro = new ResizeObserver(measure);
     ro.observe(el);
     return () => ro.disconnect();
-  }, [inGame, playHeight, keyboardOpen]);
+  }, [showGrid, playHeight, keyboardOpen]);
   const cellPx = gridPx !== null && gridPx > 0 ? cellSizeOf(gridPx, puzzle.size) : null;
 
   // Sayfa kaydırmasını ve iOS lastik-bant etkisini oyun süresince kapat.
@@ -699,11 +707,16 @@ export function GameBoard({
           {/* Devam eden oyunda "süre şimdi başlar" bir yalandı: oturum
               sunucuda açık kaldığı için sayaç kapatılan sekmeden beri kesintisiz
               işliyordu (spec §4: duraklatma yok). */}
-          <p className="mt-4 text-sm text-[var(--ink-soft)]">
-            {activeStartedAt !== null
-              ? 'Süren kaldığı yerden işliyor — duraklatma yok.'
-              : 'Süre "Başla" dediğin an işlemeye başlar.'}
-          </p>
+          {/* Çözülmüş arşiv bulmacasında "Başla" düğmesi yok; satır orada
+              var olmayan bir düğmeyi anlatıyordu ("Tekrar Oyna" süreyi zaten
+              kendi etiketinde söylüyor). */}
+          {!alreadyCompleted && (
+            <p className="mt-4 text-sm text-[var(--ink-soft)]">
+              {activeStartedAt !== null
+                ? 'Süren kaldığı yerden işliyor — duraklatma yok.'
+                : 'Süre “Başla” dediğin an işlemeye başlar.'}
+            </p>
+          )}
           {error && <p className="mt-3 text-sm text-[var(--accent)]">{error}</p>}
           {alreadyCompleted ? (
             // Arşivde çözülmüş bulmaca: iki eylem AÇIKÇA ayrılır. Eskiden hiçbir
@@ -740,7 +753,7 @@ export function GameBoard({
       <FinishDialog open durationMs={result?.durationMs ?? 0} rank={result?.rank ?? null}
         isRanked={result?.isRanked ?? false} streak={result?.streak ?? null}
         stats={result?.stats} sessionId={session?.sessionId ?? null} siblings={siblings}
-        hintCount={hintCount} puzzleNumber={puzzleNumber}
+        hintCount={hintCount} puzzleNumber={puzzleNumber} isArchive={isArchive}
         difficulty={puzzle.difficulty} date={puzzle.date} />
     );
   }
@@ -771,8 +784,10 @@ export function GameBoard({
       <div className="h-[3px] shrink-0 bg-[var(--line)]" role="progressbar"
         aria-label="Çözülen kelime oranı" aria-valuemin={0} aria-valuemax={totalCount}
         aria-valuenow={solvedCount}>
-        <div className="h-full bg-[var(--correct)] transition-[width] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"
-          style={{ width: `${(solvedCount / totalCount) * 100}%` }} />
+        {/* Genişlik değil ölçek canlandırılır: her kelimede yerleşim yeniden
+            hesaplanmasın, geçiş compositor'da kalsın. */}
+        <div className="h-full origin-left bg-[var(--correct)] transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"
+          style={{ transform: `scaleX(${solvedCount / totalCount})` }} />
       </div>
 
       {/* Başlık şeridi 320 px'e kadar TAŞMADAN sığmalı: metin etiketleri
@@ -795,6 +810,13 @@ export function GameBoard({
         <span className="hidden text-sm text-[var(--ink-soft)] lg:ml-auto lg:inline">
           {formatTrtDate(puzzle.date)}
         </span>
+        {/* Masaüstünde kuralları yeniden açmanın yolu yoktu: "?" düğmesi
+            yalnızca mobil ipucu panelindeydi. */}
+        <button type="button" onClick={() => setHowToOpen(true)} onPointerDown={(e) => e.preventDefault()}
+          aria-label="Nasıl oynanır"
+          className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-full text-[var(--ink-soft)] transition-colors hover:bg-[var(--paper-raised)] hover:text-[var(--ink)] lg:flex">
+          <HelpCircle aria-hidden className="h-5 w-5" />
+        </button>
         <span className="ml-auto hidden shrink-0 font-mono text-xs tabular-nums text-[var(--ink-soft)] min-[360px]:inline lg:hidden">
           {solvedCount}/{totalCount}
         </span>
@@ -809,12 +831,16 @@ export function GameBoard({
           className="flex h-11 w-9 shrink-0 items-center justify-center rounded-full border border-[var(--line)] text-[var(--ink-soft)] transition-colors hover:bg-[var(--paper-raised)] lg:hidden">
           <List aria-hidden className="h-[18px] w-[18px]" />
         </button>
-        <button type="button" onClick={hint} disabled={hintBusy} onPointerDown={(e) => e.preventDefault()} aria-label="Harf aç (+15 saniye ceza)"
-          className="flex min-h-11 shrink-0 items-center gap-1 rounded-full bg-[var(--accent-soft)] px-2.5 text-sm font-medium text-[var(--ink)] transition-transform active:scale-95 disabled:opacity-60 lg:hidden">
-          <Lightbulb aria-hidden className={`h-4 w-4 shrink-0 text-[var(--accent)] ${hintBusy ? 'animate-pulse' : ''}`} />
-          <span className="hidden min-[380px]:inline">Harf Aç</span>
-          <span className="hidden text-[var(--ink-soft)] min-[420px]:inline">+15 sn</span>
-        </button>
+        {/* Bulmaca bitince harf açacak bir şey kalmıyor; düğme orada durup
+            hiçbir şey yapmıyordu. */}
+        {inGame && (
+          <button type="button" onClick={hint} disabled={hintBusy} onPointerDown={(e) => e.preventDefault()} aria-label="Harf aç (+15 saniye ceza)"
+            className="flex min-h-11 shrink-0 items-center gap-1 rounded-full bg-[var(--accent-soft)] px-2.5 text-sm font-medium text-[var(--ink)] transition-transform active:scale-95 disabled:opacity-60 lg:hidden">
+            <Lightbulb aria-hidden className={`h-4 w-4 shrink-0 text-[var(--accent)] ${hintBusy ? 'animate-pulse' : ''}`} />
+            <span className="hidden min-[380px]:inline">Harf Aç</span>
+            <span className="hidden text-[var(--ink-soft)] min-[420px]:inline">+15 sn</span>
+          </button>
+        )}
       </header>
 
       {error && (
@@ -834,6 +860,33 @@ export function GameBoard({
               onToggleDir={() => dispatch({ type: 'SELECT', row: state.sel.row, col: state.sel.col })} />
           </div>
         )}
+        {/* Bitişte ipucu şeridinin yerini "çözüldü" şeridi alır: grid
+            yerinden oynamaz, sonuç kartı da tek ve her ekranda aynı yerden
+            geri açılır (eskiden altta, masaüstünde ekranı boydan boya kesen
+            ayrı bir düğme vardı). */}
+        {phase === 'done' && (
+          <div className="play-clue">
+            <div
+              className="rise flex min-h-[3.25rem] items-center gap-2.5 rounded-2xl border border-[color:color-mix(in_srgb,var(--correct)_35%,transparent)] bg-[var(--correct-soft)] py-1.5 pl-2.5 pr-1.5 lg:min-h-[4rem] lg:gap-3 lg:pl-3">
+              <span aria-hidden className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--correct)] text-[var(--paper)] lg:h-9 lg:w-9">
+                <Check className="h-4 w-4" strokeWidth={3} />
+              </span>
+              <span className="min-w-0 flex-1 leading-tight">
+                <span className="block font-medium text-[var(--ink)] lg:text-lg">Bulmaca Çözüldü</span>
+                {result && (
+                  <span className="block text-sm text-[var(--ink-soft)]">
+                    <span className="font-mono tabular-nums">{formatDuration(result.durationMs)}</span>
+                    {hintCount > 0 && ` · ${hintCount} harf açıldı`}
+                  </span>
+                )}
+              </span>
+              <button type="button" onClick={() => setFinishOpen(true)}
+                className="flex min-h-11 shrink-0 items-center gap-1.5 rounded-xl bg-[var(--ink)] px-3.5 text-sm font-semibold text-[var(--paper)] transition-transform active:scale-[0.97]">
+                <Sparkles aria-hidden className="h-4 w-4" /> Sonucu Gör
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Kare, ölçtüğümüz kutunun İÇİNDE mutlak konumlu (akış dışı) durur.
             Akışta olsaydı JS'in verdiği boyut kapsayıcının yüksekliğini
@@ -844,7 +897,7 @@ export function GameBoard({
           <div ref={gridRef}
             className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
             style={gridPx !== null ? { width: gridPx, height: gridPx } : { visibility: 'hidden' }}>
-            <Grid puzzle={puzzle} letters={state.letters} sel={state.sel}
+            <Grid puzzle={puzzle} letters={state.letters} sel={inGame ? state.sel : NO_SELECTION}
               activeCells={activeCells} correctCells={correctCells} hintCells={hintCells}
               wrongCells={wrongCells} flashCell={flashCell} cellPx={cellPx} />
             {/* Grid'i tam kaplayan görünmez ama TIKLANABİLİR input: dokunuş
@@ -852,8 +905,10 @@ export function GameBoard({
                 (başka öğeye dokunup programatik focus() mobilde güvenilmez).
                 fontSize 16 ŞART: iOS 16 px'in altındaki input'a odaklanınca
                 sayfayı YAKINLAŞTIRIR. user-select/touch-callout none +
-                onContextMenu, iOS'in "Yapıştır / Seç" balonunu bastırır. */}
-            <input ref={inputRef} type="text" inputMode="text" lang="tr"
+                onContextMenu, iOS'in "Yapıştır / Seç" balonunu bastırır.
+                Bitişte kaldırılır: çözülmüş grid'e dokunmak mobilde klavyeyi
+                boşuna açıyordu. */}
+            {inGame && <input ref={inputRef} type="text" inputMode="text" lang="tr"
               defaultValue={INPUT_PAD} aria-label="Bulmaca — harf gir"
               className="absolute inset-0 z-10 h-full w-full cursor-pointer select-none rounded-2xl bg-transparent text-transparent outline-none"
               style={{
@@ -870,7 +925,7 @@ export function GameBoard({
               onKeyDown={onInputKeyDown}
               onPointerDown={onGridPointer}
               onFocus={resetNativeInput}
-              onContextMenu={(e) => e.preventDefault()} />
+              onContextMenu={(e) => e.preventDefault()} />}
           </div>
         </div>
 
@@ -896,13 +951,17 @@ export function GameBoard({
                     </p>
                   </div>
                 </div>
-                <button type="button" onClick={hint} disabled={hintBusy} onPointerDown={(e) => e.preventDefault()}
-                  title="Seçili hücrenin harfini açar; süreye 15 saniye eklenir"
-                  className="mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[var(--accent-soft)] text-sm font-semibold text-[var(--ink)] transition-transform active:scale-[0.98] disabled:opacity-60">
-                  <Lightbulb aria-hidden className={`h-4 w-4 shrink-0 text-[var(--accent)] ${hintBusy ? 'animate-pulse' : ''}`} />
-                  {hintBusy ? 'Harf Açılıyor…' : 'Harf Aç'}
-                  <span className="font-normal text-[var(--ink-soft)]">+15 sn</span>
-                </button>
+                {/* Bitişte burada düğme yok: sonucu geri açan tek yer, ipucu
+                    şeridinin yerine gelen "çözüldü" şeridi. */}
+                {inGame && (
+                  <button type="button" onClick={hint} disabled={hintBusy} onPointerDown={(e) => e.preventDefault()}
+                    title="Seçili hücrenin harfini açar; süreye 15 saniye eklenir"
+                    className="mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[var(--accent-soft)] text-sm font-semibold text-[var(--ink)] transition-transform active:scale-[0.98] disabled:opacity-60">
+                    <Lightbulb aria-hidden className={`h-4 w-4 shrink-0 text-[var(--accent)] ${hintBusy ? 'animate-pulse' : ''}`} />
+                    {hintBusy ? 'Harf Açılıyor…' : 'Harf Aç'}
+                    <span className="font-normal text-[var(--ink-soft)]">+15 sn</span>
+                  </button>
+                )}
                 {hintCount > 0 && (
                   <p className="mt-2 text-center text-xs text-[var(--ink-soft)]">
                     {hintCount} harf açıldı · süreye +{Math.round(penaltyMs / 1000)} sn eklendi
@@ -912,15 +971,25 @@ export function GameBoard({
             )}
             <ClueList entries={puzzle.entries} active={entry} solvedKeys={correctKeys}
               onPick={(e) => pickEntry(e.no, e.dir)} keepFocus />
-            <button type="button" onClick={clearAll} onPointerDown={(e) => e.preventDefault()}
-              className={`mt-2 flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl border text-sm transition-colors ${
-                confirmClear
-                  ? 'border-[var(--wrong)] text-[var(--wrong)]'
-                  : 'border-[var(--line)] text-[var(--ink-soft)] hover:bg-[var(--paper-raised)]'
-              }`}>
-              <Trash2 aria-hidden className="h-4 w-4" />
-              {confirmClear ? 'Emin misin? Dokun ve Sil' : 'Tümünü Temizle'}
-            </button>
+            {inGame && (
+              <button type="button" onClick={clearAll} onPointerDown={(e) => e.preventDefault()}
+                className={`mt-2 flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl border text-sm transition-colors ${
+                  confirmClear
+                    ? 'border-[var(--wrong)] text-[var(--wrong)]'
+                    : 'border-[var(--line)] text-[var(--ink-soft)] hover:bg-[var(--paper-raised)]'
+                }`}>
+                <Trash2 aria-hidden className="h-4 w-4" />
+                {confirmClear ? 'Emin misin? Dokun ve Sil' : 'Tümünü Temizle'}
+              </button>
+            )}
+            {/* Klavye kısayolları hiçbir yerde yazmıyordu: Enter ile kelime
+                değiştirmek bir masaüstü oyuncusunun tahmin edeceği şey değil.
+                Bu panel yalnızca masaüstünde görünür. */}
+            {inGame && (
+              <p className="mt-2.5 shrink-0 text-center text-xs leading-relaxed text-[var(--ink-soft)]">
+                <kbd className="kbd">Enter</kbd> sonraki kelime · <kbd className="kbd">Boşluk</kbd> yön değiştirir
+              </p>
+            )}
           </div>
         </aside>
       </div>
@@ -947,13 +1016,15 @@ export function GameBoard({
           <div className="flex min-h-0 flex-1 flex-col px-3 py-2">
             <ClueList entries={puzzle.entries} active={entry} solvedKeys={correctKeys}
               onPick={(e) => pickEntry(e.no, e.dir)} />
-            <button type="button" onClick={() => { clearAll(); if (confirmClear) setListOpen(false); }}
-              className={`mt-2 flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl border text-sm ${
-                confirmClear ? 'border-[var(--wrong)] text-[var(--wrong)]' : 'border-[var(--line)] text-[var(--ink-soft)]'
-              }`}>
-              <Trash2 aria-hidden className="h-4 w-4" />
-              {confirmClear ? 'Emin misin? Dokun ve Sil' : 'Tümünü Temizle'}
-            </button>
+            {inGame && (
+              <button type="button" onClick={() => { clearAll(); if (confirmClear) setListOpen(false); }}
+                className={`mt-2 flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl border text-sm ${
+                  confirmClear ? 'border-[var(--wrong)] text-[var(--wrong)]' : 'border-[var(--line)] text-[var(--ink-soft)]'
+                }`}>
+                <Trash2 aria-hidden className="h-4 w-4" />
+                {confirmClear ? 'Emin misin? Dokun ve Sil' : 'Tümünü Temizle'}
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -976,18 +1047,8 @@ export function GameBoard({
         gridLines={buildShareGrid(puzzle.black, hintCells)}
         celebrate
         hintCount={hintCount} puzzleNumber={puzzleNumber} difficulty={puzzle.difficulty}
-        date={puzzle.date} />
+        date={puzzle.date} isArchive={isArchive} />
 
-      {/* Diyalog kapatıldığında çözülmüş ızgara ortada kalır; sonuç kartı bu
-          şeritten geri açılır. */}
-      {phase === 'done' && !finishOpen && (
-        <div className="shrink-0 px-3 pb-3">
-          <button type="button" onClick={() => setFinishOpen(true)}
-            className="flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[var(--ink)] font-semibold text-[var(--paper)] shadow-lg transition-transform active:scale-[0.98]">
-            <Sparkles aria-hidden className="h-4 w-4" /> Sonucu Yeniden Gör
-          </button>
-        </div>
-      )}
     </div>
   );
 }
