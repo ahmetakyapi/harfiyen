@@ -4,7 +4,7 @@ import type { Db } from '@/lib/db';
 import { isUniqueViolation } from '@/lib/pgError';
 import { playSessions, puzzles } from '@/lib/schema';
 import { HINT_PENALTY_MS, type Entry } from '@/lib/types';
-import { applyStreak, readStreak, type StreakState } from './streak';
+import { applyStreak, liveStreak, readStreak, type StreakState } from './streak';
 
 export type Identity = { userId: number | null; anonId: string | null };
 
@@ -181,7 +181,7 @@ export async function finishSession(db: Db, opts: {
     const durationMs = session.durationMs ?? 0;
     const [rank, streak, stats] = await Promise.all([
       session.isRanked ? rankOf(db, session.puzzleId, durationMs, session.submittedAt ?? now) : Promise.resolve(null),
-      streakFor(db, session.isRanked ? session.userId : null),
+      streakFor(db, session.isRanked ? session.userId : null, now),
       finishStats(db, session, durationMs),
     ]);
     return {
@@ -334,10 +334,17 @@ export async function getSessionWords(db: Db, opts: {
 const toStreakDto = (s: StreakState | null): { current: number; best: number } | null =>
   s === null ? null : { current: s.currentStreak, best: s.bestStreak };
 
-/** Tamamlanmış oturuma dönüşte seriyi DB'den okur (idempotent submit yolu). */
-async function streakFor(db: Db, userId: number | null): Promise<{ current: number; best: number } | null> {
+/** Tamamlanmış oturuma dönüşte seriyi DB'den okur (idempotent submit yolu).
+ *  Tablodaki sayı değil BUGÜN geçerli seri döner (liveStreak): arşivden günler
+ *  sonra açılan bir sonuç ekranı, çoktan kopmuş seriyi "5 günlük seri" diye
+ *  gösteriyordu — ana sayfa ve profilde düzeltilen hatanın aynısı. */
+async function streakFor(
+  db: Db, userId: number | null, now: Date,
+): Promise<{ current: number; best: number } | null> {
   if (userId === null) return null;
-  return toStreakDto(await readStreak(db, userId));
+  const s = await readStreak(db, userId);
+  if (s === null) return null;
+  return { current: liveStreak(s, gameDay(now)).current, best: s.bestStreak };
 }
 
 async function rankOf(db: Db, puzzleId: number, durationMs: number, submittedAt: Date): Promise<number> {

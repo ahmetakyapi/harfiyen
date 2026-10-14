@@ -21,7 +21,9 @@ export function StreakBadge({ current, best, atRisk = false }: {
       </div>
       {atRisk && (
         <p className="text-center text-sm text-[var(--ink-soft)]">
-          Serini sürdürmek için bugün bir bulmaca bitir.
+          {/* Arşivden çözülen bulmaca seriyi sürdürmez (applyStreak yalnızca
+              sıralı oyunda çalışır); "bir bulmaca" bunu yanlış vaat ediyordu. */}
+          Serini sürdürmek için bugünün bulmacalarından birini bitir.
         </p>
       )}
     </div>

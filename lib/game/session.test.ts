@@ -124,6 +124,25 @@ describe('finishSession', () => {
     expect(r3).toEqual({ ...r2, alreadyCompleted: true });
   });
 
+  it('günler sonra açılan sonuç ekranı kopmuş seriyi göstermez', async () => {
+    const db = await createTestDb();
+    const p = await makePuzzle(db, today);
+    const uid = await makeUser(db);
+    const identity = { userId: uid, anonId: null };
+    const s = await startSession(db, { puzzleId: p.id, identity, now: T0 });
+    const done = await finishSession(db, { sessionId: s.sessionId, identity, letters: p.solution, now: new Date(T0.getTime() + 60_000) });
+    if (!done.correct) throw new Error('çözüm reddedildi');
+    expect(done.streak).toEqual({ current: 1, best: 1 });
+    // Ertesi gün seri hâlâ ayakta (bugün bitirilirse sürer).
+    const nextDay = await finishSession(db, { sessionId: s.sessionId, identity, letters: p.solution, now: new Date(T0.getTime() + 86_400_000) });
+    if (!nextDay.correct) throw new Error('idempotent dönüş reddedildi');
+    expect(nextDay.streak).toEqual({ current: 1, best: 1 });
+    // Üç gün sonra arşivden dönülünce tablodaki eski sayı gösterilmez.
+    const later = await finishSession(db, { sessionId: s.sessionId, identity, letters: p.solution, now: new Date(T0.getTime() + 3 * 86_400_000) });
+    if (!later.correct) throw new Error('idempotent dönüş reddedildi');
+    expect(later.streak).toEqual({ current: 0, best: 1 });
+  });
+
   it('iki kullanıcıda yavaş olan 2. sırayı alır ve seri güncellenir', async () => {
     const db = await createTestDb();
     const p = await makePuzzle(db, today);
