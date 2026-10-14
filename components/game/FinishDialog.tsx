@@ -222,9 +222,9 @@ export function FinishDialog({
               {streak && streak.current > 0 && (
                 <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-[var(--accent-soft)] px-3 py-1 text-sm">
                   <Flame aria-hidden className="h-4 w-4 text-[var(--flame)]" />
-                  <strong>{streak.current}</strong> günlük seri
+                  <strong>{streak.current}</strong> Günlük Seri
                   {streak.best > streak.current && (
-                    <span className="text-[var(--ink-soft)]">· en iyi {streak.best}</span>
+                    <span className="text-[var(--ink-soft)]">· En İyi {streak.best}</span>
                   )}
                 </p>
               )}

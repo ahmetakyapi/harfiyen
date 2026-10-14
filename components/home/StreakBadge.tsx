@@ -1,6 +1,7 @@
 import { Flame } from 'lucide-react';
 
-// Seri rozeti. Sayı tablodaki değil BUGÜN geçerli olan seridir (liveStreak):
+// Seri rozeti — bir etiket, bu yüzden Title Case ("5 Günlük Seri", "Seri Koptu").
+// Sayı tablodaki değil BUGÜN geçerli olan seridir (liveStreak):
 // kopmuş bir seriyi "5 günlük seri" diye göstermek, oyuncuya olmayan bir şeyi
 // vaat ediyordu. Seri dünle bitiyorsa altta tek satırlık bir hatırlatma çıkar —
 // günlük oyunun asıl geri dönüş kancası "yarın da gel" değil "bugün kaçırma".
@@ -13,10 +14,10 @@ export function StreakBadge({ current, best, atRisk = false }: {
         {/* Alev her iki temada da sabit sıcak amber — seri = ateş, mavi alev olmaz. */}
         <Flame aria-hidden className={`h-4 w-4 ${current > 0 ? 'text-[var(--flame)]' : 'text-[var(--ink-soft)]'}`} />
         {current > 0
-          ? <span><strong>{current}</strong> günlük seri</span>
-          : <span>{best > 0 ? 'Seri koptu' : 'Henüz seri yok'}</span>}
+          ? <span><strong>{current}</strong> Günlük Seri</span>
+          : <span>{best > 0 ? 'Seri Koptu' : 'Henüz Seri Yok'}</span>}
         {best > 0 && best !== current && (
-          <span className="text-[var(--ink-soft)]">· en iyi {best}</span>
+          <span className="text-[var(--ink-soft)]">· En İyi {best}</span>
         )}
       </div>
       {atRisk && (
