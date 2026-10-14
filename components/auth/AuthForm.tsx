@@ -70,7 +70,7 @@ export function AuthForm({ mode, next }: { mode: 'login' | 'register'; next?: st
             eskiden ancak gönderdikten sonra geliyordu. */}
         {mode === 'register' && (
           <p id={`${id}-user-hint`} className="text-xs text-[var(--ink-soft)]">
-            3–20 karakter: küçük harf, rakam ve alt çizgi.
+            3–20 karakter: a-z, rakam ve alt çizgi. Türkçe harf kullanılamaz.
           </p>
         )}
       </div>

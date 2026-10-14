@@ -118,6 +118,7 @@ export function GameBoard({
   // bulmacanın en doyurucu anı) ve ipucu şeridinin yerine gelen "çözüldü"
   // şeridindeki "Sonucu Gör" ile geri açılır.
   const [finishOpen, setFinishOpen] = useState(true);
+  const resultBtnRef = useRef<HTMLButtonElement | null>(null);
   // Ekran okuyucu duyuruları: oyunun bütün geri bildirimi görseldi.
   const [liveMessage, setLiveMessage] = useState('');
   // Nasıl Oynanır artık oyun ekranından da elle açılabiliyor: modal bir kez
@@ -880,7 +881,7 @@ export function GameBoard({
                   </span>
                 )}
               </span>
-              <button type="button" onClick={() => setFinishOpen(true)}
+              <button type="button" ref={resultBtnRef} onClick={() => setFinishOpen(true)}
                 className="flex min-h-11 shrink-0 items-center gap-1.5 rounded-xl bg-[var(--ink)] px-3.5 text-sm font-semibold text-[var(--paper)] transition-transform active:scale-[0.97]">
                 <Sparkles aria-hidden className="h-4 w-4" /> Sonucu Gör
               </button>
@@ -984,9 +985,11 @@ export function GameBoard({
             )}
             {/* Klavye kısayolları hiçbir yerde yazmıyordu: Enter ile kelime
                 değiştirmek bir masaüstü oyuncusunun tahmin edeceği şey değil.
-                Bu panel yalnızca masaüstünde görünür. */}
+                Bu panel yalnızca geniş ekranda görünür; satır ayrıca yalnızca
+                fareli cihazda (geniş dokunmatik tablette bu tuşlar yok —
+                HowToModal'daki satırla aynı koşul). */}
             {inGame && (
-              <p className="mt-2.5 shrink-0 text-center text-xs leading-relaxed text-[var(--ink-soft)]">
+              <p className="mt-2.5 hidden shrink-0 text-center text-xs leading-relaxed text-[var(--ink-soft)] [@media(hover:hover)_and_(pointer:fine)]:block">
                 <kbd className="kbd">Enter</kbd> sonraki kelime · <kbd className="kbd">Boşluk</kbd> yön değiştirir
               </p>
             )}
@@ -1037,9 +1040,11 @@ export function GameBoard({
       {howToOpen && <HowToModal forceOpen onClose={() => setHowToOpen(false)} />}
 
       <FinishDialog open={phase === 'done' && finishOpen}
-        // Odak tuzağı kapanışta odağı geri veriyor; hedef gizli grid input'u
-        // olduğu için mobilde klavye yeniden açılıyordu — bulmaca bitmişken.
-        onClose={() => { setFinishOpen(false); requestAnimationFrame(() => inputRef.current?.blur()); }}
+        // Bitişte gizli grid input'u kaldırıldığından odak tuzağının geri
+        // vereceği bir hedef kalmıyor ve odak <body>'ye düşüyordu. Klavyeyle
+        // oynayan için doğal hedef, sonucu geri açan düğme (mobilde düğmeye
+        // odaklanmak klavye açmaz).
+        onClose={() => { setFinishOpen(false); requestAnimationFrame(() => resultBtnRef.current?.focus()); }}
         durationMs={result?.durationMs ?? 0}
         rank={result?.rank ?? null} isRanked={result?.isRanked ?? false}
         streak={result?.streak ?? null} stats={result?.stats}
