@@ -36,7 +36,8 @@ export function ArchiveGallery({
           Geçmiş bulmacalar pratik içindir; süren sıralamaya girmez.
         </p>
         {totalDays > 0 && (
-          <p className="rise mt-1 font-mono text-xs text-[var(--ink-soft)]" style={{ '--i': 3 } as React.CSSProperties}>
+          // Sözcük taşıyan küçük künye satırı sans: mono yalnızca saf rakamda.
+          <p className="rise mt-1 text-xs font-medium tabular-nums text-[var(--ink-soft)]" style={{ '--i': 3 } as React.CSSProperties}>
             {totalDays} gün · {totalDays * 3} bulmaca
             {solvedOnPage > 0 && ` · bu sayfada ${solvedOnPage} gün tamamlandı`}
           </p>

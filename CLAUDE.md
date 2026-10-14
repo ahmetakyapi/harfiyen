@@ -48,10 +48,15 @@ Bu kural sahibinin tüm repolarında geçerli (9 Ekim 2026).
   `/archive`, `/login`, `/register`, `/how-to-play`.
 - Hareket sistemi `app/globals.css` → "HAREKET SİSTEMİ" bölümü; bileşenler
   `components/motion/` (Intro = açılış perdesi, RouteCurtain = sayfa geçişi,
-  CellCursor = hücre imleci, KineticTitle, Tilt, CountUp, LetterBurst,
-  RollingText). Yalnızca opacity/transform/clip-path canlandır. Sayfa girişleri
-  `.rise`/`.deal` (`--i` sırası), kaydırmaya bağlı açılışlar `.reveal`/`.reveal-fold`
-  (saf CSS, `animation-timeline: view()`).
+  KineticTitle, Tilt, CountUp, LetterBurst, RollingText). Yalnızca
+  opacity/transform canlandır (tek istisna: tema düğmesinin View Transition
+  dairesi). Sayfa girişleri `.rise`/`.deal` (`--i` sırası),
+  kaydırmaya bağlı açılışlar `.reveal`/`.reveal-fold` (saf CSS,
+  `animation-timeline: view()`). Giriş animasyonu `backwards` dolgulu biter,
+  geride transform bırakmaz. Özel imleç YOK (CellCursor Ekim 2026'da kaldırıldı).
+- Oyun yerleşimi `.play-layout` adlandırılmış grid alanlarıyla kurulu; medya
+  sorgusunda `.play-grid`e `grid-row` verme (otomatik yerleşime düşer, bitişte
+  çözülmüş grid büzülür).
 - Transform animasyonlu bir kabın içine `position: fixed` öğe koyma (o kap
   içeren blok olur) — diyalogları portal ile body'ye taşı.
 - Tailwind'de `bg-[var(--x)]/50` ÇALIŞMAZ (sınıf üretilmez). Saydamlık için

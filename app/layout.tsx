@@ -4,7 +4,6 @@ import { BottomNav } from '@/components/layout/BottomNav';
 import { Header } from '@/components/layout/Header';
 import { HeaderSlot } from '@/components/layout/HeaderSlot';
 import { ThemeProvider } from '@/components/layout/ThemeProvider';
-import { CellCursor } from '@/components/motion/CellCursor';
 import { INTRO_SCRIPT, Intro } from '@/components/motion/Intro';
 import { RouteCurtain } from '@/components/motion/RouteCurtain';
 import './globals.css';
@@ -69,7 +68,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           {children}
           <BottomNav />
           <RouteCurtain />
-          <CellCursor />
         </ThemeProvider>
       </body>
     </html>

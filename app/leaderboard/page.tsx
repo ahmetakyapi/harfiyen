@@ -109,7 +109,7 @@ export default async function LeaderboardPage({ searchParams }: {
               </p>
             )}
             {board.total > 0 && (
-              <p className="mt-3 text-center font-mono text-xs tabular-nums text-[var(--ink-soft)]">
+              <p className="mt-3 text-center text-xs font-medium tabular-nums text-[var(--ink-soft)]">
                 {board.total} oyuncu bitirdi
               </p>
             )}

@@ -162,8 +162,8 @@ export default async function ProfilePage({ params }: { params: { username: stri
                   <span className="block font-mono text-sm font-semibold tabular-nums">
                     {p.bestMs !== null ? formatDuration(p.bestMs) : '—'}
                   </span>
-                  <span className="block font-mono text-xs tabular-nums text-[var(--ink-soft)]">
-                    ort. {p.avgMs !== null ? formatDuration(p.avgMs) : '—'}
+                  <span className="block text-xs text-[var(--ink-soft)]">
+                    Ortalama <span className="font-mono tabular-nums">{p.avgMs !== null ? formatDuration(p.avgMs) : '—'}</span>
                   </span>
                 </span>
               </li>

@@ -1,8 +1,9 @@
 'use client';
 
+import { Eye, EyeOff } from 'lucide-react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { normalizeUsername } from '@/lib/tr';
 
 // Yalnızca site-içi göreli yollara izin verilir — açık yönlendirme (open
@@ -20,6 +21,10 @@ export function AuthForm({ mode, next }: { mode: 'login' | 'register'; next?: st
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // Şifre kurtarma yok: yanlış yazılmış bir şifreyle açılan hesap kalıcı
+  // olarak kaybolur. Telefonda yazdığını görebilmek bu riski en ucuz kesen şey.
+  const [showPassword, setShowPassword] = useState(false);
+  const id = useId();
 
   async function submit(e: React.FormEvent): Promise<void> {
     e.preventDefault();
@@ -51,25 +56,41 @@ export function AuthForm({ mode, next }: { mode: 'login' | 'register'; next?: st
     <form onSubmit={submit}
       className="deal mx-auto flex w-full max-w-sm flex-col gap-4 rounded-2xl border border-[var(--line)] bg-[var(--paper-raised)] p-6 shadow-[0_28px_70px_-48px_var(--ink)]"
       style={{ '--i': 1 } as React.CSSProperties}>
-      <label className="flex flex-col gap-1 text-sm">
-        Kullanıcı Adı
-        <input
+      <div className="flex flex-col gap-1 text-sm">
+        <label htmlFor={`${id}-user`}>Kullanıcı Adı</label>
+        <input id={`${id}-user`}
           value={username}
           onChange={(e) => setUsername(normalizeUsername(e.target.value))}
           autoComplete="username" autoCapitalize="none" autoCorrect="off" spellCheck={false}
+          aria-describedby={mode === 'register' ? `${id}-user-hint` : undefined}
           className={INPUT}
           required minLength={3} maxLength={20}
         />
-      </label>
-      <label className="flex flex-col gap-1 text-sm">
-        Şifre
-        <input
-          type="password" value={password} onChange={(e) => setPassword(e.target.value)}
-          autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
-          className={INPUT}
-          required minLength={8}
-        />
-      </label>
+        {/* Kuralı hata gelmeden söyle: "neden olmadı" sorusunun cevabı
+            eskiden ancak gönderdikten sonra geliyordu. */}
+        {mode === 'register' && (
+          <p id={`${id}-user-hint`} className="text-xs text-[var(--ink-soft)]">
+            3–20 karakter: küçük harf, rakam ve alt çizgi.
+          </p>
+        )}
+      </div>
+      <div className="flex flex-col gap-1 text-sm">
+        <label htmlFor={`${id}-pass`}>Şifre</label>
+        <div className="relative">
+          <input id={`${id}-pass`}
+            type={showPassword ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)}
+            autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
+            autoCapitalize="none" autoCorrect="off" spellCheck={false}
+            className={`${INPUT} w-full pr-12`}
+            required minLength={8}
+          />
+          <button type="button" onClick={() => setShowPassword((v) => !v)}
+            aria-label={showPassword ? 'Şifreyi gizle' : 'Şifreyi göster'} aria-pressed={showPassword}
+            className="absolute inset-y-0 right-0 flex w-11 items-center justify-center rounded-r-lg text-[var(--ink-soft)] transition-colors hover:text-[var(--ink)]">
+            {showPassword ? <EyeOff aria-hidden className="h-[18px] w-[18px]" /> : <Eye aria-hidden className="h-[18px] w-[18px]" />}
+          </button>
+        </div>
+      </div>
       {mode === 'register' && (
         <p className="text-xs text-[var(--ink-soft)]">
           E-posta istemiyoruz; bu yüzden şifreni unutursan kurtaramayız. Güvenli bir yere not et.

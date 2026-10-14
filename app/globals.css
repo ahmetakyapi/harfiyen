@@ -141,6 +141,12 @@ body {
   position: relative;
 }
 
+/* Satır kırılımı: başlıklar dengeli kırılır, paragrafın son satırında tek
+   kelime kalmaz ("…sıralamaya / girmez." gibi). Desteklemeyen tarayıcı
+   olağan kırılıma düşer — yerleşim değişmez. */
+h1, h2, h3 { text-wrap: balance; }
+p, li { text-wrap: pretty; }
+
 /* ——— Atmosfer katmanı ———
    Köşe glow'ları temanın iki malzemesini taşır: bir köşede mavi, karşı köşede
    sıcak kum. Eskiden bunlar `body`nin arka planındaydı ve `background-attachment:
@@ -400,14 +406,15 @@ body::before {
   to { opacity: 1; transform: none; }
 }
 
-/* DİKKAT: bu animasyon `transform` içerdiği ve `both` ile doldurulduğu için
-   öğe, `position: fixed` alt öğeleri için İÇEREN BLOK olur — animasyon bittikten
-   sonra bile. Yani bu <main>'in içine konan tam ekran bir örtü viewport'a değil
-   main'in kutusuna çıpalanır ve ekranın tuhaf bir yerinde açılır (tarih seçici
-   bir kez bu tuzağa düştü). Sayfa içine diyalog koyacaksan onu portal ile
-   doğrudan body'ye taşı — bkz. components/calendar/DatePicker.tsx. */
+/* Dolgu BİLEREK `backwards`: eskiden `both` idi ve animasyon bittikten sonra
+   da transform'u "etkin" tuttuğu için <main>, `position: fixed` alt öğeleri
+   için İÇEREN BLOK olarak kalıyordu (tarih seçici bir kez bu tuzağa düştü).
+   `backwards` ile animasyon bitince hiçbir stil kalmaz; son kare zaten
+   öğenin kendi hâliyle aynı olduğundan görünürde bir sıçrama da olmaz.
+   Giriş sürerken (0.24 sn) tuzak yine vardır — sayfa içi diyaloglar bu
+   yüzden portal ile body'ye taşınmaya devam eder (DatePicker.tsx). */
 .page-enter {
-  animation: page-enter 0.24s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: page-enter 0.24s cubic-bezier(0.22, 1, 0.36, 1) backwards;
 }
 
 /* İskelet parıltısı. Donuk gri bloklar "takılmış" görünür; akıp giden parıltı
@@ -448,9 +455,9 @@ body::before {
    HAREKET SİSTEMİ
    Tek bir fikirden türer: BULMACA HÜCRESİ. Açılış perdesi bir kelimenin
    hücrelere yazılıp "doğru" yanması, sayfa geçişi ekranı kaplayıp açılan bir
-   hücre ızgarası, imleç üstüne gelinen öğeyi seçili hücre gibi çerçeveleyen
-   bir halka, yükleyici dalga dalga dolan bir ızgara. Her animasyon yalnızca
-   opacity/transform/clip-path oynatır — layout ve paint tetiklemez.
+   hücre ızgarası, yükleyici dalga dalga dolan bir ızgara. Her animasyon
+   yalnızca opacity/transform oynatır — layout ve paint tetiklemez.
+   Özel imleç YOK (sahibinin kuralı): işaretçi her yerde tarayıcınınkidir.
    ═══════════════════════════════════════════════════════════════════════ */
 :root {
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
@@ -529,9 +536,11 @@ html.intro-playing .intro {
   40% { background: var(--correct-soft); transform: translateY(-14%); }
   100% { background: var(--correct-soft); transform: none; box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--correct) 45%, transparent); }
 }
+/* Perde kırpılarak değil KAYDIRILARAK kalkar: tam ekran bir katmanda
+   clip-path her karede yeniden boyama demekti; transform compositor'da kalır. */
 @keyframes intro-lift {
-  from { clip-path: inset(0 0 0 0); }
-  to { clip-path: inset(0 0 100% 0); }
+  from { transform: none; }
+  to { transform: translateY(-100%); }
 }
 
 /* ——— Sayfa geçiş perdesi (RouteCurtain) ———
@@ -762,33 +771,6 @@ a:hover > .logo-mark .logo-bar { transform: scaleX(1.18); }
 a:hover > .logo-mark .logo-arm-l { transform: rotate(-5deg); }
 a:hover > .logo-mark .logo-arm-r { transform: rotate(5deg); }
 
-/* ——— Hücre imleci (CellCursor) ———
-   Yalnızca ince işaretçili cihazlarda; dokunmatikte hiç bağlanmaz. Kendi
-   imlecimizi GİZLEMİYORUZ: halka yerli imlecin etrafında bir "seçim"
-   katmanıdır, erişilebilirlik ve isabet yerli imlecin kalır. */
-.cell-cursor {
-  position: fixed;
-  left: 0; top: 0;
-  z-index: 95;
-  pointer-events: none;
-  box-shadow: inset 0 0 0 1.5px var(--ink);
-  transition: opacity 0.25s var(--ease-out), background-color 0.25s var(--ease-out), box-shadow 0.25s var(--ease-out);
-}
-.cell-cursor[data-hover] {
-  background: color-mix(in srgb, var(--accent) 9%, transparent);
-  box-shadow: inset 0 0 0 2px var(--accent);
-}
-.cell-cursor-no {
-  position: absolute;
-  left: 3px; top: 1px;
-  font-size: 8px;
-  font-weight: 700;
-  line-height: 1;
-  color: var(--ink);
-  transition: opacity 0.2s;
-}
-.cell-cursor[data-hover] .cell-cursor-no { opacity: 0; }
-
 /* ——— Kayan rakam (geri sayım, sayaçlar) ———
    Her rakam kendi anahtarıyla yeniden bağlanır; yeni rakam yukarıdan düşer.
    Kutunun sabit genişliği (tabular-nums) yerleşimi oynatmaz. */
@@ -796,6 +778,12 @@ a:hover > .logo-mark .logo-arm-r { transform: rotate(5deg); }
 .roll > span { display: inline-block; animation: roll-in 0.42s var(--ease-expo) both; }
 @keyframes roll-in {
   from { transform: translateY(-85%); opacity: 0; }
+}
+/* Hareket azaltmada süre 0.01 ms'ye inse de yeni rakam İLK karesini
+   başlangıç hâlinde (opacity 0) boyuyordu: geri sayımda her saniye bir
+   kare yanıp sönen bir hane. Burada animasyon hiç kurulmaz. */
+@media (prefers-reduced-motion: reduce) {
+  .roll > span { animation: none; }
 }
 
 /* ——— Sayan rakam (CountUp) ———
