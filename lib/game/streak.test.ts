@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { users } from '@/lib/schema';
 import { createTestDb } from '@/tests/helpers/testDb';
-import { applyStreak, nextStreak } from './streak';
+import { applyStreak, liveStreak, nextStreak } from './streak';
 
 describe('nextStreak', () => {
   const s0 = { currentStreak: 0, bestStreak: 0, lastStreakDate: null };
@@ -29,6 +29,25 @@ describe('applyStreak', () => {
     expect(after.currentStreak).toBe(2);
     expect(after.bestStreak).toBe(2);
     expect(after.lastStreakDate).toBe('2026-07-22');
+  });
+});
+
+describe('liveStreak', () => {
+  const s = { currentStreak: 5, lastStreakDate: '2026-08-28' };
+  it('bugün oynandıysa seri sürer, risk yok', () => {
+    expect(liveStreak(s, '2026-08-28')).toEqual({ current: 5, atRisk: false });
+  });
+  it('son gün dünse seri sürer ama bugün bitirilmezse kopacak', () => {
+    expect(liveStreak(s, '2026-08-29')).toEqual({ current: 5, atRisk: true });
+  });
+  it('bir gün atlandıysa tablodaki eski sayı gösterilmez', () => {
+    // users.current_streak ancak bir sonraki bitirişte güncellenir; o zamana
+    // kadar ekranda kopmuş seri "5 günlük seri" diye duruyordu.
+    expect(liveStreak(s, '2026-08-30')).toEqual({ current: 0, atRisk: false });
+  });
+  it('hiç oynamamış kullanıcı', () => {
+    expect(liveStreak({ currentStreak: 0, lastStreakDate: null }, '2026-08-30'))
+      .toEqual({ current: 0, atRisk: false });
   });
 });
 

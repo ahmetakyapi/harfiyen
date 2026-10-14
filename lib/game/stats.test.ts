@@ -25,7 +25,7 @@ describe('getProfileStats', () => {
         letters: g.solution, now: new Date(T0.getTime() + seconds * 1000),
       });
     }
-    const stats = await getProfileStats(db, 'ahmet');
+    const stats = await getProfileStats(db, 'ahmet', { now: T0 });
     if (!stats) throw new Error('stats null');
     expect(stats.totalSolved).toBe(2);
     expect(stats.perDifficulty.easy).toEqual({ solved: 1, bestMs: 60_000, avgMs: 60_000 });
@@ -33,6 +33,16 @@ describe('getProfileStats', () => {
     expect(stats.perDifficulty.hard).toEqual({ solved: 0, bestMs: null, avgMs: null });
     expect(stats.currentStreak).toBe(1);
     expect(stats.recent).toHaveLength(2);
+  });
+  it('ara verilmiş serinin eski sayısını göstermez', async () => {
+    const db = await createTestDb();
+    await db.insert(users).values({
+      username: 'mola', passwordHash: 'x', currentStreak: 6, bestStreak: 6, lastStreakDate: today,
+    });
+    const later = new Date(T0.getTime() + 3 * 86_400_000);
+    const stats = await getProfileStats(db, 'mola', { now: later });
+    expect(stats?.currentStreak).toBe(0);
+    expect(stats?.bestStreak).toBe(6);
   });
   it('olmayan kullanıcıda null döner', async () => {
     const db = await createTestDb();

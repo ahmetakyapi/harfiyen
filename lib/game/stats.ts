@@ -2,6 +2,7 @@ import { and, desc, eq, gte, sql } from 'drizzle-orm';
 import { addDays, gameDay, trtDate } from '@/lib/date';
 import type { Db } from '@/lib/db';
 import { playSessions, puzzles, users } from '@/lib/schema';
+import { liveStreak } from './streak';
 import { DIFFICULTIES, type Difficulty } from '@/lib/types';
 
 export type ProfileStats = {
@@ -19,7 +20,10 @@ export type ProfileStats = {
 // büyümeyecek kadar kısa.
 export const CALENDAR_DAYS = 56;
 
-export async function getProfileStats(db: Db, username: string): Promise<ProfileStats | null> {
+export async function getProfileStats(
+  db: Db, username: string, opts: { now?: Date } = {},
+): Promise<ProfileStats | null> {
+  const today = gameDay(opts.now);
   const [user] = await db.select().from(users).where(eq(users.username, username));
   if (!user) return null;
 
@@ -27,7 +31,7 @@ export async function getProfileStats(db: Db, username: string): Promise<Profile
   const ranked = and(mine, eq(playSessions.isRanked, true));
   // Takvim OYUN gününü izler: TSİ 00:00-09:00 arasında takvim günü ilerlemiş
   // olur ama o günün bulmacaları henüz açılmamıştır.
-  const since = addDays(gameDay(), -CALENDAR_DAYS);
+  const since = addDays(today, -CALENDAR_DAYS);
 
   // Eskiden kullanıcının BÜTÜN oturumları Node'a çekilip orada toplanıyordu;
   // her sütun aggregate'e taşındı ve dört sorgu paralel gidiyor.
@@ -80,7 +84,8 @@ export async function getProfileStats(db: Db, username: string): Promise<Profile
     // toISOString UTC keser: TSİ 00:00-02:59 arasında kaydolanların üyelik
     // tarihi bir gün geride görünüyordu.
     memberSince: trtDate(user.createdAt),
-    currentStreak: user.currentStreak, bestStreak: user.bestStreak,
+    // Tablodaki sayı değil, BUGÜN geçerli olan seri (bkz. liveStreak).
+    currentStreak: liveStreak(user, today).current, bestStreak: user.bestStreak,
     totalSolved: DIFFICULTIES.reduce((n, d) => n + perDifficulty[d].solved, 0),
     practiceSolved: Number(practiceRows[0]?.n ?? 0),
     perDifficulty,

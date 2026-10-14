@@ -8,6 +8,7 @@ import { KineticTitle } from '@/components/motion/KineticTitle';
 import { auth } from '@/lib/auth';
 import { formatTrtDate, gameDay, puzzleNumber } from '@/lib/date';
 import { getDb } from '@/lib/db';
+import { liveStreak } from '@/lib/game/streak';
 import { playSessions, puzzles, users } from '@/lib/schema';
 import { DIFFICULTIES } from '@/lib/types';
 
@@ -30,7 +31,7 @@ export default async function HomePage() {
 
   const userId = session ? Number(session.user.id) : null;
   const sessionByPuzzle = new Map<number, { status: string; durationMs: number | null }>();
-  let streak: { currentStreak: number; bestStreak: number } | null = null;
+  let streak: { current: number; best: number; atRisk: boolean } | null = null;
   if (userId !== null && rows.length > 0) {
     const [mine, [me]] = await Promise.all([
       db.select({
@@ -40,8 +41,10 @@ export default async function HomePage() {
         inArray(playSessions.puzzleId, rows.map((r) => r.id)),
         eq(playSessions.userId, userId),
       )),
-      db.select({ currentStreak: users.currentStreak, bestStreak: users.bestStreak })
-        .from(users).where(eq(users.id, userId)),
+      db.select({
+        currentStreak: users.currentStreak, bestStreak: users.bestStreak,
+        lastStreakDate: users.lastStreakDate,
+      }).from(users).where(eq(users.id, userId)),
     ]);
     for (const s of mine) {
       const prev = sessionByPuzzle.get(s.puzzleId);
@@ -49,7 +52,7 @@ export default async function HomePage() {
         sessionByPuzzle.set(s.puzzleId, { status: s.status, durationMs: s.durationMs });
       }
     }
-    streak = me ?? null;
+    streak = me ? { ...liveStreak(me, today), best: me.bestStreak } : null;
   }
 
   const doneCount = rows.filter((r) => sessionByPuzzle.get(r.id)?.status === 'completed').length;
@@ -72,7 +75,7 @@ export default async function HomePage() {
         </p>
         <div className="rise relative mt-5 flex justify-center" style={{ '--i': 3 } as React.CSSProperties}>
           {streak
-            ? <StreakBadge current={streak.currentStreak} best={streak.bestStreak} />
+            ? <StreakBadge current={streak.current} best={streak.best} atRisk={streak.atRisk} />
             : (
               // Eski metin "oynayabilirsin, üyelik sadece sıralama için" vaadi
               // kuruyordu; oysa /play üyeliğe kapalı. Kapı ne ise onu söylüyoruz.

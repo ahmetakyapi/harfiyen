@@ -14,6 +14,24 @@ export function nextStreak(s: StreakState, date: string): StreakState {
   return { currentStreak: current, bestStreak: Math.max(s.bestStreak, current), lastStreakDate: date };
 }
 
+/**
+ * Ekranda gösterilecek seri. `users.current_streak` yalnızca bir bulmaca
+ * BİTİRİLİNCE yazılır; oyuncu üç gün ara verse de tabloda eski sayı durur ve
+ * ana sayfa/profil kopmuş bir seriyi "5 günlük seri" diye gösteriyordu. Son
+ * seri günü bugün ya da dün değilse seri kopmuştur → 0.
+ *
+ * `atRisk`: seri dünle bitiyor, bugün henüz bir bulmaca bitirilmedi — bugün
+ * bitirilmezse yarın kopacak.
+ */
+export function liveStreak(
+  s: Pick<StreakState, 'currentStreak' | 'lastStreakDate'>, today: string,
+): { current: number; atRisk: boolean } {
+  const yesterday = addDays(today, -1);
+  const alive = s.lastStreakDate === today || s.lastStreakDate === yesterday;
+  const current = alive ? s.currentStreak : 0;
+  return { current, atRisk: current > 0 && s.lastStreakDate === yesterday };
+}
+
 /** Seriyi günceller ve GÜNCEL hâlini döner (bitiş ekranında gösterilir). */
 export async function applyStreak(db: Db, userId: number, date: string): Promise<StreakState | null> {
   const [user] = await db.select().from(users).where(eq(users.id, userId));
